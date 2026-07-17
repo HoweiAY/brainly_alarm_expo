@@ -1,8 +1,8 @@
-import { Button, Pressable, StyleSheet, Text, View } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { PROTOTYPE_ROUNDS, type TileState } from "@/tasks/memoryGame";
 import { useMemoryGame } from "@/tasks/useMemoryGame";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { Button, Pressable, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const TILE_COLORS: Record<TileState, string> = {
   DEFAULT: "#BDBDBD",
@@ -13,15 +13,28 @@ const TILE_COLORS: Record<TileState, string> = {
 
 export default function MemoryGameScreen() {
   const router = useRouter();
-  const { rounds, difficulty } = useLocalSearchParams<{ rounds?: string; difficulty?: string }>();
+  const { rounds, difficulty } = useLocalSearchParams<{
+    rounds?: string;
+    difficulty?: string;
+  }>();
   void rounds;
   void difficulty;
 
-  const { gridItems, titleText, currentRound, gameStarted, playerTurn, start, handleTilePress } =
-    useMemoryGame({
-      rounds: PROTOTYPE_ROUNDS,
-      onComplete: () => router.replace("/(main)"),
-    });
+  const {
+    gridItems,
+    titleText,
+    currentRound,
+    gameStarted,
+    playerTurn,
+    start,
+    handleTilePress,
+  } = useMemoryGame({
+    rounds: PROTOTYPE_ROUNDS,
+    onComplete: () => {
+      router.dismissAll();
+      router.replace("/(main)");
+    },
+  });
 
   const gridSize = Math.round(Math.sqrt(gridItems.length));
 
@@ -43,7 +56,10 @@ export default function MemoryGameScreen() {
                 return (
                   <Pressable
                     key={index}
-                    style={[styles.tile, { backgroundColor: TILE_COLORS[state] }]}
+                    style={[
+                      styles.tile,
+                      { backgroundColor: TILE_COLORS[state] },
+                    ]}
                     disabled={!playerTurn}
                     onPress={() => {
                       void handleTilePress(index);
