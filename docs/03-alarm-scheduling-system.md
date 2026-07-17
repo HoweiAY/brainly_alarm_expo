@@ -6,13 +6,13 @@ This document specifies the alarm scheduling engine: how alarms are registered w
 
 ## 1. Component Map
 
-| Component | Source | Role |
-|---|---|---|
-| `AlarmViewModel` | `components/alarm/AlarmViewModel.kt` | Schedules/cancels alarms with `AlarmManager`. Pure scheduling logic — no persistence. |
-| `AlarmReceiver` | `components/alarm/AlarmReceiver.kt` | `BroadcastReceiver` invoked by `AlarmManager` when an alarm is due. |
-| `AlarmSoundManager` | `utils/AlarmSoundManager.kt` | Singleton that plays/stops the looping alarm `Ringtone`. |
-| `AlarmDisplay` | `components/alarm/AlarmDisplay.kt` | Triggered-alarm UI screen; routes the user to the dismissal task. |
-| `MainActivity` | `MainActivity.kt` | Entry point; reads the `alarmTriggered` extra to decide whether to open the alarm flow or the home flow. |
+| Component           | Source                               | Role                                                                                                     |
+| ------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `AlarmViewModel`    | `components/alarm/AlarmViewModel.kt` | Schedules/cancels alarms with `AlarmManager`. Pure scheduling logic — no persistence.                    |
+| `AlarmReceiver`     | `components/alarm/AlarmReceiver.kt`  | `BroadcastReceiver` invoked by `AlarmManager` when an alarm is due.                                      |
+| `AlarmSoundManager` | `utils/AlarmSoundManager.kt`         | Singleton that plays/stops the looping alarm `Ringtone`.                                                 |
+| `AlarmDisplay`      | `components/alarm/AlarmDisplay.kt`   | Triggered-alarm UI screen; routes the user to the dismissal task.                                        |
+| `MainActivity`      | `MainActivity.kt`                    | Entry point; reads the `alarmTriggered` extra to decide whether to open the alarm flow or the home flow. |
 
 ## 2. Scheduling an Alarm — `AlarmViewModel.setAlarm`
 
@@ -46,20 +46,20 @@ fun setAlarm(alarm: Alarm, reset: Boolean = false, snoozed: Boolean = false)
 
 Extras carried by the broadcast `Intent` and re-read by `AlarmReceiver`:
 
-| Extra key | Type | Meaning |
-|---|---|---|
-| `alarmId` | `Int` | The `Alarm.id`. |
-| `dayOfWeek` | `Int` | `Calendar` weekday constant the alarm was scheduled for. |
-| `hour` | `Int` | 0–23. |
-| `minute` | `Int` | 0–59. |
-| `task` | `String` | Dismissal task type. |
-| `roundCount` | `Int` | Number of rounds. |
-| `difficulty` | `String` | Easy/Normal/Hard. |
-| `sound` | `String` | `"Default"` or a content-URI string. |
-| `snooze` | `Boolean` | Whether snooze is allowed. |
-| `enabled` | `Boolean` | Whether the alarm is enabled. |
-| `isSnoozed` | `Boolean` | `true` if this firing is a snooze. |
-| `alarmTriggered` | `Boolean` | Hint for the launched Activity to enter the alarm flow. |
+| Extra key        | Type      | Meaning                                                  |
+| ---------------- | --------- | -------------------------------------------------------- |
+| `alarmId`        | `Int`     | The `Alarm.id`.                                          |
+| `dayOfWeek`      | `Int`     | `Calendar` weekday constant the alarm was scheduled for. |
+| `hour`           | `Int`     | 0–23.                                                    |
+| `minute`         | `Int`     | 0–59.                                                    |
+| `task`           | `String`  | Dismissal task type.                                     |
+| `roundCount`     | `Int`     | Number of rounds.                                        |
+| `difficulty`     | `String`  | Easy/Normal/Hard.                                        |
+| `sound`          | `String`  | `"Default"` or a content-URI string.                     |
+| `snooze`         | `Boolean` | Whether snooze is allowed.                               |
+| `enabled`        | `Boolean` | Whether the alarm is enabled.                            |
+| `isSnoozed`      | `Boolean` | `true` if this firing is a snooze.                       |
+| `alarmTriggered` | `Boolean` | Hint for the launched Activity to enter the alarm flow.  |
 
 ## 4. Firing — `AlarmReceiver.onReceive`
 
@@ -161,14 +161,14 @@ Used by every task-completion path and by the None/turn-off path to return the u
 
 ## 10. Mapping to React Native + Expo
 
-| Current (Android) | RN/Expo candidate | Notes |
-|---|---|---|
+| Current (Android)                        | RN/Expo candidate                                                                                        | Notes                                                                                                                                                                                                                                                                                                                                                                        |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `AlarmManager.setExactAndAllowWhileIdle` | `expo-notifications` `Notifications.scheduleNotificationAsync` with a trigger, or a custom native module | Expo's high-level scheduling API does not give exact wake-up alarms with the same guarantees. For Alarmy-style behavior, a **custom native module** wrapping `AlarmManager` (Android) and `UNUserNotificationCenter` + background tasks (iOS) is recommended. iOS imposes a strict ~64-notification limit and does not support exact-time triggers — the iOS UX will differ. |
-| `BroadcastReceiver` | Headless JS task (`expo-task-manager`) or the native module's on-fire callback | The receiver currently launches an Activity. RN equivalent: emit an event / show a foreground notification that opens the app. |
-| `PendingIntent` per (alarm, weekday) | One scheduled notification per (alarm, weekday) | Same request-code scheme can be reused as the notification identifier. |
-| `Ringtone` looping | `expo-av` / `expo-audio` looping playback | Must support background/lock-screen playback and overriding silent mode for alarm sounds. |
-| Boot re-arming | Persist alarm list in SQLite; on `BOOT_COMPLETED` re-register all enabled alarms | Requires a native module + persisted store; not implemented in the original Kotlin app (https://github.com/HoweiAY/brainly-alarm). |
-| 5-minute snooze | Re-schedule a one-shot alarm `now + 5 min` | Direct equivalent. |
+| `BroadcastReceiver`                      | Headless JS task (`expo-task-manager`) or the native module's on-fire callback                           | The receiver currently launches an Activity. RN equivalent: emit an event / show a foreground notification that opens the app.                                                                                                                                                                                                                                               |
+| `PendingIntent` per (alarm, weekday)     | One scheduled notification per (alarm, weekday)                                                          | Same request-code scheme can be reused as the notification identifier.                                                                                                                                                                                                                                                                                                       |
+| `Ringtone` looping                       | `expo-av` / `expo-audio` looping playback                                                                | Must support background/lock-screen playback and overriding silent mode for alarm sounds.                                                                                                                                                                                                                                                                                    |
+| Boot re-arming                           | Persist alarm list in SQLite; on `BOOT_COMPLETED` re-register all enabled alarms                         | Requires a native module + persisted store; not implemented in the original Kotlin app (https://github.com/HoweiAY/brainly-alarm).                                                                                                                                                                                                                                           |
+| 5-minute snooze                          | Re-schedule a one-shot alarm `now + 5 min`                                                               | Direct equivalent.                                                                                                                                                                                                                                                                                                                                                           |
 
 ### 10.1 Suggested RN Module API
 
@@ -178,12 +178,12 @@ interface NativeAlarm {
   // Returns the OS identifier used to cancel later.
   schedule(opts: {
     alarmId: number;
-    weekday: number;      // 1..7 (Cal-style) or 0..6 — pick a convention
+    weekday: number; // 1..7 (Cal-style) or 0..6 — pick a convention
     hour: number;
     minute: number;
     soundUri: string | null;
     payload: AlarmSnapshot;
-    triggerAt: number;    // epoch ms
+    triggerAt: number; // epoch ms
   }): Promise<string>;
 
   cancel(identifier: string): Promise<void>;

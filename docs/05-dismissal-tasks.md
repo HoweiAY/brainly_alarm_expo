@@ -10,6 +10,7 @@ fun handleTaskCompleted() {
 ```
 
 Each task receives:
+
 - `difficulty: String` — one of `taskDifficulties` (`"Easy"`, `"Normal"`, `"Hard"`).
 - `rounds: Int` — 1..5.
 - `context: Context` — application context (used to construct `AlarmViewModel`).
@@ -25,25 +26,26 @@ A Simon-style sequence-memory game.
 
 ### 1.1 Setup by Difficulty
 
-| Difficulty | Grid size | Tiles in sequence per round |
-|---|---|---|
-| `Easy` | 3 × 3 (9 tiles) | 4 |
-| `Normal` | 3 × 3 (9 tiles) | 5 |
-| `Hard` | 4 × 4 (16 tiles) | 6 |
-| (other) | 0 (degenerate) | 0 |
+| Difficulty | Grid size        | Tiles in sequence per round |
+| ---------- | ---------------- | --------------------------- |
+| `Easy`     | 3 × 3 (9 tiles)  | 4                           |
+| `Normal`   | 3 × 3 (9 tiles)  | 5                           |
+| `Hard`     | 4 × 4 (16 tiles) | 6                           |
+| (other)    | 0 (degenerate)   | 0                           |
 
 ### 1.2 State Machine
 
 Per-tile `TileState` enum:
 
-| State | Tile color | Meaning |
-|---|---|---|
-| `DEFAULT` | Gray | Idle / not yet interacted. |
-| `SHOWING` | Yellow | The game is currently flashing this tile as part of the sequence. |
-| `CORRECT` | Green | The user tapped this tile correctly. |
-| `INCORRECT` | Red | The user tapped the wrong tile. |
+| State       | Tile color | Meaning                                                           |
+| ----------- | ---------- | ----------------------------------------------------------------- |
+| `DEFAULT`   | Gray       | Idle / not yet interacted.                                        |
+| `SHOWING`   | Yellow     | The game is currently flashing this tile as part of the sequence. |
+| `CORRECT`   | Green      | The user tapped this tile correctly.                              |
+| `INCORRECT` | Red        | The user tapped the wrong tile.                                   |
 
 Top-level state:
+
 - `gameStarted: Boolean` — whether a round is in progress (controls whether the "Start" button or the round indicator is shown).
 - `flippingOrder: List<Int>` — the randomly shuffled, `requiredTileClicks`-long subset of tile indices the user must reproduce.
 - `currentPlayerIndex: Int` — how far through `flippingOrder` the user is.
@@ -108,12 +110,12 @@ A mental-arithmetic task. Each round presents an arithmetic expression; the user
 
 ### 2.1 Equation Generation — `generateEquation(difficulty)`
 
-| Difficulty | Operand count | Operand range | Operators |
-|---|---|---|---|
-| `Easy` | 2 | `1..30` (random) | `+`, `-` |
-| `Normal` | 3 | `1..50` (random) | `+`, `-` |
-| `Hard` | 3 | `1..20` (random) | `+`, `-`, `*` |
-| (other) | 3 | `1..20` | `+`, `-` |
+| Difficulty | Operand count | Operand range    | Operators     |
+| ---------- | ------------- | ---------------- | ------------- |
+| `Easy`     | 2             | `1..30` (random) | `+`, `-`      |
+| `Normal`   | 3             | `1..50` (random) | `+`, `-`      |
+| `Hard`     | 3             | `1..20` (random) | `+`, `-`, `*` |
+| (other)    | 3             | `1..20`          | `+`, `-`      |
 
 Operators are chosen randomly per gap between operands. The resulting string is built as e.g. `"12 + 7 - 3"` (space-padded). Multiplication appears only on Hard.
 

@@ -11,6 +11,7 @@ The original implementation is a native Android app written in Kotlin using Jetp
 ## 2. Core Features
 
 ### 2.1 Alarm Management
+
 - Create, edit, delete, and enable/disable multiple alarms.
 - Each alarm is defined by:
   - A time (hour and minute, 12-hour picker).
@@ -23,6 +24,7 @@ The original implementation is a native Android app written in Kotlin using Jetp
 - The Home screen shows a live "Next alarm in X days Y hours Z minutes" countdown, an alarm list, and a bulk "Turn all on/off" / "Edit" (multi-select delete) menu.
 
 ### 2.2 Alarm Triggering
+
 - Alarms are scheduled with the Android `AlarmManager` using exact, wake-up alarms (`setExactAndAllowWhileIdle`, `RTC_WAKEUP`).
 - Each (alarm id, day-of-week) pair is scheduled as its own `PendingIntent` so that a multi-day alarm fires independently on each configured weekday.
 - When an alarm fires, `AlarmReceiver` (a `BroadcastReceiver`):
@@ -33,22 +35,25 @@ The original implementation is a native Android app written in Kotlin using Jetp
 - The receiver is registered in the manifest to also respond to `BOOT_COMPLETED`, although re-scheduling of alarms after reboot is not currently persisted.
 
 ### 2.3 Dismissal Tasks
+
 To turn off a triggered alarm, the user completes one of the following tasks (selected per alarm):
 
-| Task | Description | Difficulty effect | Rounds effect |
-|---|---|---|---|
-| **Memory Game** | A grid of tiles flashes in a random order; the user must tap the tiles in the same order. | Easy/Normal → 3×3 grid, 4–5 tiles. Hard → 4×4 grid, 6 tiles. | Number of consecutive successful rounds required. |
-| **Math Equation** | The user solves a randomly generated arithmetic expression and types the integer answer. | Easy → 2 operands (1–30, +/-). Normal → 3 operands (1–50, +/-). Hard → 3 operands (1–20, +/-/*). | Number of equations to solve consecutively. |
-| **Phone Shaking** | The user shakes the device a random number of times (15–30). Uses the accelerometer. | Not applicable (disabled). | Not applicable (disabled). |
-| **None** | No task — the alarm is dismissed immediately by tapping "Turn off". | Not applicable. | Not applicable. |
+| Task              | Description                                                                               | Difficulty effect                                                                                | Rounds effect                                     |
+| ----------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
+| **Memory Game**   | A grid of tiles flashes in a random order; the user must tap the tiles in the same order. | Easy/Normal → 3×3 grid, 4–5 tiles. Hard → 4×4 grid, 6 tiles.                                     | Number of consecutive successful rounds required. |
+| **Math Equation** | The user solves a randomly generated arithmetic expression and types the integer answer.  | Easy → 2 operands (1–30, +/-). Normal → 3 operands (1–50, +/-). Hard → 3 operands (1–20, +/-/*). | Number of equations to solve consecutively.       |
+| **Phone Shaking** | The user shakes the device a random number of times (15–30). Uses the accelerometer.      | Not applicable (disabled).                                                                       | Not applicable (disabled).                        |
+| **None**          | No task — the alarm is dismissed immediately by tapping "Turn off".                       | Not applicable.                                                                                  | Not applicable.                                   |
 
 Completing the final round stops the alarm sound and navigates back to the Home screen via `AlarmViewModel.onAlarmDismissed()`.
 
 ### 2.4 Snooze
+
 - If snooze is enabled for the alarm, the dismissal screen offers a "Snooze for 5 minutes" button.
 - Snoozing cancels the current alarm, schedules a new one-shot alarm 5 minutes in the future, stops the sound, and returns the user to the Home screen.
 
 ### 2.5 Alarm Reschedule (Weekly Reset)
+
 - When a non-None alarm is dismissed via "Begin task", the existing `PendingIntent` for the current weekday is cancelled and re-scheduled for the same weekday one week later (the app adds 7 days to the alarm time, controlled by the `reset` flag in `AlarmViewModel.setAlarm`).
 - This effectively makes each weekday slot a recurring weekly alarm.
 
@@ -56,20 +61,20 @@ Completing the final round stops the alarm sound and navigates back to the Home 
 
 These describe the upstream Kotlin/Jetpack Compose app at **https://github.com/HoweiAY/brainly-alarm**, not this repository.
 
-| Area | Technology |
-|---|---|
-| Language | Kotlin |
-| UI Toolkit | Jetpack Compose + Material 3 |
-| Navigation | Jetpack Navigation Compose |
-| Local Database | Room (SQLite), version 2, single `alarms` table |
+| Area             | Technology                                                                               |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| Language         | Kotlin                                                                                   |
+| UI Toolkit       | Jetpack Compose + Material 3                                                             |
+| Navigation       | Jetpack Navigation Compose                                                               |
+| Local Database   | Room (SQLite), version 2, single `alarms` table                                          |
 | State Management | `ViewModel` + `StateFlow` / `LiveData`, observed via `collectAsState` / `observeAsState` |
-| Alarm Scheduling | Android `AlarmManager` + `BroadcastReceiver` |
-| Sound Playback | Android `Ringtone` / `RingtoneManager` (singleton `AlarmSoundManager`) |
-| Notifications | `NotificationManager` + `NotificationCompat`, channel `brainly_alarm_id` |
-| Sensors | `SensorManager` accelerometer for the shake task |
-| Math evaluation | `exp4j` library (`net.objecthunter:exp4j:0.4.8`) |
-| Media picking | `ActivityResultContracts.GetContent` (`audio/*`) + `MediaStore` for filename lookup |
-| Build | Gradle (Kotlin DSL), AGP 8.1.2, Kotlin 1.9.10, KSP, minSdk 28 / targetSdk 34 |
+| Alarm Scheduling | Android `AlarmManager` + `BroadcastReceiver`                                             |
+| Sound Playback   | Android `Ringtone` / `RingtoneManager` (singleton `AlarmSoundManager`)                   |
+| Notifications    | `NotificationManager` + `NotificationCompat`, channel `brainly_alarm_id`                 |
+| Sensors          | `SensorManager` accelerometer for the shake task                                         |
+| Math evaluation  | `exp4j` library (`net.objecthunter:exp4j:0.4.8`)                                         |
+| Media picking    | `ActivityResultContracts.GetContent` (`audio/*`) + `MediaStore` for filename lookup      |
+| Build            | Gradle (Kotlin DSL), AGP 8.1.2, Kotlin 1.9.10, KSP, minSdk 28 / targetSdk 34             |
 
 ## 4. Project Structure
 
@@ -114,6 +119,7 @@ app/src/main/java/com/example/alarmapp/
 ## 5. Permissions
 
 Declared in `AndroidManifest.xml`:
+
 - `POST_NOTIFICATIONS` — alarm foreground notification.
 - `READ_EXTERNAL_STORAGE` / `WRITE_EXTERNAL_STORAGE` — selecting custom alarm audio.
 - `SCHEDULE_EXACT_ALARM` / `USE_EXACT_ALARM` — exact, wake-up alarm scheduling.

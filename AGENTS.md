@@ -9,6 +9,7 @@ Read the exact versioned Expo docs at https://docs.expo.dev/versions/v57.0.0/ be
 ## Spec Docs
 
 Authoritative specifications live in `docs/`:
+
 - `01-project-overview.md` — product, features, original Kotlin structure, Expo stack mapping.
 - `02-data-layer-and-persistence.md` — `Alarm` entity, DAO/repository API, TypeScript sketch, migration notes.
 - `03-alarm-scheduling-system.md` — `AlarmManager` scheduling, firing, cancel/snooze, weekly reschedule, native-module API.

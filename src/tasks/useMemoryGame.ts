@@ -23,10 +23,15 @@ export interface UseMemoryGameResult {
   handleTilePress: (idx: number) => Promise<void>;
 }
 
-export function useMemoryGame({ rounds, onComplete }: UseMemoryGameOptions): UseMemoryGameResult {
+export function useMemoryGame({
+  rounds,
+  onComplete,
+}: UseMemoryGameOptions): UseMemoryGameResult {
   const config = DIFFICULTY_CONFIG[PROTOTYPE_DIFFICULTY];
 
-  const [gridItems, setGridItems] = useState<TileState[]>(() => newGrid(config.gridSize));
+  const [gridItems, setGridItems] = useState<TileState[]>(() =>
+    newGrid(config.gridSize),
+  );
   const [titleText, setTitleText] = useState<string>("");
   const [currentRound, setCurrentRound] = useState<number>(1);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
@@ -90,7 +95,8 @@ export function useMemoryGame({ rounds, onComplete }: UseMemoryGameOptions): Use
   };
 
   const handleTilePress = async (idx: number) => {
-    if (!playerTurn || busyRef.current || gridRef.current[idx] !== "DEFAULT") return;
+    if (!playerTurn || busyRef.current || gridRef.current[idx] !== "DEFAULT")
+      return;
 
     const result = evaluateTap(orderRef.current, playerIndexRef.current, idx);
 
@@ -130,5 +136,13 @@ export function useMemoryGame({ rounds, onComplete }: UseMemoryGameOptions): Use
     };
   }, []);
 
-  return { gridItems, titleText, currentRound, gameStarted, playerTurn, start, handleTilePress };
+  return {
+    gridItems,
+    titleText,
+    currentRound,
+    gameStarted,
+    playerTurn,
+    start,
+    handleTilePress,
+  };
 }

@@ -59,13 +59,13 @@ fun stopAlarmSound()
 
 ### 1.4 RN/Expo Mapping
 
-| Current | RN/Expo candidate | Notes |
-|---|---|---|
-| `Ringtone` looping playback | `expo-av` (`Audio.Sound`) or the newer `expo-audio` | Must set `isLooping: true`, `shouldPlay: true`. |
-| System default alarm ringtone (`RingtoneManager.TYPE_ALARM`) | No direct cross-platform API; ship a default alarm sound asset, or read the platform default via a native module | iOS has no "default alarm sound" concept; bundle a fallback. |
-| Alarm-category audio routing | Configure the audio session/category as "Alarm" / "Playback" with `AVAudioSessionCategoryAmbient`-style override of silent switch | Critical so alarms sound even when the phone is on silent — this is core to the product. |
-| Background playback while app is launched by the alarm | Foreground service or the alarm-notification foreground intent | iOS: alarm sound playback from a notification is limited; a native module playing sound while the app is briefly backgrounded is needed. |
-| Content-URI playback | `expo-av` supports `require()` assets and file URIs; for picked audio, copy to app sandbox first | Android content URIs from `expo-document-picker` may need `FileSystem.copyAsync` to a local path for reliable looping playback. |
+| Current                                                      | RN/Expo candidate                                                                                                                 | Notes                                                                                                                                    |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `Ringtone` looping playback                                  | `expo-av` (`Audio.Sound`) or the newer `expo-audio`                                                                               | Must set `isLooping: true`, `shouldPlay: true`.                                                                                          |
+| System default alarm ringtone (`RingtoneManager.TYPE_ALARM`) | No direct cross-platform API; ship a default alarm sound asset, or read the platform default via a native module                  | iOS has no "default alarm sound" concept; bundle a fallback.                                                                             |
+| Alarm-category audio routing                                 | Configure the audio session/category as "Alarm" / "Playback" with `AVAudioSessionCategoryAmbient`-style override of silent switch | Critical so alarms sound even when the phone is on silent — this is core to the product.                                                 |
+| Background playback while app is launched by the alarm       | Foreground service or the alarm-notification foreground intent                                                                    | iOS: alarm sound playback from a notification is limited; a native module playing sound while the app is briefly backgrounded is needed. |
+| Content-URI playback                                         | `expo-av` supports `require()` assets and file URIs; for picked audio, copy to app sandbox first                                  | Android content URIs from `expo-document-picker` may need `FileSystem.copyAsync` to a local path for reliable looping playback.          |
 
 ## 2. Custom Alarm Sound Selection
 
@@ -211,19 +211,19 @@ ExpressionBuilder(expression).build().evaluate().toInt()
 
 From `AndroidManifest.xml`:
 
-| Permission | Used by |
-|---|---|
-| `POST_NOTIFICATIONS` | Alarm foreground notification (Android 13+). |
-| `READ_EXTERNAL_STORAGE` | Reading custom alarm audio via the picker. |
-| `WRITE_EXTERNAL_STORAGE` | Declared but effectively unused by the app's code path. |
-| `SCHEDULE_EXACT_ALARM` | `AlarmManager.setExactAndAllowWhileIdle`. |
-| `USE_EXACT_ALARM` | Same — declared for Android 14+ exact-alarm attestation. |
+| Permission               | Used by                                                  |
+| ------------------------ | -------------------------------------------------------- |
+| `POST_NOTIFICATIONS`     | Alarm foreground notification (Android 13+).             |
+| `READ_EXTERNAL_STORAGE`  | Reading custom alarm audio via the picker.               |
+| `WRITE_EXTERNAL_STORAGE` | Declared but effectively unused by the app's code path.  |
+| `SCHEDULE_EXACT_ALARM`   | `AlarmManager.setExactAndAllowWhileIdle`.                |
+| `USE_EXACT_ALARM`        | Same — declared for Android 14+ exact-alarm attestation. |
 
 ### RN Port Permission Plan
 
-| Permission | Expo module |
-|---|---|
-| Notifications + alarm scheduling | `expo-notifications` + a custom native module for exact wake-up alarms. Request `SCHEDULE_EXACT_ALARM` via the Android exact-alarm permission flow. |
-| Audio file access | `expo-document-picker` (no persistent storage permission needed on modern Android) **or** `expo-media-library` if reading from the user's music library. Prefer the picker + copy-to-sandbox approach to avoid storage permissions entirely. |
-| Foreground service for alarm playback (Android) | A custom native module running a foreground service while the alarm rings. |
-| Override DND / silent | Android: use `CATEGORY_ALARM` + the alarm audio stream. iOS: `AVAudioSessionCategory(Ambient/Playback)` + `mixWithOthers = false`; document the silent-switch limitation. |
+| Permission                                      | Expo module                                                                                                                                                                                                                                  |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Notifications + alarm scheduling                | `expo-notifications` + a custom native module for exact wake-up alarms. Request `SCHEDULE_EXACT_ALARM` via the Android exact-alarm permission flow.                                                                                          |
+| Audio file access                               | `expo-document-picker` (no persistent storage permission needed on modern Android) **or** `expo-media-library` if reading from the user's music library. Prefer the picker + copy-to-sandbox approach to avoid storage permissions entirely. |
+| Foreground service for alarm playback (Android) | A custom native module running a foreground service while the alarm rings.                                                                                                                                                                   |
+| Override DND / silent                           | Android: use `CATEGORY_ALARM` + the alarm audio stream. iOS: `AVAudioSessionCategory(Ambient/Playback)` + `mixWithOthers = false`; document the silent-switch limitation.                                                                    |

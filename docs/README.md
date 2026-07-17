@@ -4,15 +4,15 @@ This folder contains the specification documents for the Brainly Alarm app, prep
 
 ## Contents
 
-| # | Document | Scope |
-|---|---|---|
-| 01 | [Project Overview](01-project-overview.md) | High-level summary, core features, technology stack, project structure, and the cross-cutting notes for the RN port. |
-| 02 | [Data Layer & Persistence API](02-data-layer-and-persistence.md) | The `Alarm` data model, Room database, DAO, repository, and app-wide database ViewModel. Includes a TypeScript sketch of the equivalent repository API. |
-| 03 | [Alarm Scheduling & Triggering System](03-alarm-scheduling-system.md) | `AlarmManager` scheduling, `AlarmReceiver` firing, cancellation, snooze, weekly reschedule, notification channel, and the RN native-module mapping. |
-| 04 | [Navigation, Screens & UI Architecture](04-navigation-and-ui-architecture.md) | The NavHost graph, route catalog, per-screen specifications, and the `HomeViewModel` / `CreateAlarmViewModel` state contracts. Maps each Compose concept to an **Expo Router** / Zustand equivalent. |
-| 05 | [Dismissal Tasks Specification](05-dismissal-tasks.md) | Full spec of the Memory Game, Math Equation, Phone Shaking, and "None" tasks, including state machines, difficulty tables, and edge cases. |
-| 06 | [Sound, Notifications & Platform Utilities](06-sound-notifications-and-platform-utils.md) | `AlarmSoundManager`, custom audio selection, notification channel/notifications, Room `TypeConverter`, exp4j, sensors, and the permissions map for the RN port. |
-| 07 | [React Native / Expo Migration Guide](07-react-native-migration-guide.md) | Recommended **Expo Router** project structure, library choices, native-module surface, state-management strategy, phased migration plan, and known risks. |
+| #   | Document                                                                                  | Scope                                                                                                                                                                                                |
+| --- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 01  | [Project Overview](01-project-overview.md)                                                | High-level summary, core features, technology stack, project structure, and the cross-cutting notes for the RN port.                                                                                 |
+| 02  | [Data Layer & Persistence API](02-data-layer-and-persistence.md)                          | The `Alarm` data model, Room database, DAO, repository, and app-wide database ViewModel. Includes a TypeScript sketch of the equivalent repository API.                                              |
+| 03  | [Alarm Scheduling & Triggering System](03-alarm-scheduling-system.md)                     | `AlarmManager` scheduling, `AlarmReceiver` firing, cancellation, snooze, weekly reschedule, notification channel, and the RN native-module mapping.                                                  |
+| 04  | [Navigation, Screens & UI Architecture](04-navigation-and-ui-architecture.md)             | The NavHost graph, route catalog, per-screen specifications, and the `HomeViewModel` / `CreateAlarmViewModel` state contracts. Maps each Compose concept to an **Expo Router** / Zustand equivalent. |
+| 05  | [Dismissal Tasks Specification](05-dismissal-tasks.md)                                    | Full spec of the Memory Game, Math Equation, Phone Shaking, and "None" tasks, including state machines, difficulty tables, and edge cases.                                                           |
+| 06  | [Sound, Notifications & Platform Utilities](06-sound-notifications-and-platform-utils.md) | `AlarmSoundManager`, custom audio selection, notification channel/notifications, Room `TypeConverter`, exp4j, sensors, and the permissions map for the RN port.                                      |
+| 07  | [React Native / Expo Migration Guide](07-react-native-migration-guide.md)                 | Recommended **Expo Router** project structure, library choices, native-module surface, state-management strategy, phased migration plan, and known risks.                                            |
 
 ## How to Use These Docs
 

@@ -21,7 +21,10 @@ export function newGrid(size: number): TileState[] {
 }
 
 export function generateOrder(config: DifficultyConfig): number[] {
-  const indices = Array.from({ length: config.gridSize * config.gridSize }, (_, i) => i);
+  const indices = Array.from(
+    { length: config.gridSize * config.gridSize },
+    (_, i) => i,
+  );
   for (let i = indices.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [indices[i], indices[j]] = [indices[j], indices[i]];

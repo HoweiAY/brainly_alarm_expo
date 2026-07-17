@@ -10,27 +10,27 @@ Source: `model/data/Alarm.kt`
 
 The entire app's persisted state is a single entity: `Alarm`. There are no other tables.
 
-| Field | Type | Column | Default | Notes |
-|---|---|---|---|---|
-| `id` | `Int` | `id` (PK, autoGenerate) | `0` | Auto-incremented primary key. |
-| `days` | `List<String>` | `days` | `[]` | Weekday abbreviations, e.g. `["Mon","Wed","Fri"]`. Stored as CSV via `TypeConverter`. Empty list means "every day" at scheduling time. |
-| `hour` | `Int` | `hour` | `12` | 24-hour format 0–23 internally; UI uses a 12-hour `TimePicker`. |
-| `minute` | `Int` | `minute` | `0` | 0–59. |
-| `task` | `String` | `task` | `"Memory"` | One of `taskTypes`: `Memory`, `Math`, `Shake phone`, `None`. |
-| `rounds` | `Int` | `task rounds` | `1` | 1–5. Only used for Memory/Math. |
-| `difficulty` | `String` | `difficulty` | `"Easy"` | One of `taskDifficulties`: `Easy`, `Normal`, `Hard`. |
-| `sound` | `String` | `sound` | `"Default"` | Either the literal `"Default"` (use system alarm ringtone) or a content-`Uri` string picked from local storage. |
-| `snooze` | `Boolean` | `snooze` | `true` | Whether the snooze button is shown on the dismissal screen. |
-| `enabled` | `Boolean` | `enabled` | `true` | Whether the alarm is currently scheduled. Toggled from the Home screen. |
+| Field        | Type           | Column                  | Default     | Notes                                                                                                                                  |
+| ------------ | -------------- | ----------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`         | `Int`          | `id` (PK, autoGenerate) | `0`         | Auto-incremented primary key.                                                                                                          |
+| `days`       | `List<String>` | `days`                  | `[]`        | Weekday abbreviations, e.g. `["Mon","Wed","Fri"]`. Stored as CSV via `TypeConverter`. Empty list means "every day" at scheduling time. |
+| `hour`       | `Int`          | `hour`                  | `12`        | 24-hour format 0–23 internally; UI uses a 12-hour `TimePicker`.                                                                        |
+| `minute`     | `Int`          | `minute`                | `0`         | 0–59.                                                                                                                                  |
+| `task`       | `String`       | `task`                  | `"Memory"`  | One of `taskTypes`: `Memory`, `Math`, `Shake phone`, `None`.                                                                           |
+| `rounds`     | `Int`          | `task rounds`           | `1`         | 1–5. Only used for Memory/Math.                                                                                                        |
+| `difficulty` | `String`       | `difficulty`            | `"Easy"`    | One of `taskDifficulties`: `Easy`, `Normal`, `Hard`.                                                                                   |
+| `sound`      | `String`       | `sound`                 | `"Default"` | Either the literal `"Default"` (use system alarm ringtone) or a content-`Uri` string picked from local storage.                        |
+| `snooze`     | `Boolean`      | `snooze`                | `true`      | Whether the snooze button is shown on the dismissal screen.                                                                            |
+| `enabled`    | `Boolean`      | `enabled`               | `true`      | Whether the alarm is currently scheduled. Toggled from the Home screen.                                                                |
 
 ### 1.1 Helper Methods on `Alarm`
 
-| Method | Returns | Purpose |
-|---|---|---|
-| `getTimeInMillis(): Long` | `Long` | Computes the next `Calendar` time-in-ms for the alarm by scanning its `days` and picking the earliest upcoming slot. (Used for display/ordering; the authoritative scheduling logic lives in `AlarmViewModel`.) |
-| `getTimeString(): String` | `"HH:mm"` | Zero-padded 24-hour time for the alarm card. |
-| `getDaysString(): String` | `"Mon, Wed, Fri"` / `"Every day"` | Human-readable days label. If all 7 weekdays are present → `"Every day"`. |
-| `getCalendarDay(day: String): Int` | `Calendar.SUNDAY`..`Calendar.SATURDAY` | Converts a weekday abbreviation to a `Calendar` day-of-week constant. Throws `IllegalArgumentException` on unknown input. |
+| Method                             | Returns                                | Purpose                                                                                                                                                                                                         |
+| ---------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getTimeInMillis(): Long`          | `Long`                                 | Computes the next `Calendar` time-in-ms for the alarm by scanning its `days` and picking the earliest upcoming slot. (Used for display/ordering; the authoritative scheduling logic lives in `AlarmViewModel`.) |
+| `getTimeString(): String`          | `"HH:mm"`                              | Zero-padded 24-hour time for the alarm card.                                                                                                                                                                    |
+| `getDaysString(): String`          | `"Mon, Wed, Fri"` / `"Every day"`      | Human-readable days label. If all 7 weekdays are present → `"Every day"`.                                                                                                                                       |
+| `getCalendarDay(day: String): Int` | `Calendar.SUNDAY`..`Calendar.SATURDAY` | Converts a weekday abbreviation to a `Calendar` day-of-week constant. Throws `IllegalArgumentException` on unknown input.                                                                                       |
 
 ### 1.2 Static Constants — `Datasource.kt`
 
@@ -75,26 +75,26 @@ abstract class AlarmDatabase : RoomDatabase {
 
 Source: `model/data/AlarmDao.kt`
 
-| Method | SQL | Thread | Returns |
-|---|---|---|---|
-| `insert(alarm)` | `INSERT ... ON CONFLICT IGNORE` | `suspend` | Unit. Ignores if the PK collides (auto-generated, so effectively never). |
-| `update(alarm)` | `UPDATE ... ON CONFLICT REPLACE` | `suspend` | Unit. Used for both edits and toggling `enabled`. |
-| `delete(alarm)` | `DELETE` by entity match | `suspend` | Unit. |
-| `getAllAlarms()` | `SELECT * FROM alarms ORDER BY id ASC` | reactive | `LiveData<List<Alarm>>`. Observed by Home screen. |
-| `getAlarmById(id)` | `SELECT * FROM alarms WHERE id = :id LIMIT 1` | blocking | `Alarm` (single fetch). |
+| Method             | SQL                                           | Thread    | Returns                                                                  |
+| ------------------ | --------------------------------------------- | --------- | ------------------------------------------------------------------------ |
+| `insert(alarm)`    | `INSERT ... ON CONFLICT IGNORE`               | `suspend` | Unit. Ignores if the PK collides (auto-generated, so effectively never). |
+| `update(alarm)`    | `UPDATE ... ON CONFLICT REPLACE`              | `suspend` | Unit. Used for both edits and toggling `enabled`.                        |
+| `delete(alarm)`    | `DELETE` by entity match                      | `suspend` | Unit.                                                                    |
+| `getAllAlarms()`   | `SELECT * FROM alarms ORDER BY id ASC`        | reactive  | `LiveData<List<Alarm>>`. Observed by Home screen.                        |
+| `getAlarmById(id)` | `SELECT * FROM alarms WHERE id = :id LIMIT 1` | blocking  | `Alarm` (single fetch).                                                  |
 
 ### 4.1 Equivalent API Surface (TypeScript sketch)
 
 ```ts
 type Alarm = {
-  id: number;            // auto-increment PK
-  days: string[];        // ["Mon","Wed","Fri"] or [] for daily
-  hour: number;          // 0..23
-  minute: number;        // 0..59
+  id: number; // auto-increment PK
+  days: string[]; // ["Mon","Wed","Fri"] or [] for daily
+  hour: number; // 0..23
+  minute: number; // 0..59
   task: "Memory" | "Math" | "Shake phone" | "None";
-  rounds: number;        // 1..5
+  rounds: number; // 1..5
   difficulty: "Easy" | "Normal" | "Hard";
-  sound: string;         // "Default" or content-uri string
+  sound: string; // "Default" or content-uri string
   snooze: boolean;
   enabled: boolean;
 };
@@ -127,15 +127,15 @@ Source: `model/data/AlarmDatabaseViewModel.kt`
 
 Constructed once per `MainActivity` via `AlarmDatabaseViewModelFactory` and shared across screens through the NavHost.
 
-| API | Description |
-|---|---|
-| `allAlarms: LiveData<List<Alarm>>` | Reactive list of all alarms; observed by `HomeMenu`. |
-| `foundAlarm: LiveData<Alarm?>` | Single-alarm lookup result; observed by `CreateAlarmMenu` and `AlarmDisplay` to load an alarm for editing / dismissal. |
-| `insertAlarm(alarm)` | Delegates to repository. |
-| `updateAlarm(alarm)` | Delegates to repository. Used for edits, enable/disable, and post-dismissal rescheduling. |
-| `deleteAlarm(alarm)` | Delegates to repository. |
-| `getAllAlarms(): List<Alarm>` | Synchronous snapshot of `allAlarms.value`. |
-| `getAlarmById(id)` | Launches a `viewModelScope` coroutine, fetches via repository, and pushes the result into `foundAlarm`. |
+| API                                | Description                                                                                                            |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `allAlarms: LiveData<List<Alarm>>` | Reactive list of all alarms; observed by `HomeMenu`.                                                                   |
+| `foundAlarm: LiveData<Alarm?>`     | Single-alarm lookup result; observed by `CreateAlarmMenu` and `AlarmDisplay` to load an alarm for editing / dismissal. |
+| `insertAlarm(alarm)`               | Delegates to repository.                                                                                               |
+| `updateAlarm(alarm)`               | Delegates to repository. Used for edits, enable/disable, and post-dismissal rescheduling.                              |
+| `deleteAlarm(alarm)`               | Delegates to repository.                                                                                               |
+| `getAllAlarms(): List<Alarm>`      | Synchronous snapshot of `allAlarms.value`.                                                                             |
+| `getAlarmById(id)`                 | Launches a `viewModelScope` coroutine, fetches via repository, and pushes the result into `foundAlarm`.                |
 
 ### 6.1 Lookup Flow (used by edit + dismissal screens)
 

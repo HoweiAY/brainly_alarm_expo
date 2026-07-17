@@ -29,26 +29,29 @@ The `startDestination` is chosen at composition time from the `alarmTriggered` b
 Source: `BrainlyAlarmScreen.kt`, `strings.xml`.
 
 ### 2.1 `AppScreen` enum (top-level graph roots)
-| Name | Route | Title (string resource) |
-|---|---|---|
-| `MainScreen` | `MainScreen` | `main_screen` — "Main screen" |
+
+| Name          | Route         | Title (string resource)         |
+| ------------- | ------------- | ------------------------------- |
+| `MainScreen`  | `MainScreen`  | `main_screen` — "Main screen"   |
 | `AlarmScreen` | `AlarmScreen` | `alarm_screen` — "Alarm screen" |
 
 ### 2.2 `AlarmScreen` enum (sub-destinations, used in both graph roots)
-| Name | Route | Title |
-|---|---|---|
-| `Home` | `Home` | `home_menu` — "Home menu" |
-| `CreateAlarm` | `CreateAlarm?alarmId={alarmId}` | `create_alarm_menu` — "Create an alarm" |
-| `DisplayAlarm` | `DisplayAlarm` | `display_alarm_screen` — "Alarm display" |
+
+| Name           | Route                           | Title                                    |
+| -------------- | ------------------------------- | ---------------------------------------- |
+| `Home`         | `Home`                          | `home_menu` — "Home menu"                |
+| `CreateAlarm`  | `CreateAlarm?alarmId={alarmId}` | `create_alarm_menu` — "Create an alarm"  |
+| `DisplayAlarm` | `DisplayAlarm`                  | `display_alarm_screen` — "Alarm display" |
 
 `alarmId` is an optional `StringType` nav arg (nullable). When omitted → "create new alarm"; when present → "edit existing alarm".
 
 ### 2.3 `TasksScreen` enum (dismissal tasks)
-| Name | Route | Title |
-|---|---|---|
-| `MemoryGame` | `MemoryGame/{rounds}/{difficulty}` | `memory_game` — "Memory" |
-| `MathEquation` | `MathEquation/{rounds}/{difficulty}` | `math_equation` — "Math" |
-| `PhoneShaking` | `PhoneShaking` | `phone_shaking` — "Shake phone" |
+
+| Name           | Route                                | Title                           |
+| -------------- | ------------------------------------ | ------------------------------- |
+| `MemoryGame`   | `MemoryGame/{rounds}/{difficulty}`   | `memory_game` — "Memory"        |
+| `MathEquation` | `MathEquation/{rounds}/{difficulty}` | `math_equation` — "Math"        |
+| `PhoneShaking` | `PhoneShaking`                       | `phone_shaking` — "Shake phone" |
 
 `rounds` (Int) and `difficulty` (String) are path params with defaults `1` and `taskDifficulties[0]` ("Easy") if absent.
 
@@ -78,6 +81,7 @@ The `AlarmViewModel` (scheduling) is **not** shared — each screen constructs i
 **Backing state:** `HomeUiState` (see §6.1).
 
 **Layout (top-to-bottom):**
+
 1. Greeting header: "Welcome to Brainly Alarm!".
 2. "Next alarm in X day(s) Y hour(s) Z minute(s)" countdown (refreshed every minute via a `LaunchedEffect` loop).
 3. "Alarms" row with:
@@ -89,6 +93,7 @@ The `AlarmViewModel` (scheduling) is **not** shared — each screen constructs i
 5. In edit mode: a bottom action bar with "Cancel" and "Select all", and a 🗑 delete icon that removes all selected alarms.
 
 **Reactive effects:**
+
 - On `alarmData` change (from `observeAsState`): syncs each alarm's `enabled` state with the OS schedule, then recomputes the next-alarm message.
 - Per-minute tick: calls `homeViewModel.updateNextAlarm(enabledAlarms)`.
 - On `alarmMsgChanged` / `enableAlarmChanged` flags: refreshes the displayed `nextAlarmMsg`.
@@ -113,6 +118,7 @@ A Material 3 `Card` representing one alarm.
 **Loading behavior:** When `alarmId != null`, loads the alarm via `getAlarmById`, verifies the returned `Alarm.id` matches, then calls `resetUiState(alarm)` to seed the UI. Until loaded (`alarmLoaded == false`), the form is not rendered.
 
 **Form fields:**
+
 1. **TimePicker** (Material 3, 12-hour) — initial values from loaded alarm or UI state defaults (hour 8, minute 0).
 2. **Day** — `LazyRow` of `WeekdayTextButton`s for each entry in `weekdays`. Toggle selection in `CreateAlarmViewModel.updateWeekdays`. (Confirm treats an empty selection as "all 7 days".)
 3. **Task** — dropdown of `taskTypes`. `ArrowDropDown` icon toggles `taskSelectorExpanded`.
@@ -122,6 +128,7 @@ A Material 3 `Card` representing one alarm.
 7. **Snooze** — `Switch` bound to `snoozeEnabled`.
 
 **Footer actions:**
+
 - **Cancel** — resets UI state and `navController.popBackStack()`.
 - **Confirm**:
   - If editing an existing alarm: `cancelAlarm(old)`, mutate the loaded `Alarm` fields in place, `updateAlarm`, `setAlarm`.
@@ -133,6 +140,7 @@ A Material 3 `Card` representing one alarm.
 **ViewModels:** `AlarmViewModel` (scheduling) + `AlarmDatabaseViewModel` (lookup + reschedule persist).
 
 **Behavior:**
+
 - Reads the alarm snapshot from `alarmIntent` extras (with safe defaults).
 - Loads the corresponding `Alarm` from DB via `getAlarmById` for the reschedule path.
 - Shows a centered column: "Time to wake up!" label + large live-updating `HH:mm` clock (updates the displayed minute every second via a `LaunchedEffect` loop).
@@ -160,33 +168,33 @@ See `docs/05-dismissal-tasks.md` for the full task specifications. From a naviga
 
 `HomeUiState` (`components/menus/viewModels/HomeUiState.kt`):
 
-| Field | Type | Default | Purpose |
-|---|---|---|---|
-| `optionsExpanded` | `Boolean` | `false` | More-options dropdown open? |
-| `alarmEditEnabled` | `Boolean` | `false` | Multi-select edit mode active? |
-| `enableAlarmChanged` | `Boolean` | `false` | Toggle flag (flipped each change) used as a `LaunchedEffect` key. |
-| `alarmMsgChanged` | `Boolean` | `false` | Toggle flag for next-alarm message changes. |
-| `selectedAlarms` | `MutableList<Alarm>` | `[]` | Alarms selected in edit mode. |
-| `enabledAlarms` | `MutableList<Alarm>` | `[]` | Mirror of currently-enabled alarms, used to compute the next-alarm countdown. |
-| `nextAlarmDay/Hour/Minute` | `Int` | `0` | Components of the countdown. |
-| `nextAlarmMsg` | `String` | `"No alarms set"` | Rendered countdown text. |
+| Field                      | Type                 | Default           | Purpose                                                                       |
+| -------------------------- | -------------------- | ----------------- | ----------------------------------------------------------------------------- |
+| `optionsExpanded`          | `Boolean`            | `false`           | More-options dropdown open?                                                   |
+| `alarmEditEnabled`         | `Boolean`            | `false`           | Multi-select edit mode active?                                                |
+| `enableAlarmChanged`       | `Boolean`            | `false`           | Toggle flag (flipped each change) used as a `LaunchedEffect` key.             |
+| `alarmMsgChanged`          | `Boolean`            | `false`           | Toggle flag for next-alarm message changes.                                   |
+| `selectedAlarms`           | `MutableList<Alarm>` | `[]`              | Alarms selected in edit mode.                                                 |
+| `enabledAlarms`            | `MutableList<Alarm>` | `[]`              | Mirror of currently-enabled alarms, used to compute the next-alarm countdown. |
+| `nextAlarmDay/Hour/Minute` | `Int`                | `0`               | Components of the countdown.                                                  |
+| `nextAlarmMsg`             | `String`             | `"No alarms set"` | Rendered countdown text.                                                      |
 
 `HomeViewModel` exposes (`StateFlow<HomeUiState>`):
 
-| Method | Effect |
-|---|---|
-| `resetUiState()` | Clears dropdown/edit/selection, recomputes next-alarm. |
-| `selectOptions()` / `dismissDropdown(editEnabled)` | Open/close options dropdown. |
-| `enableEdit()` | Enter edit mode (delegates to `dismissDropdown(editEnabled=true)`). |
-| `toggleAlarmEnabled(alarm, enable)` | Adds/removes from `enabledAlarms`, flips `enableAlarmChanged`, recomputes next-alarm. |
-| `enableAllAlarms(alarmData): Boolean` | Toggles all alarms on/off; returns resulting "all enabled" state. |
-| `toggleAlarmSelected(alarm)` | Toggles membership in `selectedAlarms`. |
-| `selectAllAlarms(alarmData)` | Selects all or clears selection. |
-| `clearSelectedAlarm()` | Empties selection. |
-| `cancelAlarmsEdit()` | Exits edit mode. |
-| `updateNextAlarm(alarmData)` | Computes the soonest upcoming alarm from all enabled alarms and stores day/hour/minute deltas. |
-| `updateNextAlarmMsg(alarmData)` | Builds the "Next alarm in …" string from the deltas. |
-| `nextAlarmCalendar(current, calendars)` (private) | Picks the calendar entry with the smallest (day, hour, minute) delta from now. |
+| Method                                             | Effect                                                                                         |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `resetUiState()`                                   | Clears dropdown/edit/selection, recomputes next-alarm.                                         |
+| `selectOptions()` / `dismissDropdown(editEnabled)` | Open/close options dropdown.                                                                   |
+| `enableEdit()`                                     | Enter edit mode (delegates to `dismissDropdown(editEnabled=true)`).                            |
+| `toggleAlarmEnabled(alarm, enable)`                | Adds/removes from `enabledAlarms`, flips `enableAlarmChanged`, recomputes next-alarm.          |
+| `enableAllAlarms(alarmData): Boolean`              | Toggles all alarms on/off; returns resulting "all enabled" state.                              |
+| `toggleAlarmSelected(alarm)`                       | Toggles membership in `selectedAlarms`.                                                        |
+| `selectAllAlarms(alarmData)`                       | Selects all or clears selection.                                                               |
+| `clearSelectedAlarm()`                             | Empties selection.                                                                             |
+| `cancelAlarmsEdit()`                               | Exits edit mode.                                                                               |
+| `updateNextAlarm(alarmData)`                       | Computes the soonest upcoming alarm from all enabled alarms and stores day/hour/minute deltas. |
+| `updateNextAlarmMsg(alarmData)`                    | Builds the "Next alarm in …" string from the deltas.                                           |
+| `nextAlarmCalendar(current, calendars)` (private)  | Picks the calendar entry with the smallest (day, hour, minute) delta from now.                 |
 
 **Next-alarm computation** (in `updateNextAlarm` + `nextAlarmCalendar`): for each enabled alarm, for each of its weekdays, builds a `Calendar` at that weekday + hour + minute and computes the (dayDiff, hourDiff, minuteDiff) from now, accounting for wrap-around (a passed time today is treated as next week). The minimum-delta calendar wins. This is purely a display computation — it does **not** affect actual scheduling.
 
@@ -194,32 +202,32 @@ See `docs/05-dismissal-tasks.md` for the full task specifications. From a naviga
 
 `CreateAlarmUiState` (`components/menus/viewModels/CreateAlarmUiState.kt`):
 
-| Field | Type | Default | Purpose |
-|---|---|---|---|
-| `alarmId` | `Int?` | `null` | Id of the alarm being edited; `null` for create. |
-| `weekdaysSelected` | `MutableList<String>` | `[]` | Selected weekdays. |
-| `hourSelected` / `minuteSelected` | `Int` | `8` / `0` | TimePicker seed values. |
-| `taskSelected` | `String` | `"Memory"` | `taskTypes[0]`. |
-| `roundsSelected` | `Int` | `1` | 1–5. |
-| `difficultySelected` | `String` | `"Easy"` | `taskDifficulties[0]`. |
-| `alarmSoundSelected` | `String` | `"Default"` | Display name of chosen audio. |
-| `alarmSoundUri` | `String` | `"Default"` | Content-URI string. |
-| `snoozeEnabled` | `Boolean` | `true` | Snooze toggle. |
-| `taskSelectorExpanded` | `Boolean` | `false` | Task dropdown open? |
+| Field                             | Type                  | Default     | Purpose                                          |
+| --------------------------------- | --------------------- | ----------- | ------------------------------------------------ |
+| `alarmId`                         | `Int?`                | `null`      | Id of the alarm being edited; `null` for create. |
+| `weekdaysSelected`                | `MutableList<String>` | `[]`        | Selected weekdays.                               |
+| `hourSelected` / `minuteSelected` | `Int`                 | `8` / `0`   | TimePicker seed values.                          |
+| `taskSelected`                    | `String`              | `"Memory"`  | `taskTypes[0]`.                                  |
+| `roundsSelected`                  | `Int`                 | `1`         | 1–5.                                             |
+| `difficultySelected`              | `String`              | `"Easy"`    | `taskDifficulties[0]`.                           |
+| `alarmSoundSelected`              | `String`              | `"Default"` | Display name of chosen audio.                    |
+| `alarmSoundUri`                   | `String`              | `"Default"` | Content-URI string.                              |
+| `snoozeEnabled`                   | `Boolean`             | `true`      | Snooze toggle.                                   |
+| `taskSelectorExpanded`            | `Boolean`             | `false`     | Task dropdown open?                              |
 
 `CreateAlarmViewModel` exposes (`StateFlow<CreateAlarmUiState>`):
 
-| Method | Effect |
-|---|---|
-| `resetUiState(alarm)` | If `alarm != null`, seeds all fields from it; else resets to defaults. |
-| `expandTaskSelector(expand)` | Open/close the task dropdown. |
-| `updateWeekdays(weekday)` | Toggle a weekday in `weekdaysSelected`. |
-| `updateHourSelected(hour)` / `updateMinuteSelected(minute)` | Update time fields. |
-| `updateTaskSelected(task)` | Set `taskSelected`. |
-| `updateRoundCount(rounds)` | Set `roundsSelected`. |
-| `updateTaskDifficulty(difficulty)` | Set `difficultySelected`. |
-| `updateSoundSelected(context, uri): String` | Queries `MediaStore` for the display name of `uri`, sets both `alarmSoundSelected` and `alarmSoundUri`, returns the display name. |
-| `updateSnoozeEnabled(enabled)` | Set `snoozeEnabled`. |
+| Method                                                      | Effect                                                                                                                            |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `resetUiState(alarm)`                                       | If `alarm != null`, seeds all fields from it; else resets to defaults.                                                            |
+| `expandTaskSelector(expand)`                                | Open/close the task dropdown.                                                                                                     |
+| `updateWeekdays(weekday)`                                   | Toggle a weekday in `weekdaysSelected`.                                                                                           |
+| `updateHourSelected(hour)` / `updateMinuteSelected(minute)` | Update time fields.                                                                                                               |
+| `updateTaskSelected(task)`                                  | Set `taskSelected`.                                                                                                               |
+| `updateRoundCount(rounds)`                                  | Set `roundsSelected`.                                                                                                             |
+| `updateTaskDifficulty(difficulty)`                          | Set `difficultySelected`.                                                                                                         |
+| `updateSoundSelected(context, uri): String`                 | Queries `MediaStore` for the display name of `uri`, sets both `alarmSoundSelected` and `alarmSoundUri`, returns the display name. |
+| `updateSnoozeEnabled(enabled)`                              | Set `snoozeEnabled`.                                                                                                              |
 
 > **Note:** the Material 3 `TimePicker` keeps its own state (`rememberTimePickerState`); the `hourSelected`/`minuteSelected` UI-state fields are only seeds. On Confirm, the time is read directly from `timePickerState.hour`/`minute`.
 
@@ -227,22 +235,22 @@ See `docs/05-dismissal-tasks.md` for the full task specifications. From a naviga
 
 > The port is **Expo-first** and uses **Expo Router** (file-based routing on top of `react-navigation`), the recommended navigation solution for Expo apps. Screens are files under an `app/` directory; nested `NavHost` graphs map to **route groups** (parenthesised folders) each with a `_layout.tsx` defining its `Stack`.
 
-| Compose concept | Expo Router equivalent |
-|---|---|
-| `NavHost` + nested `navigation(...)` graph roots | Route **groups**: `app/(main)/` and `app/(alarm)/`, each with a `_layout.tsx` (`<Stack>`). The root `app/_layout.tsx` renders the active group. The parenthesised name is not part of the URL. |
-| `composable(route)` | A route file, e.g. `app/(main)/index.tsx` ↔ `Home`, `app/(alarm)/index.tsx` ↔ `AlarmDisplay`. |
-| `navigation("CreateAlarm?alarmId={id}")` with nullable `alarmId` | `router.push('/create-alarm', { alarmId })` for edit, or `router.push('/create-alarm')` for create. `useLocalSearchParams<{ alarmId?: string }>()` reads it. |
-| `navigation("MemoryGame/{rounds}/{difficulty}")` path params | **Dynamic route** file `app/(alarm)/tasks/memory-game/[rounds]/[difficulty].tsx`; read via `useLocalSearchParams<{ rounds: string; difficulty: string }>()`. |
-| `navController.popBackStack()` | `router.back()` (or `router.replace('/(main)')` to clear the alarm stack on dismiss). |
-| `startDestination = if (alarmTriggered) AlarmScreen else MainScreen` | In root `_layout.tsx`, on mount (or on the alarm deep-link event) call `router.replace('/(alarm)')` when triggered, else `router.replace('/(main)')`. |
-| `viewModel()` scoped state | Per-screen hook (Zustand store slice, `useState`/`useReducer`, or a `useScreenViewModel` hook). |
-| `StateFlow<UiState>` + `collectAsState` | Zustand `useStore(selector)` (preferred) / Context + `useMemo`. |
-| `LiveData` + `observeAsState` | Subscription-based store (see data-layer doc). |
-| `LaunchedEffect(Unit) { while(true) { ...; delay(1000) } }` | `useEffect` + `setInterval`, cleaned up on unmount. |
-| `ActivityResultContracts.GetContent("audio/*")` | `expo-document-picker` + `expo-audio`. |
-| `TimePicker` (Material 3) | `@react-native-community/datetimepicker` (mode="time") or a custom wheel picker. |
-| `Switch` / `Slider` / `RadioButton` / `Checkbox` | `react-native` `Switch`, `@react-native-community/slider`, custom radio/checkbox. |
-| `LazyColumn` | `FlashList` (preferred) / `FlatList`. |
+| Compose concept                                                      | Expo Router equivalent                                                                                                                                                                         |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NavHost` + nested `navigation(...)` graph roots                     | Route **groups**: `app/(main)/` and `app/(alarm)/`, each with a `_layout.tsx` (`<Stack>`). The root `app/_layout.tsx` renders the active group. The parenthesised name is not part of the URL. |
+| `composable(route)`                                                  | A route file, e.g. `app/(main)/index.tsx` ↔ `Home`, `app/(alarm)/index.tsx` ↔ `AlarmDisplay`.                                                                                                  |
+| `navigation("CreateAlarm?alarmId={id}")` with nullable `alarmId`     | `router.push('/create-alarm', { alarmId })` for edit, or `router.push('/create-alarm')` for create. `useLocalSearchParams<{ alarmId?: string }>()` reads it.                                   |
+| `navigation("MemoryGame/{rounds}/{difficulty}")` path params         | **Dynamic route** file `app/(alarm)/tasks/memory-game/[rounds]/[difficulty].tsx`; read via `useLocalSearchParams<{ rounds: string; difficulty: string }>()`.                                   |
+| `navController.popBackStack()`                                       | `router.back()` (or `router.replace('/(main)')` to clear the alarm stack on dismiss).                                                                                                          |
+| `startDestination = if (alarmTriggered) AlarmScreen else MainScreen` | In root `_layout.tsx`, on mount (or on the alarm deep-link event) call `router.replace('/(alarm)')` when triggered, else `router.replace('/(main)')`.                                          |
+| `viewModel()` scoped state                                           | Per-screen hook (Zustand store slice, `useState`/`useReducer`, or a `useScreenViewModel` hook).                                                                                                |
+| `StateFlow<UiState>` + `collectAsState`                              | Zustand `useStore(selector)` (preferred) / Context + `useMemo`.                                                                                                                                |
+| `LiveData` + `observeAsState`                                        | Subscription-based store (see data-layer doc).                                                                                                                                                 |
+| `LaunchedEffect(Unit) { while(true) { ...; delay(1000) } }`          | `useEffect` + `setInterval`, cleaned up on unmount.                                                                                                                                            |
+| `ActivityResultContracts.GetContent("audio/*")`                      | `expo-document-picker` + `expo-audio`.                                                                                                                                                         |
+| `TimePicker` (Material 3)                                            | `@react-native-community/datetimepicker` (mode="time") or a custom wheel picker.                                                                                                               |
+| `Switch` / `Slider` / `RadioButton` / `Checkbox`                     | `react-native` `Switch`, `@react-native-community/slider`, custom radio/checkbox.                                                                                                              |
+| `LazyColumn`                                                         | `FlashList` (preferred) / `FlatList`.                                                                                                                                                          |
 
 ### 7.1 Suggested Expo Router File Tree
 
