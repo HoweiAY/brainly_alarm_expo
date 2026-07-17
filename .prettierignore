@@ -1,0 +1,9 @@
+.expo/
+
+build
+coverage
+
+dist/
+node_modules/
+android/
+ios/
