@@ -10,6 +10,10 @@ export default function Home() {
         title="Memory Game (Normal)"
         onPress={() => router.push("/(alarm)/tasks/memory-game/3/Normal")}
       />
+      <Button
+        title="Math Equation (Normal)"
+        onPress={() => router.push("/(alarm)/tasks/math-equation/3/Normal")}
+      />
     </View>
   );
 }

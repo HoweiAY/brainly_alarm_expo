@@ -7,6 +7,10 @@ export default function AlarmLayout() {
         name="tasks/memory-game/[rounds]/[difficulty]"
         options={{ title: "Memory" }}
       />
+      <Stack.Screen
+        name="tasks/math-equation/[rounds]/[difficulty]"
+        options={{ title: "Math" }}
+      />
     </Stack>
   );
 }
