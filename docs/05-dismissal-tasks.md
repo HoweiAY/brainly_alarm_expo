@@ -129,7 +129,7 @@ ExpressionBuilder(expression).build().evaluate().toInt()
 
 On any exception → returns `0`. Integer division is implicit in the cast.
 
-> **RN port note:** Replace exp4j with a small JS `Function` evaluator (after sanitizing to `[\d+\-*\s]` only) or a hand-written tokenizer. Do **not** `eval` unsanitized input. Since generation is fully controlled, a sanitized `Function("return " + expr)` is acceptable; the original relies on the same trust boundary.
+> **RN port note:** Replace exp4j with JS libraries such as **Math.js** or **JavaScript Expression Evaluator (expr-eval)** (after sanitizing to `[\d+\-*\s]` only) or a hand-written tokenizer. Do **not** `eval` unsanitized input. Since generation is fully controlled, a sanitized `Function("return " + expr)` is acceptable; the original relies on the same trust boundary.
 
 ### 2.3 State
 
