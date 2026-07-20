@@ -11,6 +11,7 @@ export default function AlarmLayout() {
         name="tasks/math-equation/[rounds]/[difficulty]"
         options={{ title: "Math" }}
       />
+      <Stack.Screen name="tasks/phone-shaking" options={{ title: "Shake" }} />
     </Stack>
   );
 }

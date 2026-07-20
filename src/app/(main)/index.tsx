@@ -14,6 +14,10 @@ export default function Home() {
         title="Math Equation (Normal)"
         onPress={() => router.push("/(alarm)/tasks/math-equation/3/Normal")}
       />
+      <Button
+        title="Phone Shaking"
+        onPress={() => router.push("/(alarm)/tasks/phone-shaking")}
+      />
     </View>
   );
 }
