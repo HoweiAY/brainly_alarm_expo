@@ -10,7 +10,7 @@ This document is the actionable plan for re-implementing Brainly Alarm in React 
 | Navigation       | **`expo-router`** (file-based routing, the default Expo navigation solution)                                    | Replaces the nested `MainStack`/`AlarmStack` Compose graph with route groups `(main)`/`(alarm)` and per-group `_layout.tsx` (see doc 04 §7.1). Built on `react-navigation` but config-driven, so no imperative navigator setup. |
 | State management | **Zustand** (+ `immer`)                                                                                         | Lightweight, mirrors the per-screen `ViewModel` + `StateFlow` pattern. One store per screen, one shared alarm store.                                                                                                            |
 | Local DB         | **`expo-sqlite`** (SQL) or **WatermelonDB** (reactive ORM)                                                      | WatermelonDB gives the reactive `observeAllAlarms()` the current `LiveData` provides; `expo-sqlite` is lighter. Pick WatermelonDB if you want the reactivity for free.                                                          |
-| Alarm scheduling | **Custom native module** (`expo-modules-core`) wrapping Android `AlarmManager` + iOS `UNUserNotificationCenter` | No Expo library gives exact, wake-up, recurring alarms with Alarmy-level guarantees. See §2.                                                                                                                                    |
+| Alarm scheduling | **Custom native module** (`expo-modules-core`) for exact, wake-up, recurring alarms | No Expo library gives exact, wake-up, recurring alarms with Alarmy-level guarantees. See §2.                                                                                                                                    |
 | Sound playback   | **`expo-audio`** (newer) or `expo-av`                                                                           | Looping playback; route to alarm audio category.                                                                                                                                                                                |
 | Audio picking    | **`expo-document-picker`** + `expo-file-system` copy to sandbox                                                 | Avoids storage permissions; guarantees long-term playback (fixes the persisted-URI bug in doc 06 §2.3).                                                                                                                         |
 | Sensors          | **`expo-sensors` (`Accelerometer`)**                                                                            | Drop-in for the shake task.                                                                                                                                                                                                     |
@@ -53,18 +53,18 @@ interface AlarmScheduler {
 }
 ```
 
-- **Android:** wraps `AlarmManager.setExactAndAllowWhileIdle(RTC_WAKEUP, ...)`, one `PendingIntent` per (alarmId, weekday) using the same `"${alarmId}${weekday}".hashCode()` request-code scheme as the Kotlin app (doc 03 §2). On fire, send a broadcast that (a) starts a foreground service to loop the alarm sound and (b) posts the high-priority `CATEGORY_ALARM` notification that opens the app on `AlarmDisplay`.
+- **Android:** wraps `AlarmManager.setExactAndAllowWhileIdle(RTC_WAKEUP, ...)`, one scheduled request per (alarmId, weekday) using the same `"${alarmId}${weekday}".hashCode()` scheduling-identifier scheme as the Kotlin app (doc 03 §2). On fire, send a broadcast that (a) starts a background playback task to loop the alarm sound and (b) posts a high-priority alarm notification that opens the app on `AlarmDisplay`.
 - **iOS:** no exact alarms. Use `UNCalendarNotificationTrigger` with `repeats: true` per weekday, accept the ~64-scheduled-notification limit, and a degraded UX (notification sound only; user opens app to perform the dismissal task). Document this limitation clearly.
-- **Boot persistence:** on `BOOT_COMPLETED` (Android), re-register every enabled alarm from the SQLite store. The original Kotlin app (https://github.com/HoweiAY/brainly-alarm) does **not** do this — the RN port should fix it.
+- **Boot persistence:** on device reboot (Android), re-register every enabled alarm from the SQLite store. The original Kotlin app (https://github.com/HoweiAY/brainly-alarm) does **not** do this — the RN port should fix it.
 
 ### 2.2 `AlarmSoundModule` (or fold into `AlarmSchedulerModule`)
 
 - Loop an alarm sound (asset or local file URI) on the alarm audio stream, overriding silent/DND where the platform allows.
 - Singleton lifecycle (load on play, release on stop) matching `AlarmSoundManager`.
 
-### 2.3 Foreground Service (Android)
+### 2.3 Background Playback (Android)
 
-While an alarm is ringing, run a foreground service so the sound keeps playing even if the user backgrounds the app, and so the system does not kill the process mid-task.
+While an alarm is ringing, run a background playback task so the sound keeps playing even if the user backgrounds the app, and so the system does not kill the process mid-task.
 
 ## 3. Recommended Project Structure
 
@@ -98,8 +98,7 @@ src/
 ├─ data/
 │  ├─ types.ts                     # Alarm, AlarmSnapshot, enums (weekdays, taskTypes, difficulties)
 │  ├─ db.ts                        # expo-sqlite / WatermelonDB setup + migrations
-│  ├─ alarmRepository.ts           # CRUD; mirrors AlarmRepository + DAO
-│  └─ constants.ts                # weekdays, taskTypes, taskDifficulties
+│  └─ constants.ts                 # weekdays, taskTypes, taskDifficulties
 ├─ alarms/
 │  ├─ AlarmScheduler.ts            # wraps the native module
 │  ├─ scheduling.ts               # setAlarm/cancelAlarm/resetAlarm/snooze logic
@@ -170,7 +169,7 @@ export interface AlarmSnapshot {
 - `npx create-expo-app@latest --template tabs` (TypeScript) or `npx create-expo-app` then `npx expo install expo-router` (dev-client build).
 - Set up the **Expo Router** skeleton: `app/_layout.tsx`, `app/(main)/`, `app/(alarm)/` groups with empty route files matching doc 04 §7.1. Configure the `(alarm)` group as `fullScreenModal`.
 - Set up Zustand stores (empty) and `expo-sqlite`/WatermelonDB schema for the `alarms` table.
-- Implement `alarmRepository` CRUD against the DB.
+- Implement `alarmStore` CRUD backed by the DB (the store is the single source of truth; screens subscribe via selectors).
 
 ### Phase 1 — Static UI parity (1–2 weeks)
 
@@ -183,7 +182,7 @@ export interface AlarmSnapshot {
 
 - Build the `AlarmScheduler` native module (Android first).
 - Wire `setAlarm`/`cancelAlarm`/`resetAlarm`/`snooze` in `src/alarms/scheduling.ts`.
-- Implement the foreground service + `AlarmSoundManager` equivalent.
+- Implement the background playback task + `AlarmSoundManager` equivalent.
 - End-to-end Android alarm fire → `AlarmDisplay` → task → dismiss → weekly reschedule.
 - Add boot re-arming.
 
@@ -210,13 +209,13 @@ export interface AlarmSnapshot {
 
 | Risk                                                                                                                                | Mitigation                                                                                                                                                                                                                                                                       |
 | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **iOS cannot do exact wake-up alarms.** The whole product premise is "alarm you can't ignore."                                      | Design the iOS experience around `UNCalendarNotificationTrigger` + a critical-alert sound + a foreground dismissal task. Accept that iOS alarms are notification-triggered, not alarm-manager-driven. Decide whether to ship iOS with this limitation or Android-only initially. |
+| **iOS cannot do exact wake-up alarms.** The whole product premise is "alarm you can't ignore."                                      | Design the iOS experience around `UNCalendarNotificationTrigger` + a critical-alert sound + a foreground dismissal task. Accept that iOS alarms are notification-triggered, not exact-alarm-driven. Decide whether to ship iOS with this limitation or Android-only initially. |
 | **Custom native module is unavoidable.**                                                                                            | Budget the Phase-2 time generously; treat the alarm scheduler as the project's single most complex component.                                                                                                                                                                    |
 | **exp4j → JS evaluator safety.**                                                                                                    | Use a strict regex allow-list (`/^[\d+\-*\s]+$/`) before evaluating; never `eval` arbitrary input.                                                                                                                                                                               |
 | **`TypeConverter` CSV asymmetry** (`"".split(",") === [""]`).                                                                       | Store `days` as JSON in the port; never as CSV.                                                                                                                                                                                                                                  |
 | **Stale-alarm backlog.** The original Kotlin receiver guards with `today == day && hour == currentHour && minute == currentMinute`. | Replicate the same guard in the native module's on-fire handler; drop missed alarms rather than firing them all at once on wake.                                                                                                                                                 |
 | **Content-URI persistence bug** (doc 06 §2.3).                                                                                      | Copy picked audio to the app sandbox at pick time; store the local `file://` URI in the DB.                                                                                                                                                                                      |
-| **Missing boot re-arming.**                                                                                                         | Persist enabled alarms in SQLite; on `BOOT_COMPLETED` re-register all of them.                                                                                                                                                                                                   |
+| **Missing boot re-arming.**                                                                                                         | Persist enabled alarms in SQLite; on device reboot re-register all of them.                                                                                                                                                                                                   |
 | **Alarm sound over silent/DND.**                                                                                                    | Use the alarm audio category on both platforms; test on real devices with DND on.                                                                                                                                                                                                |
 | **Shake sensor units differ** (`expo-sensors` vs Android `SensorManager`).                                                          | Recalibrate the 11 m/s² threshold on real devices; document the chosen `expo-sensors` threshold.                                                                                                                                                                                 |
 | **`HomeViewModel.updateNextAlarm` is complex day/hour/minute arithmetic.**                                                          | Port it as pure functions in `src/utils/time.ts` and unit-test the wrap-around cases before wiring to the UI.                                                                                                                                                                    |

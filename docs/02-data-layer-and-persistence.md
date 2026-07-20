@@ -99,13 +99,16 @@ type Alarm = {
   enabled: boolean;
 };
 
-interface AlarmRepository {
+// Zustand store acting as the single source of truth + reactive layer.
+interface AlarmStore {
+  alarms: Alarm[];
+  foundAlarm: Alarm | null;
   insertAlarm(alarm: Omit<Alarm, "id">): Promise<number>;
   updateAlarm(alarm: Alarm): Promise<void>;
   deleteAlarm(alarm: Alarm): Promise<void>;
-  getAllAlarms(): Promise<Alarm[]>;
-  getAlarmById(id: number): Promise<Alarm | null>;
-  observeAllAlarms(callback: (alarms: Alarm[]) => void): () => void; // unsub
+  getAllAlarms(): Alarm[]; // synchronous snapshot of state
+  getAlarmById(id: number): Promise<void>; // resolves into `foundAlarm`
+  // React components subscribe via Zustand selectors (or a React context).
 }
 ```
 
@@ -119,7 +122,7 @@ A thin coroutine wrapper over the DAO. It owns a `CoroutineScope(Dispatchers.Mai
 - `getAlarmById(id)` → `async(IO).await()`, returns `Alarm?`.
 - `allAlarms: LiveData<List<Alarm>>` exposed directly from the DAO for reactive observation.
 
-> **RN port note:** No equivalent of `LiveData` exists; use a reactive store (Zustand selector, WatermelonDB `withObservables`, or an RxJS/EventEmitter observable) so the Home list re-renders on any change.
+> **RN port note:** No equivalent of `LiveData` exists; use a reactive store (Zustand selectors, a React context provider, WatermelonDB `withObservables`, or an RxJS/EventEmitter observable) so the Home list re-renders on any change. The repository/DAO split from the Kotlin app collapses into a single Zustand store in the RN port.
 
 ## 6. App-wide Database ViewModel — `AlarmDatabaseViewModel`
 
@@ -158,8 +161,8 @@ Because `foundAlarm` is a single shared `MutableLiveData`, the caller must verif
 
 ## 8. Migration Notes for RN/Expo
 
-1. Use `expo-sqlite` (with a typed repository) or WatermelonDB. Either way, define a proper migration runner instead of destructive fallback.
+1. Use `expo-sqlite` or WatermelonDB for the persistence layer. Either way, define a proper migration runner instead of destructive fallback.
 2. Store `days` as JSON, not CSV, to avoid comma-in-token edge cases and to simplify queries.
 3. Replace `LiveData` reactivity with a store subscription model and expose an `observeAllAlarms` API.
-4. Centralize all CRUD in a single repository module so UI components never touch SQL directly — mirroring the existing `AlarmRepository` boundary.
+4. Centralize all CRUD in a shared Zustand store (e.g. `alarmStore`) so UI components never touch SQL or storage directly. This mirrors the `AlarmRepository` boundary from the Kotlin app while following React idioms — the store acts as the single source of truth and exposes subscription-based reactivity, replacing the native-Android repository pattern with a React-context/store equivalent.
 5. Generate the auto-increment `id` from the database (SQLite `INTEGER PRIMARY KEY AUTOINCREMENT`) so it matches the current behavior used by `AlarmManager` request codes.

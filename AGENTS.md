@@ -11,7 +11,7 @@ Read the exact versioned Expo docs at https://docs.expo.dev/versions/v57.0.0/ be
 Authoritative specifications live in `docs/`:
 
 - `01-project-overview.md` — product, features, original Kotlin structure, Expo stack mapping.
-- `02-data-layer-and-persistence.md` — `Alarm` entity, DAO/repository API, TypeScript sketch, migration notes.
+- `02-data-layer-and-persistence.md` — `Alarm` entity, DAO/store API, TypeScript sketch, migration notes.
 - `03-alarm-scheduling-system.md` — `AlarmManager` scheduling, firing, cancel/snooze, weekly reschedule, native-module API.
 - `04-navigation-and-ui-architecture.md` — NavHost graph, route catalog, per-screen specs, ViewModel/UiState contracts, Expo Router file tree.
 - `05-dismissal-tasks.md` — Memory/Math/Shake/None state machines, difficulty tables, edge cases.
@@ -25,9 +25,9 @@ Always read the relevant `docs/` section before implementing a subsystem; the do
 - **Framework:** Expo managed workflow + dev-client (custom native module required).
 - **Navigation:** `expo-router` (file-based). Route groups `app/(main)/` and `app/(alarm)/`, each with `_layout.tsx`.
 - **State:** Zustand (+ immer). One shared `alarmStore`, plus per-screen `homeStore` / `createAlarmStore` mirroring the Kotlin `ViewModel`/`StateFlow` contracts.
-- **Persistence:** `expo-sqlite` (typed repository) or WatermelonDB (reactive). Store `days` as **JSON**, never CSV.
-- **Alarm scheduling:** custom Expo native module wrapping Android `AlarmManager` + iOS `UNCalendarNotificationTrigger` (iOS has no exact alarms — degraded UX is expected and must be documented). Complement with `expo-notifications` + `expo-task-manager`.
-- **Sound:** `expo-audio` (or `expo-av`) looping on the alarm audio category; override silent/DND where the platform allows. Foreground service on Android while ringing.
+- **Persistence:** `expo-sqlite` (typed persistence layer) or WatermelonDB (reactive). Store `days` as **JSON**, never CSV.
+- **Alarm scheduling:** custom Expo native module for exact, wake-up, recurring alarms (iOS has no exact alarms — degraded UX is expected and must be documented). Complement with `expo-notifications` + `expo-task-manager`.
+- **Sound:** `expo-audio` (or `expo-av`) looping on the alarm audio category; override silent/DND where the platform allows. Keep playback alive in the background while ringing.
 - **Audio picking:** `expo-document-picker` + `expo-file-system` copy to sandbox (fixes the persisted-URI bug from doc 06 §2.3).
 - **Sensors:** `expo-sensors` `Accelerometer` for the shake task (recalibrate the 11 m/s² threshold).
 - **Date/time:** `date-fns` + native `Date`.
@@ -41,13 +41,13 @@ Always read the relevant `docs/` section before implementing a subsystem; the do
 
 1. **Read the docs first.** Before touching a subsystem, read the matching `docs/0X-*.md` section and `docs/07` (migration guide). Note that the original Kotlin source is **not** vendored in this repo; it lives at **https://github.com/HoweiAY/brainly-alarm** (under `app/src/main/java/com/example/alarmapp/`) and is reference-only. Cross-check against that upstream repository when needed.
 2. **Follow the planned structure.** Use the Expo Router file tree in `docs/04` §7.1 and the `src/` layout in `docs/07` §3. Non-route code goes in `src/`, not `app/`.
-3. **Mirror the contracts, not the code.** Reproduce the data/repository API, UiState fields, scheduling invariants, and dismissal-task state machines exactly. Port ViewModel/StateFlow to Zustand stores; port `LiveData` to subscription-based reactivity.
-4. **Centralize CRUD.** All database access goes through `src/data/alarmRepository.ts`; UI never touches SQL directly.
-5. **Native module is required for scheduling.** No Expo library gives exact wake-up recurring alarms. Build `AlarmSchedulerModule` per `docs/03` §10.1 and `docs/07` §2.1; reuse the `"${alarmId}${weekday}".hashCode()` request-code scheme. Replicate the stale-alarm guard (`today == day && hour == currentHour && minute == currentMinute || isSnoozed`).
+3. **Mirror the contracts, not the code.** Reproduce the data API, UiState fields, scheduling invariants, and dismissal-task state machines exactly. Port ViewModel/StateFlow to Zustand stores; port `LiveData` to subscription-based reactivity.
+4. **Centralize CRUD.** All data access goes through a shared Zustand `alarmStore` (optionally backed by a persistence layer); UI components never touch SQL or storage directly.
+5. **Native module is required for scheduling.** No Expo library gives exact wake-up recurring alarms. Build `AlarmSchedulerModule` per `docs/03` §10.1 and `docs/07` §2.1; reuse the `"${alarmId}${weekday}".hashCode()` scheduling-identifier scheme. Replicate the stale-alarm guard (`today == day && hour == currentHour && minute == currentMinute || isSnoozed`).
 6. **Fix known bugs in the port:**
    - Store `days` as JSON (not CSV) — `docs/06` §4.
    - Copy picked audio to the sandbox; store `file://` URI — `docs/06` §2.3.
-   - Implement boot re-arming (persist enabled alarms; re-register on `BOOT_COMPLETED`) — `docs/03` §9.
+   - Implement boot re-arming (persist enabled alarms; re-register on device reboot) — `docs/03` §9.
    - Design a real SQLite migration runner; do not use destructive fallback — `docs/02` §8.
    - Fix the shake-task off-by-one (decrement-then-check) or document it — `docs/05` §3.3.
 7. **Dismissal tasks are pure and testable.** Put game-loop/equation/shake logic in `src/tasks/` as pure functions; screens just render state. Keep difficulty→grid-size/operand-count tables identical to `docs/05`.
