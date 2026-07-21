@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "expo-router";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { AlarmCard } from "@/components/AlarmCard";
 import { mockAlarms } from "@/data/mockAlarms";
 import type { Alarm } from "@/data/types";
 import { computeNextAlarm, formatCountdown } from "@/utils/time";
+import { Lucide } from "@react-native-vector-icons/lucide";
+import { useRouter } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const TICK_MS = 60_000;
 
@@ -98,7 +99,7 @@ export default function Home() {
             accessibilityLabel="Add alarm"
             onPress={() => router.push("/create-alarm")}
           >
-            <Text style={styles.iconText}>+</Text>
+            <Lucide name="plus" size={16} color="#208AEF" />
           </Pressable>
           <Pressable
             style={styles.iconButton}
@@ -106,7 +107,7 @@ export default function Home() {
             accessibilityLabel="More options"
             onPress={() => setOptionsExpanded((v) => !v)}
           >
-            <Text style={styles.iconText}>{"\u22EE"}</Text>
+            <Lucide name="ellipsis-vertical" size={16} color="#208AEF" />
           </Pressable>
         </View>
       </View>
@@ -222,11 +223,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#eef2f7",
-  },
-  iconText: {
-    fontSize: 22,
-    color: "#208AEF",
-    fontWeight: "bold",
   },
   backdrop: {
     position: "absolute",
