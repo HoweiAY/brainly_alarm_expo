@@ -92,23 +92,54 @@ export default function Home() {
       <View style={styles.header}>
         <Text style={styles.greeting}>Welcome to Brainly Alarm!</Text>
         <Text style={styles.countdown}>{countdown}</Text>
-        <View style={styles.actionsRow}>
-          <Pressable
-            style={styles.iconButton}
-            accessibilityRole="button"
-            accessibilityLabel="Add alarm"
-            onPress={() => router.push("/create-alarm")}
-          >
-            <Lucide name="plus" size={16} color="#208AEF" />
-          </Pressable>
-          <Pressable
-            style={styles.iconButton}
-            accessibilityRole="button"
-            accessibilityLabel="More options"
-            onPress={() => setOptionsExpanded((v) => !v)}
-          >
-            <Lucide name="ellipsis-vertical" size={16} color="#208AEF" />
-          </Pressable>
+        <View
+          style={[styles.actionsRow, editEnabled && styles.actionsRowEditing]}
+        >
+          {editEnabled ? (
+            <>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Cancel edit"
+                onPress={cancelEdit}
+              >
+                <Text style={styles.actionRowText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={
+                  selectedIds.size === alarms.length && alarms.length > 0
+                    ? "Unselect all"
+                    : "Select all"
+                }
+                onPress={selectAll}
+              >
+                <Text style={styles.actionRowText}>
+                  {selectedIds.size === alarms.length && alarms.length > 0
+                    ? "Unselect all"
+                    : "Select all"}
+                </Text>
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <Pressable
+                style={styles.iconButton}
+                accessibilityRole="button"
+                accessibilityLabel="Add alarm"
+                onPress={() => router.push("/create-alarm")}
+              >
+                <Lucide name="plus" size={16} color="#208AEF" />
+              </Pressable>
+              <Pressable
+                style={styles.iconButton}
+                accessibilityRole="button"
+                accessibilityLabel="More options"
+                onPress={() => setOptionsExpanded((v) => !v)}
+              >
+                <Lucide name="ellipsis-vertical" size={16} color="#208AEF" />
+              </Pressable>
+            </>
+          )}
         </View>
       </View>
 
@@ -132,20 +163,6 @@ export default function Home() {
       {editEnabled ? (
         <View style={styles.bottomBar}>
           <Pressable
-            style={styles.bottomBarButton}
-            accessibilityRole="button"
-            onPress={cancelEdit}
-          >
-            <Text style={styles.bottomBarText}>Cancel</Text>
-          </Pressable>
-          <Pressable
-            style={styles.bottomBarButton}
-            accessibilityRole="button"
-            onPress={selectAll}
-          >
-            <Text style={styles.bottomBarText}>Select all</Text>
-          </Pressable>
-          <Pressable
             style={[
               styles.bottomBarButton,
               selectedIds.size === 0 && styles.bottomBarButtonDisabled,
@@ -154,7 +171,8 @@ export default function Home() {
             disabled={selectedIds.size === 0}
             onPress={deleteSelected}
           >
-            <Text style={styles.bottomBarText}>{"\uD83D\uDDD1"}</Text>
+            <Lucide name="trash" size={20} />
+            <Text style={styles.bottomBarText}>Delete</Text>
           </Pressable>
         </View>
       ) : null}
@@ -216,6 +234,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
+  actionsRowEditing: {
+    justifyContent: "space-between",
+  },
+  actionRowText: {
+    color: "#208AEF",
+    fontWeight: "600",
+  },
   iconButton: {
     width: 40,
     height: 40,
@@ -265,7 +290,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
-    paddingVertical: 12,
+    paddingVertical: 8,
     paddingHorizontal: 16,
     backgroundColor: "#ffffff",
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -274,13 +299,16 @@ const styles = StyleSheet.create({
   bottomBarButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 4,
   },
   bottomBarButtonDisabled: {
     opacity: 0.4,
   },
   bottomBarText: {
-    fontSize: 16,
-    color: "#208AEF",
+    fontSize: 12,
     fontWeight: "600",
   },
 });

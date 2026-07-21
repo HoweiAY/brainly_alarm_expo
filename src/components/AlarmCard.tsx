@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { Lucide } from "@react-native-vector-icons/lucide";
 import type { Alarm } from "@/data/types";
 import { formatTime, getDaysString } from "@/utils/time";
 
@@ -31,7 +32,7 @@ export function AlarmCard({
       </View>
       {editEnabled ? (
         <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
-          {selected ? <Text style={styles.checkmark}>{"\u2713"}</Text> : null}
+          {selected ? <Lucide name="check" color="#ffffff" size={16} /> : null}
         </View>
       ) : (
         <Switch
@@ -64,7 +65,6 @@ const styles = StyleSheet.create({
   },
   time: {
     fontSize: 30,
-    fontWeight: "bold",
     color: "#1a1a1a",
   },
   days: {
