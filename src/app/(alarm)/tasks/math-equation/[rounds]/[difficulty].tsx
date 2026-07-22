@@ -1,8 +1,10 @@
 import { PROTOTYPE_ROUNDS } from "@/tasks/mathEquation";
 import { useMathEquation } from "@/tasks/useMathEquation";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { colors, radii, spacing, typography } from "@/theme";
 
 export default function MathEquationScreen() {
   const router = useRouter();
@@ -12,6 +14,7 @@ export default function MathEquationScreen() {
   }>();
   void rounds;
   void difficulty;
+  const [focused, setFocused] = useState(false);
 
   const { equation, input, isCorrect, currentRound, setInput, submit } =
     useMathEquation({
@@ -24,6 +27,9 @@ export default function MathEquationScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Math</Text>
+      </View>
       <View style={styles.column}>
         <Text style={styles.round}>
           {currentRound}/{PROTOTYPE_ROUNDS}
@@ -33,18 +39,29 @@ export default function MathEquationScreen() {
         </Text>
         <Text style={styles.expression}>{equation}</Text>
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            focused && styles.inputFocused,
+            isCorrect === false && styles.inputIncorrect,
+          ]}
           value={input}
           onChangeText={setInput}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           editable={isCorrect === null}
           keyboardType="numeric"
           numberOfLines={1}
           placeholder="Answer"
+          placeholderTextColor={colors.textSubtle}
+          selectionColor={colors.primary}
           accessibilityLabel="Answer"
         />
         {isCorrect === null ? (
           <Pressable
-            style={styles.submit}
+            style={({ pressed }) => [
+              styles.submit,
+              pressed && styles.submitPressed,
+            ]}
             onPress={submit}
             accessibilityRole="button"
           >
@@ -54,7 +71,7 @@ export default function MathEquationScreen() {
           <Text
             style={[
               styles.result,
-              { color: isCorrect ? "#4CAF50" : "#F44336" },
+              { color: isCorrect ? colors.success : colors.danger },
             ]}
           >
             {isCorrect ? "✓" : "✗"}
@@ -68,51 +85,77 @@ export default function MathEquationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  headerText: {
+    ...typography.caption,
+    color: colors.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
   column: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 16,
+    gap: spacing.lg,
+    paddingHorizontal: spacing.xl,
   },
   round: {
-    fontSize: 16,
-    color: "#555",
+    ...typography.caption,
+    color: colors.textMuted,
   },
   instruction: {
-    fontSize: 18,
+    ...typography.body,
+    color: colors.textMuted,
     textAlign: "center",
   },
   expression: {
-    fontSize: 32,
-    fontWeight: "bold",
+    ...typography.h1,
+    color: colors.primary,
     textAlign: "center",
   },
   input: {
     width: "80%",
     borderWidth: 1,
-    borderColor: "#999",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderColor: colors.border,
+    borderRadius: radii.full,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     fontSize: 18,
+    color: colors.text,
     textAlign: "center",
+    backgroundColor: colors.surface,
+  },
+  inputFocused: {
+    borderColor: colors.primary,
+  },
+  inputIncorrect: {
+    borderColor: colors.danger,
   },
   submit: {
-    width: "40%",
-    backgroundColor: "#6200EE",
-    borderRadius: 8,
-    paddingVertical: 10,
+    marginTop: spacing.md,
+    width: "60%",
+    backgroundColor: colors.primary,
+    borderRadius: radii.lg,
+    paddingVertical: spacing.md,
     alignItems: "center",
   },
+  submitPressed: {
+    backgroundColor: colors.primaryPressed,
+  },
   submitText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "600",
+    ...typography.bodyEmphasis,
+    color: colors.primaryFg,
   },
   result: {
-    fontSize: 32,
-    fontWeight: "bold",
-    paddingVertical: 10,
+    fontSize: 36,
+    fontWeight: "700",
+    paddingVertical: spacing.md,
   },
 });

@@ -1,14 +1,15 @@
 import { PROTOTYPE_ROUNDS, type TileState } from "@/tasks/memoryGame";
 import { useMemoryGame } from "@/tasks/useMemoryGame";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Button, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { colors, radii, spacing, typography } from "@/theme";
 
 const TILE_COLORS: Record<TileState, string> = {
-  DEFAULT: "#BDBDBD",
-  SHOWING: "#FFEB3B",
-  CORRECT: "#4CAF50",
-  INCORRECT: "#F44336",
+  DEFAULT: colors.surface,
+  SHOWING: colors.primary,
+  CORRECT: colors.success,
+  INCORRECT: colors.danger,
 };
 
 export default function MemoryGameScreen() {
@@ -40,6 +41,9 @@ export default function MemoryGameScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Memory</Text>
+      </View>
       <View style={styles.column}>
         {gameStarted ? (
           <Text style={styles.round}>
@@ -71,7 +75,16 @@ export default function MemoryGameScreen() {
           ))}
         </View>
         {!gameStarted ? (
-          <Button title="Start" onPress={() => void start()} />
+          <Pressable
+            style={({ pressed }) => [
+              styles.start,
+              pressed && styles.startPressed,
+            ]}
+            accessibilityRole="button"
+            onPress={() => void start()}
+          >
+            <Text style={styles.startText}>Start</Text>
+          </Pressable>
         ) : null}
       </View>
     </SafeAreaView>
@@ -81,35 +94,64 @@ export default function MemoryGameScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
+  },
+  header: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  headerText: {
+    ...typography.caption,
+    color: colors.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
   column: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 16,
+    gap: spacing.lg,
+    paddingHorizontal: spacing.xl,
   },
   round: {
-    fontSize: 16,
-    color: "#555",
+    ...typography.caption,
+    color: colors.textMuted,
   },
   title: {
-    fontSize: 20,
-    fontWeight: "600",
+    ...typography.h2,
+    color: colors.text,
     textAlign: "center",
   },
   grid: {
     flexDirection: "column",
     alignItems: "center",
+    gap: spacing.sm,
   },
   row: {
     flexDirection: "row",
+    gap: spacing.sm,
   },
   tile: {
-    width: 64,
-    height: 64,
-    margin: 4,
-    borderRadius: 8,
+    width: 72,
+    height: 72,
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: "#000",
+    borderColor: colors.border,
+  },
+  start: {
+    marginTop: spacing.xl,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xxxl,
+    backgroundColor: colors.primary,
+    borderRadius: radii.lg,
+  },
+  startPressed: {
+    backgroundColor: colors.primaryPressed,
+  },
+  startText: {
+    ...typography.bodyEmphasis,
+    color: colors.primaryFg,
   },
 });

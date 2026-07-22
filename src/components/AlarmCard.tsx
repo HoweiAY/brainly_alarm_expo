@@ -1,6 +1,14 @@
-import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import { Lucide } from "@react-native-vector-icons/lucide";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from "react-native";
 import type { Alarm } from "@/data/types";
+import { colors, radii, spacing, typography } from "@/theme";
 import { formatTime, getDaysString } from "@/utils/time";
 
 interface AlarmCardProps {
@@ -32,12 +40,23 @@ export function AlarmCard({
       </View>
       {editEnabled ? (
         <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
-          {selected ? <Lucide name="check" color="#ffffff" size={16} /> : null}
+          {selected ? (
+            <Lucide name="check" color={colors.primaryFg} size={16} />
+          ) : null}
         </View>
       ) : (
         <Switch
           value={alarm.enabled}
           onValueChange={() => onToggleEnabled(alarm)}
+          trackColor={{ false: colors.surface, true: colors.primary }}
+          thumbColor={
+            Platform.OS === "android"
+              ? alarm.enabled
+                ? colors.primaryFg
+                : colors.textMuted
+              : undefined
+          }
+          ios_backgroundColor={colors.border}
         />
       )}
     </Pressable>
@@ -49,44 +68,38 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#e0e0e0",
+    borderColor: colors.border,
   },
   cardPressed: {
-    backgroundColor: "#f2f2f2",
+    backgroundColor: colors.surfaceElevated,
   },
   left: {
     flexDirection: "column",
-    gap: 4,
+    gap: spacing.xs,
   },
   time: {
-    fontSize: 30,
-    color: "#1a1a1a",
+    ...typography.numeric,
+    color: colors.text,
   },
   days: {
-    fontSize: 12,
-    color: "#666666",
+    ...typography.caption,
+    color: colors.textMuted,
   },
   checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
+    width: 22,
+    height: 22,
+    borderRadius: radii.md,
     borderWidth: 2,
-    borderColor: "#208AEF",
+    borderColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
   checkboxSelected: {
-    backgroundColor: "#208AEF",
-  },
-  checkmark: {
-    color: "#ffffff",
-    fontWeight: "bold",
-    fontSize: 16,
-    lineHeight: 18,
+    backgroundColor: colors.primary,
   },
 });
