@@ -1,28 +1,31 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { CreateAlarmForm } from "@/components/CreateAlarmForm";
+import { useAlarmById } from "@/hooks/useAlarmById";
+import { useCreateAlarmForm } from "@/hooks/useCreateAlarmForm";
+import type { Alarm } from "@/data/types";
+import { colors, typography } from "@/theme";
+import { useLocalSearchParams } from "expo-router";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, radii, spacing, typography } from "@/theme";
+
+function EditAlarm({ alarm }: { alarm: Alarm }) {
+  const form = useCreateAlarmForm(alarm);
+  return <CreateAlarmForm title="Edit alarm" form={form} />;
+}
 
 export default function EditAlarmScreen() {
-  const router = useRouter();
   const { alarmId } = useLocalSearchParams<{ alarmId: string }>();
+  const { alarm, loading } = useAlarmById(alarmId);
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.column}>
-        <Text style={styles.title}>Edit alarm</Text>
-        <Text style={styles.subtitle}>Not implemented yet</Text>
-        <Text style={styles.id}>{`Alarm ID: ${alarmId ?? ""}`}</Text>
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            pressed && styles.buttonPressed,
-          ]}
-          accessibilityRole="button"
-          onPress={() => router.back()}
-        >
-          <Text style={styles.buttonText}>Back</Text>
-        </Pressable>
-      </View>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      {loading || !alarm ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator color={colors.primary} />
+          <Text style={styles.loadingText}>Loading alarm…</Text>
+        </View>
+      ) : (
+        <EditAlarm key={alarm.id} alarm={alarm} />
+      )}
     </SafeAreaView>
   );
 }
@@ -32,38 +35,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  column: {
+  loadingContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: spacing.md,
-    paddingHorizontal: spacing.xl,
+    gap: 12,
   },
-  title: {
-    ...typography.h2,
-    color: colors.text,
-  },
-  subtitle: {
+  loadingText: {
     ...typography.body,
     color: colors.textMuted,
-    textAlign: "center",
-  },
-  id: {
-    ...typography.caption,
-    color: colors.textSubtle,
-  },
-  button: {
-    marginTop: spacing.lg,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xxxl,
-    backgroundColor: colors.primary,
-    borderRadius: radii.lg,
-  },
-  buttonPressed: {
-    backgroundColor: colors.primaryPressed,
-  },
-  buttonText: {
-    ...typography.bodyEmphasis,
-    color: colors.primaryFg,
   },
 });
