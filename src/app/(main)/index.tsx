@@ -95,7 +95,7 @@ export default function Home() {
         <Text style={styles.countdown}>{countdown}</Text>
       </View>
 
-      <View>
+      <View style={styles.listContainer}>
         <View
           style={[styles.actionsRow, editEnabled && styles.actionsRowEditing]}
         >
@@ -308,6 +308,9 @@ const styles = StyleSheet.create({
   dropdownItemText: {
     ...typography.body,
     color: colors.text,
+  },
+  listContainer: {
+    flex: 1,
   },
   list: {
     padding: spacing.lg,
