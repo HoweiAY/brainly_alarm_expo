@@ -2,16 +2,15 @@ import { Stack } from "expo-router";
 
 export default function AlarmLayout() {
   return (
-    <Stack screenOptions={{ headerShown: true }}>
-      <Stack.Screen
-        name="tasks/memory-game/[rounds]/[difficulty]"
-        options={{ title: "Memory" }}
-      />
-      <Stack.Screen
-        name="tasks/math-equation/[rounds]/[difficulty]"
-        options={{ title: "Math" }}
-      />
-      <Stack.Screen name="tasks/phone-shaking" options={{ title: "Shake" }} />
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: "#0A0A0A" },
+      }}
+    >
+      <Stack.Screen name="tasks/memory-game/[rounds]/[difficulty]" />
+      <Stack.Screen name="tasks/math-equation/[rounds]/[difficulty]" />
+      <Stack.Screen name="tasks/phone-shaking" />
     </Stack>
   );
 }
