@@ -41,16 +41,16 @@ export function FormSlider({
     return PanResponder.create({
       onStartShouldSetPanResponder: () => !disabled,
       onMoveShouldSetPanResponder: () => !disabled,
-      onPanResponderGrant: (_e, gestureState) => {
-        const x = gestureState.x0 - THUMB_SIZE / 2;
-        applyFraction(trackWidth > 0 ? x / trackWidth : 0);
+      onPanResponderGrant: (e) => {
+        const x = e.nativeEvent.locationX - THUMB_SIZE / 2;
+        applyFraction(usable > 0 ? x / usable : 0);
       },
-      onPanResponderMove: (_e, gestureState) => {
-        const x = gestureState.moveX - THUMB_SIZE / 2;
-        applyFraction(trackWidth > 0 ? x / trackWidth : 0);
+      onPanResponderMove: (e) => {
+        const x = e.nativeEvent.locationX - THUMB_SIZE / 2;
+        applyFraction(usable > 0 ? x / usable : 0);
       },
     });
-  }, [disabled, min, step, steps, value, onChange, trackWidth]);
+  }, [disabled, min, step, steps, value, onChange, trackWidth, usable]);
 
   return (
     <View
