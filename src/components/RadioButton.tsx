@@ -33,7 +33,9 @@ export function RadioButton({
           disabled && styles.circleDisabled,
         ]}
       >
-        {selected && !disabled ? <View style={styles.dot} /> : null}
+        {selected ? (
+          <View style={[styles.dot, disabled && styles.dotDisabled]} />
+        ) : null}
       </View>
       <Text style={[styles.label, disabled && styles.labelDisabled]}>
         {label}
@@ -76,6 +78,9 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: radii.full,
     backgroundColor: colors.primary,
+  },
+  dotDisabled: {
+    backgroundColor: colors.textSubtle,
   },
   label: {
     ...typography.body,
