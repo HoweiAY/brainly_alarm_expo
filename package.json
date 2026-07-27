@@ -6,8 +6,10 @@
     "@expo/ui": "~57.0.6",
     "@react-native-vector-icons/lucide": "^13.1.2",
     "dayjs": "^1.11.21",
+    "drizzle-orm": "^0.45.2",
     "expo": "~57.0.6",
     "expo-constants": "~57.0.5",
+    "expo-crypto": "~57.0.1",
     "expo-device": "~57.0.1",
     "expo-font": "~57.0.1",
     "expo-glass-effect": "~57.0.1",
@@ -16,11 +18,13 @@
     "expo-router": "~57.0.6",
     "expo-sensors": "~57.0.2",
     "expo-splash-screen": "~57.0.4",
+    "expo-sqlite": "~57.0.1",
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.1",
     "expo-system-ui": "~57.0.1",
     "expo-web-browser": "~57.0.1",
     "expr-eval": "^2.0.2",
+    "immer": "^11.1.15",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.0",
@@ -29,10 +33,13 @@
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "4.25.2",
     "react-native-web": "~0.21.0",
-    "react-native-worklets": "0.10.0"
+    "react-native-worklets": "0.10.0",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "babel-plugin-inline-import": "^3.0.0",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~57.0.0",
     "eslint-config-prettier": "^10.1.8",
@@ -50,6 +57,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "db:generate": "drizzle-kit generate",
     "prepare": "husky"
   },
   "lint-staged": {

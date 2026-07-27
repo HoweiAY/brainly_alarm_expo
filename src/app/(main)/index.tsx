@@ -1,6 +1,6 @@
 import { AlarmCard } from "@/components/AlarmCard";
-import { mockAlarms } from "@/data/mockAlarms";
 import type { Alarm } from "@/data/types";
+import { useAlarmStore } from "@/store/alarmStore";
 import { colors, radii, spacing, typography } from "@/theme";
 import { computeNextAlarm, formatCountdown } from "@/utils/time";
 import { Lucide } from "@react-native-vector-icons/lucide";
@@ -13,11 +13,15 @@ const TICK_MS = 60_000;
 
 export default function Home() {
   const router = useRouter();
-  const [alarms, setAlarms] = useState<Alarm[]>(() => mockAlarms);
+  const alarms = useAlarmStore((s) => s.alarms);
   const [editEnabled, setEditEnabled] = useState(false);
   const [optionsExpanded, setOptionsExpanded] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [now, setNow] = useState<Date>(() => new Date());
+
+  useEffect(() => {
+    useAlarmStore.getState().loadAlarms();
+  }, []);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), TICK_MS);
@@ -30,17 +34,18 @@ export default function Home() {
   );
 
   const toggleEnabled = (alarm: Alarm) => {
-    setAlarms((prev) =>
-      prev.map((a) => (a.id === alarm.id ? { ...a, enabled: !a.enabled } : a)),
-    );
+    void useAlarmStore
+      .getState()
+      .updateAlarm({ ...alarm, enabled: !alarm.enabled });
   };
 
-  const turnAllOnOff = () => {
+  const turnAllOnOff = async () => {
     setOptionsExpanded(false);
-    setAlarms((prev) => {
-      const allOn = prev.length > 0 && prev.every((a) => a.enabled);
-      return prev.map((a) => ({ ...a, enabled: !allOn }));
-    });
+    const allOn = alarms.length > 0 && alarms.every((a) => a.enabled);
+    const store = useAlarmStore.getState();
+    for (const a of alarms) {
+      await store.updateAlarm({ ...a, enabled: !allOn });
+    }
   };
 
   const enterEdit = () => {
@@ -82,8 +87,11 @@ export default function Home() {
     });
   };
 
-  const deleteSelected = () => {
-    setAlarms((prev) => prev.filter((a) => !selectedIds.has(a.id)));
+  const deleteSelected = async () => {
+    const store = useAlarmStore.getState();
+    for (const id of selectedIds) {
+      await store.deleteAlarm({ id });
+    }
     setSelectedIds(new Set());
     setEditEnabled(false);
   };

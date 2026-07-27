@@ -5,14 +5,14 @@ export type TaskType = "Memory" | "Math" | "Shake phone" | "None";
 export type Difficulty = "Easy" | "Normal" | "Hard";
 
 export interface Alarm {
-  id: number;
+  id: string;
   days: Weekday[];
   hour: number;
   minute: number;
   task: TaskType;
   rounds: number;
   difficulty: Difficulty;
-  sound: string;
+  sound: string | null;
   snooze: boolean;
   enabled: boolean;
 }
