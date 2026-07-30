@@ -30,7 +30,7 @@ export const useAlarmStore = create<AlarmStoreState>((set, get) => {
     const rows = await db
       .select()
       .from(alarmsTable)
-      .orderBy(asc(alarmsTable.createdAt));
+      .orderBy(asc(alarmsTable.hour), asc(alarmsTable.minute));
     set({ alarms: rows.map(rowToAlarm), loaded: true, loading: false });
   };
 
