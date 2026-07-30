@@ -6,7 +6,14 @@ import { computeNextAlarm, formatCountdown } from "@/utils/time";
 import { Lucide } from "@react-native-vector-icons/lucide";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Alert,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const TICK_MS = 60_000;
@@ -87,13 +94,31 @@ export default function Home() {
     });
   };
 
-  const deleteSelected = async () => {
+  const performDelete = async () => {
     const store = useAlarmStore.getState();
     for (const id of selectedIds) {
       await store.deleteAlarm({ id });
     }
     setSelectedIds(new Set());
     setEditEnabled(false);
+  };
+
+  const deleteSelected = () => {
+    const count = selectedIds.size;
+    if (count === 0) return;
+    Alert.alert(
+      "Delete alarms?",
+      `Delete ${count} alarm${count > 1 ? "s" : ""}? This cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => void performDelete(),
+        },
+      ],
+      { cancelable: true },
+    );
   };
 
   return (
@@ -176,6 +201,33 @@ export default function Home() {
               onLongPress={handleLongPressCard}
             />
           )}
+          ListEmptyComponent={
+            editEnabled ? null : (
+              <View style={styles.emptyState}>
+                <Lucide
+                  name="alarm-clock-off"
+                  size={48}
+                  color={colors.textSubtle}
+                />
+                <Text style={styles.emptyTitle}>No alarms yet</Text>
+                <Text style={styles.emptySubtitle}>
+                  Add your first alarm to get started.
+                </Text>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.emptyButton,
+                    pressed && styles.emptyButtonPressed,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Add alarm"
+                  onPress={() => router.push("/create-alarm")}
+                >
+                  <Lucide name="plus" size={20} color={colors.primaryFg} />
+                  <Text style={styles.emptyButtonText}>Create alarm</Text>
+                </Pressable>
+              </View>
+            )
+          }
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           contentContainerStyle={styles.list}
         />
@@ -323,6 +375,41 @@ const styles = StyleSheet.create({
   list: {
     padding: spacing.lg,
     paddingTop: spacing.sm,
+    flexGrow: 1,
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    paddingVertical: spacing.xxl,
+  },
+  emptyTitle: {
+    ...typography.h2,
+    color: colors.text,
+    marginTop: spacing.md,
+  },
+  emptySubtitle: {
+    ...typography.caption,
+    color: colors.textMuted,
+    textAlign: "center",
+  },
+  emptyButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginTop: spacing.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radii.full,
+    backgroundColor: colors.primary,
+  },
+  emptyButtonPressed: {
+    backgroundColor: colors.primaryPressed,
+  },
+  emptyButtonText: {
+    ...typography.bodyEmphasis,
+    color: colors.primaryFg,
   },
   separator: {
     height: spacing.sm,
