@@ -5,6 +5,7 @@ import { useAlarmStore } from "@/store/alarmStore";
 export function useAlarmById(id: string | null | undefined) {
   const alarms = useAlarmStore((s) => s.alarms);
   const loaded = useAlarmStore((s) => s.loaded);
+  const error = useAlarmStore((s) => s.initError);
 
   useEffect(() => {
     useAlarmStore.getState().loadAlarms();
@@ -15,6 +16,6 @@ export function useAlarmById(id: string | null | undefined) {
       ? null
       : (alarms.find((a) => a.id === String(id)) ?? null);
 
-  const loading = !loaded;
-  return { alarm, loading };
+  const loading = !loaded && !error;
+  return { alarm, loading, error };
 }

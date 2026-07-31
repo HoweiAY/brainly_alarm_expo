@@ -1,6 +1,7 @@
 import { CreateAlarmForm } from "@/components/CreateAlarmForm";
 import { useAlarmById } from "@/hooks/useAlarmById";
 import { useCreateAlarmForm } from "@/hooks/useCreateAlarmForm";
+import { useAlarmStore } from "@/store/alarmStore";
 import type { Alarm } from "@/data/types";
 import { colors, typography } from "@/theme";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -20,8 +21,12 @@ function EditAlarm({ alarm }: { alarm: Alarm }) {
 
 export default function EditAlarmScreen() {
   const { alarmId } = useLocalSearchParams<{ alarmId: string }>();
-  const { alarm, loading } = useAlarmById(alarmId);
+  const { alarm, loading, error } = useAlarmById(alarmId);
   const router = useRouter();
+
+  const retry = () => {
+    useAlarmStore.getState().loadAlarms();
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -29,6 +34,14 @@ export default function EditAlarmScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator color={colors.primary} />
           <Text style={styles.loadingText}>Loading alarm…</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Couldn’t load alarms.</Text>
+          <Text style={styles.errorDetail}>{error}</Text>
+          <Pressable accessibilityRole="button" onPress={retry}>
+            <Text style={styles.createLink}>Try again</Text>
+          </Pressable>
         </View>
       ) : alarm ? (
         <EditAlarm key={alarm.id} alarm={alarm} />
@@ -61,6 +74,11 @@ const styles = StyleSheet.create({
   loadingText: {
     ...typography.body,
     color: colors.textMuted,
+  },
+  errorDetail: {
+    ...typography.caption,
+    color: colors.textSubtle,
+    textAlign: "center",
   },
   createLink: {
     ...typography.bodyEmphasis,
