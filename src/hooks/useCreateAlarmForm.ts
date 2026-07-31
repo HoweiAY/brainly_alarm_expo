@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
+import { Alert } from "react-native";
 import { weekdays } from "@/data/constants";
 import { useAlarmStore } from "@/store/alarmStore";
 import type { Alarm, Difficulty, TaskType, Weekday } from "@/data/types";
@@ -161,9 +162,7 @@ export function useCreateAlarmForm(
     setState((prev) => ({ ...prev, taskSelectorExpanded: expanded }));
   }, []);
 
-  const pickSound = useCallback(() => {
-    // Seam 2: expo-document-picker + expo-file-system copy-to-sandbox (Phase 3, docs/06 §2).
-  }, []);
+  const pickSound = useCallback(() => {}, []);
 
   const buildDraft = useCallback((): Omit<Alarm, "id"> => {
     return {
@@ -189,11 +188,10 @@ export function useCreateAlarmForm(
         } else {
           await store.insertAlarm(draft);
         }
-        // Seam 1: AlarmScheduler.rescheduleWeekly(alarm) — out of scope (no native scheduler yet).
+        router.back();
       } catch (e) {
         console.error("persistAlarm failed", e);
-      } finally {
-        router.back();
+        Alert.alert("Error", "Could not save the alarm. Please try again.");
       }
     };
     void persist();

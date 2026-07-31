@@ -43,15 +43,26 @@ export default function Home() {
   const toggleEnabled = (alarm: Alarm) => {
     void useAlarmStore
       .getState()
-      .updateAlarm({ ...alarm, enabled: !alarm.enabled });
+      .updateAlarm({ ...alarm, enabled: !alarm.enabled })
+      .catch((e) => {
+        console.error("toggleEnabled failed", e);
+        Alert.alert("Error", "Could not update the alarm. Please try again.");
+      });
   };
 
   const turnAllOnOff = async () => {
     setOptionsExpanded(false);
     const allOn = alarms.length > 0 && alarms.every((a) => a.enabled);
     const store = useAlarmStore.getState();
-    for (const a of alarms) {
-      await store.updateAlarm({ ...a, enabled: !allOn });
+    const results = await Promise.allSettled(
+      alarms.map((a) => store.updateAlarm({ ...a, enabled: !allOn })),
+    );
+    const failed = results.filter((r) => r.status === "rejected").length;
+    if (failed > 0) {
+      Alert.alert(
+        "Error",
+        `Could not update ${failed} alarm${failed > 1 ? "s" : ""}. Please try again.`,
+      );
     }
   };
 
@@ -96,11 +107,18 @@ export default function Home() {
 
   const performDelete = async () => {
     const store = useAlarmStore.getState();
-    for (const id of selectedIds) {
-      await store.deleteAlarm({ id });
-    }
+    const results = await Promise.allSettled(
+      [...selectedIds].map((id) => store.deleteAlarm({ id })),
+    );
     setSelectedIds(new Set());
     setEditEnabled(false);
+    const failed = results.filter((r) => r.status === "rejected").length;
+    if (failed > 0) {
+      Alert.alert(
+        "Error",
+        `Could not delete ${failed} alarm${failed > 1 ? "s" : ""}. Please try again.`,
+      );
+    }
   };
 
   const deleteSelected = () => {
