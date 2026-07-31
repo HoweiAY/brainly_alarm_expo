@@ -16,6 +16,7 @@ interface AlarmStoreState {
   loaded: boolean;
   loading: boolean;
   _disposer: (() => void) | null;
+  _initializing: boolean;
   init: () => void;
   loadAlarms: () => void;
   insertAlarm: (draft: Omit<Alarm, "id">) => Promise<string>;
@@ -39,12 +40,14 @@ export const useAlarmStore = create<AlarmStoreState>((set, get) => {
     loaded: false,
     loading: false,
     _disposer: null,
+    _initializing: false,
 
     init: () => {
+      if (get()._initializing) return;
       const previous = get()._disposer;
       if (previous) previous();
 
-      set({ loading: true });
+      set({ loading: true, _initializing: true, _disposer: null });
 
       (async () => {
         try {
@@ -57,12 +60,14 @@ export const useAlarmStore = create<AlarmStoreState>((set, get) => {
         } catch (e) {
           console.error("alarmStore.init failed", e);
           set({ loading: false });
+        } finally {
+          set({ _initializing: false });
         }
       })();
     },
 
     loadAlarms: () => {
-      if (get()._disposer) return;
+      if (get()._disposer || get()._initializing) return;
       get().init();
     },
 
