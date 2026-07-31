@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import type { Alarm } from "@/data/types";
 import { useAlarmStore } from "@/store/alarmStore";
 
-export function useAlarmById(id: number | string | null | undefined) {
+export function useAlarmById(id: string | null | undefined) {
   const alarms = useAlarmStore((s) => s.alarms);
   const loaded = useAlarmStore((s) => s.loaded);
 
