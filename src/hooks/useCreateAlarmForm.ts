@@ -1,6 +1,8 @@
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
+import { Alert } from "react-native";
 import { weekdays } from "@/data/constants";
+import { useAlarmStore } from "@/store/alarmStore";
 import type { Alarm, Difficulty, TaskType, Weekday } from "@/data/types";
 
 export type Period = "AM" | "PM";
@@ -25,7 +27,7 @@ export function to24Hour(hour12: number, period: Period): number {
 }
 
 export interface CreateAlarmUiState {
-  alarmId: number | null;
+  alarmId: string | null;
   weekdaysSelected: Weekday[];
   hourSelected: number;
   minuteSelected: number;
@@ -33,7 +35,7 @@ export interface CreateAlarmUiState {
   roundsSelected: number;
   difficultySelected: Difficulty;
   alarmSoundSelected: string;
-  alarmSoundUri: string;
+  alarmSoundUri: string | null;
   snoozeEnabled: boolean;
   taskSelectorExpanded: boolean;
   enabled: boolean;
@@ -51,7 +53,7 @@ export interface UseCreateAlarmFormResult extends CreateAlarmUiState {
   pickSound: () => void;
   toggleSnooze: () => void;
   expandTaskSelector: (expanded: boolean) => void;
-  buildAlarm: () => Alarm;
+  buildDraft: () => Omit<Alarm, "id">;
   handleConfirm: () => void;
   handleCancel: () => void;
   reset: (alarm?: Alarm | null) => void;
@@ -65,7 +67,7 @@ const DEFAULTS: Omit<CreateAlarmUiState, "alarmId"> = {
   roundsSelected: 1,
   difficultySelected: "Easy",
   alarmSoundSelected: "Default",
-  alarmSoundUri: "Default",
+  alarmSoundUri: null,
   snoozeEnabled: true,
   taskSelectorExpanded: false,
   enabled: true,
@@ -76,7 +78,7 @@ function isTaskConfigurable(task: TaskType): boolean {
 }
 
 function fromAlarm(alarm: Alarm): Omit<CreateAlarmUiState, "alarmId"> {
-  const isCustom = alarm.sound !== "Default";
+  const isCustom = alarm.sound !== null;
   return {
     weekdaysSelected: [...alarm.days],
     hourSelected: alarm.hour,
@@ -84,7 +86,7 @@ function fromAlarm(alarm: Alarm): Omit<CreateAlarmUiState, "alarmId"> {
     taskSelected: alarm.task,
     roundsSelected: alarm.rounds,
     difficultySelected: alarm.difficulty,
-    alarmSoundSelected: isCustom ? alarm.sound : "Default",
+    alarmSoundSelected: isCustom ? (alarm.sound ?? "Default") : "Default",
     alarmSoundUri: alarm.sound,
     snoozeEnabled: alarm.snooze,
     taskSelectorExpanded: false,
@@ -160,45 +162,10 @@ export function useCreateAlarmForm(
     setState((prev) => ({ ...prev, taskSelectorExpanded: expanded }));
   }, []);
 
-  const pickSound = useCallback(() => {
-    // ═══ PLACEHOLDER: pickSound ═══════════════════════════════════════
-    // What:    Open the audio picker, copy the file into the sandbox, store a
-    //          stable file:// URI + human-readable display name.
-    // Stubbed: UI-only pass — expo-document-picker / expo-file-system not installed.
-    // Spec:    docs/06 §2.1–§2.3 (picker + display-name + persistence bug fix),
-    //          docs/07 §1 (audio picking row), AGENTS.md #6 (copy-to-sandbox fix).
-    // Implement:
-    //   1. const res = await DocumentPicker.getDocumentAsync({ type: "audio/*",
-    //        copyToCacheDirectory: true })
-    //   2. if (res.canceled || !res.assets?.[0]) return
-    //   3. const asset = res.assets[0]
-    //   4. const dest = FileSystem.documentDirectory + `alarms/${asset.name}`
-    //   5. await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + "alarms/", { intermediates: true })
-    //   6. await FileSystem.copyAsync({ from: asset.uri, to: dest })
-    //        // sandbox copy fixes the persisted-URI bug (doc 06 §2.3):
-    //        // content URIs are not usable across process restarts
-    //   7. setAlarmSoundUri(dest)              // store file:// URI, NOT the content URI
-    //   8. setAlarmSoundSelected(asset.name)   // display name for the form label
-    //   9. Persist only `dest` into Alarm.sound at confirm time
-    // API:     pickSound(): Promise<void>
-    // Returns: void  (updates alarmSoundSelected + alarmSoundUri state)
-    // ═══════════════════════════════════════════════════════════════════
-  }, []);
+  const pickSound = useCallback(() => {}, []);
 
-  const buildAlarm = useCallback((): Alarm => {
-    // ═══ PLACEHOLDER: new-alarm id ════════════════════════════════════
-    // What:    The Alarm.id for a newly created alarm.
-    // Stubbed: No DB auto-increment yet.
-    // Spec:    docs/02 §1 (id auto-increment PK), docs/07 §5 (data model),
-    //          AGENTS.md "id (auto-increment)".
-    // Implement:
-    //   1. Do NOT assign id client-side. Omit it from the draft passed to
-    //        alarmStore.insertAlarm; let the DB return the real auto-increment id.
-    //   2. Use the returned id for AlarmScheduler.rescheduleWeekly (see Seam 1).
-    // Temporary: id: Date.now()  (in-memory only; discarded on persist).
-    // ═══════════════════════════════════════════════════════════════════
+  const buildDraft = useCallback((): Omit<Alarm, "id"> => {
     return {
-      id: state.alarmId ?? Date.now(),
       days: [...state.weekdaysSelected],
       hour: state.hourSelected,
       minute: state.minuteSelected,
@@ -212,30 +179,23 @@ export function useCreateAlarmForm(
   }, [state]);
 
   const handleConfirm = useCallback(() => {
-    // ═══ PLACEHOLDER: persistAlarm ═════════════════════════════════════
-    // What:    Persist the draft alarm and re-arm the OS schedule.
-    // Stubbed: UI-only pass — no DB layer (alarmStore) or AlarmScheduler yet.
-    // Spec:    docs/04 §5.3 (Confirm), docs/07 §2.1 + §4, AGENTS.md #4/#5.
-    // Implement (EDIT — alarmId != null):
-    //   1. const old = await alarmStore.getAlarmById(draft.id)
-    //   2. await AlarmScheduler.cancelAllForAlarm(draft.id)   // cancel old weekday requests
-    //   3. await alarmStore.updateAlarm(draft)                // mutate + persist fields
-    //   4. await AlarmScheduler.rescheduleWeekly(draft)       // re-arm per weekday,
-    //        // identifier scheme: `${alarmId}${weekday}`.hashCode()  (AGENTS.md #5)
-    // Implement (CREATE — alarmId == null):
-    //   1. const id = await alarmStore.insertAlarm({ ...draft, enabled: true })
-    //        // id is the DB auto-increment PK — do NOT generate client-side
-    //   2. await AlarmScheduler.rescheduleWeekly({ ...draft, id })
-    // Final:   router.back()   // do NOT call reset() before navigating — the
-    //        // screen unmounts on back, and a synchronous state update during
-    //        // the slide_from_right transition causes "child already has a
-    //        // parent" native view errors. Local state is discarded on unmount.
-    // API:     persistAlarm(draft: Alarm): Promise<void>
-    // Returns: void
-    // ═══════════════════════════════════════════════════════════════════
-    void buildAlarm;
-    router.back();
-  }, [buildAlarm, router]);
+    const draft = buildDraft();
+    const store = useAlarmStore.getState();
+    const persist = async () => {
+      try {
+        if (state.alarmId != null) {
+          await store.updateAlarm({ id: state.alarmId, ...draft });
+        } else {
+          await store.insertAlarm(draft);
+        }
+        router.back();
+      } catch (e) {
+        console.error("persistAlarm failed", e);
+        Alert.alert("Error", "Could not save the alarm. Please try again.");
+      }
+    };
+    void persist();
+  }, [buildDraft, router, state.alarmId]);
 
   const handleCancel = useCallback(() => {
     router.back();
@@ -254,7 +214,7 @@ export function useCreateAlarmForm(
     pickSound,
     toggleSnooze,
     expandTaskSelector,
-    buildAlarm,
+    buildDraft,
     handleConfirm,
     handleCancel,
     reset,

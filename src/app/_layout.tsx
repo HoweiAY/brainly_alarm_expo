@@ -1,5 +1,14 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
+import { useAlarmStore } from "@/store/alarmStore";
+
+function AlarmStoreInit() {
+  useEffect(() => {
+    useAlarmStore.getState().loadAlarms();
+  }, []);
+  return null;
+}
 
 export default function RootLayout() {
   return (
@@ -12,6 +21,7 @@ export default function RootLayout() {
           options={{ presentation: "fullScreenModal", headerShown: false }}
         />
       </Stack>
+      <AlarmStoreInit />
     </>
   );
 }

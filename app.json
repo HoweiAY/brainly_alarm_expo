@@ -44,7 +44,8 @@
             "./assets/fonts/Geist-Bold.ttf"
           ]
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,
