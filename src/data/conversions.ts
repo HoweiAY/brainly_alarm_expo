@@ -6,11 +6,18 @@ import {
   taskTypeToStorage,
   weekdayToIndex,
 } from "./constants";
-import type { alarmsTable } from "./schema";
-import type { Alarm } from "./types";
+import type { alarmsTable, scheduledAlarmsTable } from "./schema";
+import type {
+  Alarm,
+  AlarmSnapshot,
+  ScheduledAlarmRecord,
+  ScheduledAlarmType,
+} from "./types";
 
 type AlarmRow = typeof alarmsTable.$inferSelect;
 type AlarmInsert = typeof alarmsTable.$inferInsert;
+type ScheduledAlarmRow = typeof scheduledAlarmsTable.$inferSelect;
+type ScheduledAlarmInsert = typeof scheduledAlarmsTable.$inferInsert;
 
 export function rowToAlarm(row: AlarmRow): Alarm {
   return {
@@ -63,5 +70,69 @@ export function alarmToUpdateSet(
     sound: alarm.sound,
     isSnooze: alarm.snooze,
     isEnabled: alarm.enabled,
+  };
+}
+
+export function alarmToSnapshot(
+  alarm: Alarm,
+  weekday: number,
+  isSnoozed = false,
+): AlarmSnapshot {
+  return {
+    alarmId: alarm.id,
+    weekday,
+    hour: alarm.hour,
+    minute: alarm.minute,
+    task: alarm.task,
+    roundCount: alarm.rounds,
+    difficulty: alarm.difficulty,
+    sound: alarm.sound ?? "Default",
+    snooze: alarm.snooze,
+    enabled: alarm.enabled,
+    isSnoozed,
+  };
+}
+
+export function scheduledRowToRecord(
+  row: ScheduledAlarmRow,
+): ScheduledAlarmRecord {
+  return {
+    id: row.id,
+    alarmId: row.alarmId,
+    weekday: row.weekday,
+    type: row.type as ScheduledAlarmType,
+    triggerAt: row.triggerAt,
+    payload: row.payload,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+export function recordToInsert(
+  record: Omit<ScheduledAlarmRecord, "createdAt" | "updatedAt">,
+  now: number,
+): ScheduledAlarmInsert {
+  return {
+    id: record.id,
+    alarmId: record.alarmId,
+    weekday: record.weekday,
+    type: record.type,
+    triggerAt: record.triggerAt,
+    payload: record.payload,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+export function recordToUpdateSet(
+  record: Omit<ScheduledAlarmRecord, "createdAt" | "updatedAt">,
+  now: number,
+): Omit<ScheduledAlarmInsert, "id" | "createdAt" | "alarmId"> {
+  return {
+    weekday: record.weekday,
+    type: record.type,
+    triggerAt: record.triggerAt,
+    payload: record.payload,
+    updatedAt: now,
   };
 }
