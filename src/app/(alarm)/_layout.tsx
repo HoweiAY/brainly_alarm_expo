@@ -8,6 +8,7 @@ export default function AlarmLayout() {
         contentStyle: { backgroundColor: "#0A0A0A" },
       }}
     >
+      <Stack.Screen name="alarm" />
       <Stack.Screen name="tasks/memory-game/[rounds]/[difficulty]" />
       <Stack.Screen name="tasks/math-equation/[rounds]/[difficulty]" />
       <Stack.Screen name="tasks/phone-shaking" />

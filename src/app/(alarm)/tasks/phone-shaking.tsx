@@ -1,17 +1,16 @@
 import { Lucide } from "@react-native-vector-icons/lucide";
-import { useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { usePhoneShaking } from "@/tasks/usePhoneShaking";
 import { colors, radii, spacing, typography } from "@/theme";
+import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
 import { INITIAL_SHAKE_MAX } from "@/tasks/phoneShaking";
 
 export default function PhoneShakingScreen() {
-  const router = useRouter();
+  const dismiss = useAlarmDismissal();
   const { remainingShakes } = usePhoneShaking({
     onComplete: () => {
-      router.dismissAll();
-      router.replace("/(main)");
+      void dismiss();
     },
   });
 

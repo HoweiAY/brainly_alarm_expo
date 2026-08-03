@@ -1,13 +1,14 @@
 import { PROTOTYPE_ROUNDS } from "@/tasks/mathEquation";
 import { useMathEquation } from "@/tasks/useMathEquation";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radii, spacing, typography } from "@/theme";
+import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
 
 export default function MathEquationScreen() {
-  const router = useRouter();
+  const dismiss = useAlarmDismissal();
   const { rounds, difficulty } = useLocalSearchParams<{
     rounds?: string;
     difficulty?: string;
@@ -20,8 +21,7 @@ export default function MathEquationScreen() {
     useMathEquation({
       rounds: PROTOTYPE_ROUNDS,
       onComplete: () => {
-        router.dismissAll();
-        router.replace("/(main)");
+        void dismiss();
       },
     });
 

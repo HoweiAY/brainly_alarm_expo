@@ -1,8 +1,9 @@
 import { PROTOTYPE_ROUNDS, type TileState } from "@/tasks/memoryGame";
 import { useMemoryGame } from "@/tasks/useMemoryGame";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
 import { colors, radii, spacing, typography } from "@/theme";
 
 const TILE_COLORS: Record<TileState, string> = {
@@ -13,7 +14,7 @@ const TILE_COLORS: Record<TileState, string> = {
 };
 
 export default function MemoryGameScreen() {
-  const router = useRouter();
+  const dismiss = useAlarmDismissal();
   const { rounds, difficulty } = useLocalSearchParams<{
     rounds?: string;
     difficulty?: string;
@@ -32,8 +33,7 @@ export default function MemoryGameScreen() {
   } = useMemoryGame({
     rounds: PROTOTYPE_ROUNDS,
     onComplete: () => {
-      router.dismissAll();
-      router.replace("/(main)");
+      void dismiss();
     },
   });
 
