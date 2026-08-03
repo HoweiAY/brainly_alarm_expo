@@ -16,3 +16,30 @@ export interface Alarm {
   snooze: boolean;
   enabled: boolean;
 }
+
+export interface AlarmSnapshot {
+  alarmId: string;
+  weekday: number;
+  hour: number;
+  minute: number;
+  task: TaskType;
+  roundCount: number;
+  difficulty: Difficulty;
+  sound: string;
+  snooze: boolean;
+  enabled: boolean;
+  isSnoozed: boolean;
+}
+
+export type ScheduledAlarmType = "weekly" | "snooze" | "oneshot";
+
+export interface ScheduledAlarmRecord {
+  id: string;
+  alarmId: string;
+  weekday: number | null;
+  type: ScheduledAlarmType;
+  triggerAt: number;
+  payload: AlarmSnapshot;
+  createdAt: number;
+  updatedAt: number;
+}

@@ -45,7 +45,8 @@
           ]
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      "./native/app.plugin.js"
     ],
     "experiments": {
       "typedRoutes": true,
