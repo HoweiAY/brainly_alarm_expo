@@ -4,11 +4,11 @@ import {
   snoozeAlarm,
 } from "@/alarms/scheduling";
 import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
+import { colors, radii, spacing, typography } from "@/theme";
 import { formatTime } from "@/utils/time";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, radii, spacing, typography } from "@/theme";
 
 export default function AlarmDisplay() {
   const router = useRouter();
@@ -59,6 +59,7 @@ export default function AlarmDisplay() {
 
   const handleSnooze = () => {
     void snoozeAlarm(snapshot);
+    router.replace("/(main)");
   };
 
   return (
@@ -73,33 +74,34 @@ export default function AlarmDisplay() {
         <Text style={styles.task}>Task: {snapshot.task}</Text>
       </View>
       <View style={styles.actions}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            styles.primaryButton,
-            pressed && styles.buttonPressed,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="Begin task"
-          onPress={handleBegin}
-        >
-          <Text style={styles.primaryButtonText}>Begin</Text>
-        </Pressable>
-        <View style={styles.row}>
-          {snapshot.snooze ? (
-            <Pressable
-              style={({ pressed }) => [
-                styles.button,
-                styles.secondaryButton,
-                pressed && styles.buttonPressed,
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Snooze"
-              onPress={handleSnooze}
-            >
-              <Text style={styles.buttonText}>Snooze</Text>
-            </Pressable>
-          ) : null}
+        {snapshot.task === "None" ? (
+          <Pressable
+            style={({ pressed }) => [
+              styles.button,
+              styles.primaryButton,
+              pressed && styles.buttonPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Turn off"
+            onPress={handleOff}
+          >
+            <Text style={styles.primaryButtonText}>Turn Off</Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            style={({ pressed }) => [
+              styles.button,
+              styles.primaryButton,
+              pressed && styles.buttonPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Begin task"
+            onPress={handleBegin}
+          >
+            <Text style={styles.primaryButtonText}>Begin</Text>
+          </Pressable>
+        )}
+        {snapshot.snooze ? (
           <Pressable
             style={({ pressed }) => [
               styles.button,
@@ -107,12 +109,12 @@ export default function AlarmDisplay() {
               pressed && styles.buttonPressed,
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Turn off"
-            onPress={handleOff}
+            accessibilityLabel="Snooze"
+            onPress={handleSnooze}
           >
-            <Text style={styles.buttonText}>Off</Text>
+            <Text style={styles.buttonText}>Snooze</Text>
           </Pressable>
-        </View>
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -137,6 +139,8 @@ const styles = StyleSheet.create({
   },
   time: {
     ...typography.h1,
+    fontSize: 48,
+    lineHeight: 64,
     color: colors.primary,
   },
   label: {
@@ -156,10 +160,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xxl,
   },
-  row: {
-    flexDirection: "row",
-    gap: spacing.md,
-  },
   button: {
     paddingVertical: spacing.lg,
     borderRadius: radii.lg,
@@ -170,7 +170,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   secondaryButton: {
-    flex: 1,
     backgroundColor: colors.surface,
   },
   buttonPressed: {
