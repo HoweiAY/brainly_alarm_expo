@@ -1,6 +1,7 @@
 # Gradle / Android build artifacts
 android/build/
 android/.cxx/
+android/.gradle
 android/local.properties
 
 # CocoaPods / iOS build artifacts
