@@ -67,6 +67,7 @@
     "lint": "expo lint",
     "test": "jest",
     "db:generate": "drizzle-kit generate",
+    "db:squash": "node ./scripts/squash-migrations.js",
     "prepare": "husky"
   },
   "lint-staged": {
