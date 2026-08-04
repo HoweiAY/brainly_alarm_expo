@@ -37,6 +37,8 @@ class BootReceiver : BroadcastReceiver() {
             snooze = alarm.snooze,
             enabled = alarm.enabled,
             isSnoozed = false,
+            notificationTitle = "Time to wake up!",
+            notificationBody = "Click to disable the alarm.",
           )
           val triggerAt = nextWeeklyTrigger(weekday, alarm.hour, alarm.minute, now)
           scheduleAlarmAt(context, snapshot, triggerAt)

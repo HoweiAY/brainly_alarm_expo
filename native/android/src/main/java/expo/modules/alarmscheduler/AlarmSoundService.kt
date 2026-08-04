@@ -87,6 +87,10 @@ class AlarmSoundService : Service() {
   private fun ensureChannel() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       val manager = getSystemService(NotificationManager::class.java)
+      val existing = manager.getNotificationChannel(ALARM_CHANNEL_ID)
+      if (existing != null && existing.sound != null) {
+        manager.deleteNotificationChannel(ALARM_CHANNEL_ID)
+      }
       if (manager.getNotificationChannel(ALARM_CHANNEL_ID) == null) {
         val channel = NotificationChannel(
           ALARM_CHANNEL_ID,
@@ -95,6 +99,13 @@ class AlarmSoundService : Service() {
         ).apply {
           enableVibration(true)
           setBypassDnd(true)
+          setSound(
+            null,
+            AudioAttributes.Builder()
+              .setUsage(AudioAttributes.USAGE_ALARM)
+              .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+              .build(),
+          )
         }
         manager.createNotificationChannel(channel)
       }
@@ -112,13 +123,15 @@ class AlarmSoundService : Service() {
       ),
       PendingIntent.FLAG_IMMUTABLE,
     )
-    val title = if (snapshot != null) formatTimeLabel(snapshot.hour, snapshot.minute) else "Alarm"
+    val title = if (snapshot != null) snapshot.notificationTitle else "Time to wake up!"
+    val body = if (snapshot != null) snapshot.notificationBody else "Click to disable the alarm."
     return NotificationCompat.Builder(this, ALARM_CHANNEL_ID)
       .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
       .setContentTitle(title)
-      .setContentText("Brainly Alarm")
+      .setContentText(body)
       .setCategory(NotificationCompat.CATEGORY_ALARM)
       .setPriority(NotificationCompat.PRIORITY_MAX)
+      .setSilent(true)
       .setFullScreenIntent(contentIntent, true)
       .setContentIntent(contentIntent)
       .setOngoing(true)

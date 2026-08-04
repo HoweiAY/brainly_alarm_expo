@@ -9,6 +9,10 @@ import type {
   TaskType,
 } from "@/data/types";
 import { getAlarmScheduler } from "./AlarmScheduler";
+import {
+  DEFAULT_ALARM_NOTIFICATION_BODY,
+  DEFAULT_ALARM_NOTIFICATION_TITLE,
+} from "@/notifications/AlarmNotifications";
 import { soundUriFromSnapshot } from "./sound";
 import {
   expandWeekdays,
@@ -261,6 +265,10 @@ export function parseAlarmSnapshot(
     snooze: toBool(get("snooze")),
     enabled: toBool(get("enabled")),
     isSnoozed: toBool(get("isSnoozed")),
+    notificationTitle:
+      get("notificationTitle") ?? DEFAULT_ALARM_NOTIFICATION_TITLE,
+    notificationBody:
+      get("notificationBody") ?? DEFAULT_ALARM_NOTIFICATION_BODY,
   };
 }
 
@@ -279,5 +287,9 @@ export function snapshotToQueryParams(
     snooze: String(snapshot.snooze),
     enabled: String(snapshot.enabled),
     isSnoozed: String(snapshot.isSnoozed),
+    notificationTitle:
+      snapshot.notificationTitle ?? DEFAULT_ALARM_NOTIFICATION_TITLE,
+    notificationBody:
+      snapshot.notificationBody ?? DEFAULT_ALARM_NOTIFICATION_BODY,
   };
 }

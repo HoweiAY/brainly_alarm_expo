@@ -6,6 +6,10 @@ import {
   taskTypeToStorage,
   weekdayToIndex,
 } from "./constants";
+import {
+  DEFAULT_ALARM_NOTIFICATION_BODY,
+  DEFAULT_ALARM_NOTIFICATION_TITLE,
+} from "@/notifications/AlarmNotifications";
 import type { alarmsTable, scheduledAlarmsTable } from "./schema";
 import type {
   Alarm,
@@ -90,6 +94,8 @@ export function alarmToSnapshot(
     snooze: alarm.snooze,
     enabled: alarm.enabled,
     isSnoozed,
+    notificationTitle: DEFAULT_ALARM_NOTIFICATION_TITLE,
+    notificationBody: DEFAULT_ALARM_NOTIFICATION_BODY,
   };
 }
 

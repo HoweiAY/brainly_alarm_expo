@@ -24,6 +24,8 @@ object AlarmIntents {
   const val EXTRA_SNOOZE = "snooze"
   const val EXTRA_ENABLED = "enabled"
   const val EXTRA_IS_SNOOZED = "isSnoozed"
+  const val EXTRA_NOTIFICATION_TITLE = "notificationTitle"
+  const val EXTRA_NOTIFICATION_BODY = "notificationBody"
 }
 
 data class AlarmSnapshotData(
@@ -40,6 +42,8 @@ data class AlarmSnapshotData(
   val snooze: Boolean,
   val enabled: Boolean,
   val isSnoozed: Boolean,
+  val notificationTitle: String,
+  val notificationBody: String,
 )
 
 // JS sends weekday as Mon=0..Sun=6 (src/data/constants weekdayToIndex).
@@ -87,6 +91,8 @@ fun putSnapshot(intent: Intent, snapshot: AlarmSnapshotData) {
     putExtra(AlarmIntents.EXTRA_SNOOZE, snapshot.snooze)
     putExtra(AlarmIntents.EXTRA_ENABLED, snapshot.enabled)
     putExtra(AlarmIntents.EXTRA_IS_SNOOZED, snapshot.isSnoozed)
+    putExtra(AlarmIntents.EXTRA_NOTIFICATION_TITLE, snapshot.notificationTitle)
+    putExtra(AlarmIntents.EXTRA_NOTIFICATION_BODY, snapshot.notificationBody)
   }
 }
 
@@ -105,6 +111,8 @@ fun readSnapshot(intent: Intent): AlarmSnapshotData {
     snooze = intent.getBooleanExtra(AlarmIntents.EXTRA_SNOOZE, false),
     enabled = intent.getBooleanExtra(AlarmIntents.EXTRA_ENABLED, false),
     isSnoozed = intent.getBooleanExtra(AlarmIntents.EXTRA_IS_SNOOZED, false),
+    notificationTitle = intent.getStringExtra(AlarmIntents.EXTRA_NOTIFICATION_TITLE) ?: "Time to wake up!",
+    notificationBody = intent.getStringExtra(AlarmIntents.EXTRA_NOTIFICATION_BODY) ?: "Click to disable the alarm.",
   )
 }
 
@@ -121,6 +129,8 @@ fun snapshotToDeepLink(snapshot: AlarmSnapshotData): Uri {
     "snooze" to snapshot.snooze.toString(),
     "enabled" to snapshot.enabled.toString(),
     "isSnoozed" to snapshot.isSnoozed.toString(),
+    "notificationTitle" to snapshot.notificationTitle,
+    "notificationBody" to snapshot.notificationBody,
   )
   val query = params.entries.joinToString("&") { (k, v) ->
     "${Uri.encode(k)}=${Uri.encode(v)}"

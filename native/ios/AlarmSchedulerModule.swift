@@ -102,8 +102,8 @@ public final class AlarmSchedulerModule: Module {
     snapshot: AlarmSnapshotRecord
   ) throws {
     let content = UNMutableNotificationContent()
-    content.title = "Alarm"
-    content.body = "\(snapshot.hour):\(String(format: "%02d", snapshot.minute))"
+    content.title = snapshot.notificationTitle
+    content.body = snapshot.notificationBody
     content.sound = .default
     content.userInfo = Self.eventPayload(from: snapshot)
     let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
@@ -150,6 +150,8 @@ public final class AlarmSchedulerModule: Module {
       "snooze": snapshot.snooze,
       "enabled": snapshot.enabled,
       "isSnoozed": snapshot.isSnoozed,
+      "notificationTitle": snapshot.notificationTitle,
+      "notificationBody": snapshot.notificationBody,
     ]
   }
 }
@@ -166,6 +168,8 @@ struct AlarmSnapshotRecord: Record {
   @Field var snooze: Bool = false
   @Field var enabled: Bool = false
   @Field var isSnoozed: Bool = false
+  @Field var notificationTitle: String = "Time to wake up!"
+  @Field var notificationBody: String = "Click to disable the alarm."
 }
 
 struct ScheduleWeeklyOptsRecord: Record {

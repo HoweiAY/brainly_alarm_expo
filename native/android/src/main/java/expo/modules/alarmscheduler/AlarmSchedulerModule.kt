@@ -49,6 +49,12 @@ class AlarmSnapshotRecord : Record {
   @Field
   val isSnoozed: Boolean = false
 
+  @Field
+  val notificationTitle: String = "Time to wake up!"
+
+  @Field
+  val notificationBody: String = "Click to disable the alarm."
+
   fun toData(identifier: String, soundUri: String?): AlarmSnapshotData =
     AlarmSnapshotData(
       identifier = identifier,
@@ -64,6 +70,8 @@ class AlarmSnapshotRecord : Record {
       snooze = snooze,
       enabled = enabled,
       isSnoozed = isSnoozed,
+      notificationTitle = notificationTitle,
+      notificationBody = notificationBody,
     )
 
   fun toBundle(): android.os.Bundle = bundleOf(
@@ -78,6 +86,8 @@ class AlarmSnapshotRecord : Record {
     "snooze" to snooze,
     "enabled" to enabled,
     "isSnoozed" to isSnoozed,
+    "notificationTitle" to notificationTitle,
+    "notificationBody" to notificationBody,
   )
 }
 
@@ -189,21 +199,21 @@ class AlarmSchedulerModule : Module() {
       val snapshot = AlarmSoundService.currentSnapshot
       AlarmSoundService.stop(context)
       if (snapshot != null) {
-        val payload = snapshot.let {
-          bundleOf(
-            "alarmId" to it.alarmId,
-            "weekday" to it.weekday,
-            "hour" to it.hour,
-            "minute" to it.minute,
-            "task" to it.task,
-            "roundCount" to it.roundCount,
-            "difficulty" to it.difficulty,
-            "sound" to it.sound,
-            "snooze" to it.snooze,
-            "enabled" to it.enabled,
-            "isSnoozed" to it.isSnoozed,
-          )
-        }
+        val payload = bundleOf(
+          "alarmId" to snapshot.alarmId,
+          "weekday" to snapshot.weekday,
+          "hour" to snapshot.hour,
+          "minute" to snapshot.minute,
+          "task" to snapshot.task,
+          "roundCount" to snapshot.roundCount,
+          "difficulty" to snapshot.difficulty,
+          "sound" to snapshot.sound,
+          "snooze" to snapshot.snooze,
+          "enabled" to snapshot.enabled,
+          "isSnoozed" to snapshot.isSnoozed,
+          "notificationTitle" to snapshot.notificationTitle,
+          "notificationBody" to snapshot.notificationBody,
+        )
         sendEvent("onAlarmDismissed", payload)
       }
     }
@@ -224,6 +234,8 @@ class AlarmSchedulerModule : Module() {
         "snooze" to snapshot.snooze,
         "enabled" to snapshot.enabled,
         "isSnoozed" to snapshot.isSnoozed,
+        "notificationTitle" to snapshot.notificationTitle,
+        "notificationBody" to snapshot.notificationBody,
       ),
     )
   }

@@ -5,6 +5,7 @@ import {
 } from "@/alarms/scheduling";
 import { useScheduledAlarmsStore } from "@/store/scheduledAlarmsStore";
 import { useAlarmStore } from "@/store/alarmStore";
+import { useAlarmNotifications } from "@/hooks/useAlarmNotifications";
 import * as Linking from "expo-linking";
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -52,6 +53,7 @@ function handleAlarmUrl(
 
 function AlarmStoreInit() {
   const router = useRouter();
+  useAlarmNotifications();
   useEffect(() => {
     useAlarmStore.getState().loadAlarms();
     useScheduledAlarmsStore.getState().load();

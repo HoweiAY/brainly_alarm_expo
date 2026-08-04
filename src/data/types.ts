@@ -29,6 +29,8 @@ export interface AlarmSnapshot {
   snooze: boolean;
   enabled: boolean;
   isSnoozed: boolean;
+  notificationTitle: string;
+  notificationBody: string;
 }
 
 export type ScheduledAlarmType = "weekly" | "snooze" | "oneshot";

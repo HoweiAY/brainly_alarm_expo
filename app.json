@@ -46,6 +46,7 @@
         }
       ],
       "expo-sqlite",
+      "expo-notifications",
       "./native/app.plugin.js"
     ],
     "experiments": {
