@@ -18,7 +18,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const TICK_MS = 60_000;
+const TICK_MS = 1000;
 
 export default function Home() {
   const router = useRouter();
