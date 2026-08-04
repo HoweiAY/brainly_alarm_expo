@@ -1,4 +1,3 @@
-import { PROTOTYPE_ROUNDS } from "@/tasks/mathEquation";
 import { useMathEquation } from "@/tasks/useMathEquation";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
@@ -9,17 +8,20 @@ import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
 
 export default function MathEquationScreen() {
   const dismiss = useAlarmDismissal();
-  const { rounds, difficulty } = useLocalSearchParams<{
-    rounds?: string;
-    difficulty?: string;
-  }>();
-  void rounds;
-  void difficulty;
+  const { rounds: roundsParam, difficulty: difficultyParam } =
+    useLocalSearchParams<{
+      rounds?: string;
+      difficulty?: string;
+    }>();
+  const rounds = Number(roundsParam) || 3;
+  const difficulty = (difficultyParam ?? "Normal") as
+    "Easy" | "Normal" | "Hard";
   const [focused, setFocused] = useState(false);
 
   const { equation, input, isCorrect, currentRound, setInput, submit } =
     useMathEquation({
-      rounds: PROTOTYPE_ROUNDS,
+      rounds,
+      difficulty,
       onComplete: () => {
         void dismiss();
       },
@@ -32,7 +34,7 @@ export default function MathEquationScreen() {
       </View>
       <View style={styles.column}>
         <Text style={styles.round}>
-          {currentRound}/{PROTOTYPE_ROUNDS}
+          {currentRound}/{rounds}
         </Text>
         <Text style={styles.instruction}>
           What is the result of the expression?

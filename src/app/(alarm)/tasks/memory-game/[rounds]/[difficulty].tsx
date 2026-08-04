@@ -1,4 +1,4 @@
-import { PROTOTYPE_ROUNDS, type TileState } from "@/tasks/memoryGame";
+import { type TileState } from "@/tasks/memoryGame";
 import { useMemoryGame } from "@/tasks/useMemoryGame";
 import { useLocalSearchParams } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -15,12 +15,14 @@ const TILE_COLORS: Record<TileState, string> = {
 
 export default function MemoryGameScreen() {
   const dismiss = useAlarmDismissal();
-  const { rounds, difficulty } = useLocalSearchParams<{
-    rounds?: string;
-    difficulty?: string;
-  }>();
-  void rounds;
-  void difficulty;
+  const { rounds: roundsParam, difficulty: difficultyParam } =
+    useLocalSearchParams<{
+      rounds?: string;
+      difficulty?: string;
+    }>();
+  const rounds = Number(roundsParam) || 3;
+  const difficulty = (difficultyParam ?? "Normal") as
+    "Easy" | "Normal" | "Hard";
 
   const {
     gridItems,
@@ -31,7 +33,8 @@ export default function MemoryGameScreen() {
     start,
     handleTilePress,
   } = useMemoryGame({
-    rounds: PROTOTYPE_ROUNDS,
+    rounds,
+    difficulty,
     onComplete: () => {
       void dismiss();
     },
@@ -47,7 +50,7 @@ export default function MemoryGameScreen() {
       <View style={styles.column}>
         {gameStarted ? (
           <Text style={styles.round}>
-            Round: {currentRound}/{PROTOTYPE_ROUNDS}
+            Round: {currentRound}/{rounds}
           </Text>
         ) : null}
         <Text style={styles.title}>{titleText}</Text>
