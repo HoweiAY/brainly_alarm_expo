@@ -59,7 +59,7 @@ export default function AlarmDisplay() {
 
   const handleSnooze = () => {
     void snoozeAlarm(snapshot);
-    router.replace("/(main)");
+    router.dismissTo("/(main)");
   };
 
   return (

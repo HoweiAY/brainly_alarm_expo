@@ -8,7 +8,6 @@ export function useAlarmDismissal() {
   return useCallback(async () => {
     await stopAlarmSound();
     await getAlarmScheduler().forceDismissFiring();
-    router.dismissAll();
-    router.replace("/(main)");
+    router.dismissTo("/(main)");
   }, [router]);
 }
