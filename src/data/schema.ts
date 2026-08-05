@@ -1,4 +1,9 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+} from "drizzle-orm/sqlite-core";
 import type { AlarmSnapshot } from "./types";
 
 export const alarmsTable = sqliteTable("alarms", {
@@ -16,16 +21,16 @@ export const alarmsTable = sqliteTable("alarms", {
   isEnabled: integer("is_enabled", { mode: "boolean" }).notNull(),
 });
 
-export const scheduledAlarmsTable = sqliteTable("scheduled_alarms", {
-  id: text("id").primaryKey(),
-  alarmId: text("alarm_id").notNull(),
-  weekday: integer("weekday"),
-  type: text("type").notNull(),
-  triggerAt: integer("trigger_at").notNull(),
-  payload: text("payload", { mode: "json" }).$type<AlarmSnapshot>().notNull(),
-  createdAt: integer("created_at").notNull(),
-  updatedAt: integer("updated_at").notNull(),
-});
+export const alarmRegistrationsTable = sqliteTable(
+  "alarm_registrations",
+  {
+    alarmId: text("alarm_id").notNull(),
+    type: text("type").notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.alarmId, table.type] }),
+  }),
+);
 
 export const activeAlarmTable = sqliteTable("active_alarm", {
   id: text("id").primaryKey(),

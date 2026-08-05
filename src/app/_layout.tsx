@@ -3,7 +3,7 @@ import {
   reconcileSchedules,
   snapshotToQueryParams,
 } from "@/alarms/scheduling";
-import { useScheduledAlarmsStore } from "@/store/scheduledAlarmsStore";
+import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
 import { useAlarmStore } from "@/store/alarmStore";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import {
@@ -64,7 +64,7 @@ function AlarmStoreInit() {
   useAlarmNotifications();
   useEffect(() => {
     useAlarmStore.getState().loadAlarms();
-    useScheduledAlarmsStore.getState().load();
+    useAlarmRegistrationsStore.getState().load();
 
     const sub = Linking.addEventListener("url", ({ url }) =>
       handleAlarmUrl(url, router),
@@ -85,7 +85,7 @@ function AlarmStoreInit() {
     });
 
     let alarmsReady = useAlarmStore.getState().loaded;
-    let registryReady = useScheduledAlarmsStore.getState().loaded;
+    let registryReady = useAlarmRegistrationsStore.getState().loaded;
     const tryReconcile = () => {
       if (alarmsReady && registryReady) void reconcileSchedules();
     };
@@ -101,7 +101,7 @@ function AlarmStoreInit() {
     if (!registryReady) {
       disposers.push(
         runOnceLoaded(
-          useScheduledAlarmsStore as unknown as StoreWithLoaded,
+          useAlarmRegistrationsStore as unknown as StoreWithLoaded,
           () => {
             registryReady = true;
             tryReconcile();

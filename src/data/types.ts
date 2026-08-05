@@ -32,16 +32,3 @@ export interface AlarmSnapshot {
   notificationTitle: string;
   notificationBody: string;
 }
-
-export type ScheduledAlarmType = "weekly" | "snooze" | "oneshot";
-
-export interface ScheduledAlarmRecord {
-  id: string;
-  alarmId: string;
-  weekday: number | null;
-  type: ScheduledAlarmType;
-  triggerAt: number;
-  payload: AlarmSnapshot;
-  createdAt: number;
-  updatedAt: number;
-}

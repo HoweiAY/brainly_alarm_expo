@@ -10,18 +10,11 @@ import {
   DEFAULT_ALARM_NOTIFICATION_BODY,
   DEFAULT_ALARM_NOTIFICATION_TITLE,
 } from "@/notifications/AlarmNotifications";
-import type { alarmsTable, scheduledAlarmsTable } from "./schema";
-import type {
-  Alarm,
-  AlarmSnapshot,
-  ScheduledAlarmRecord,
-  ScheduledAlarmType,
-} from "./types";
+import type { alarmsTable } from "./schema";
+import type { Alarm, AlarmSnapshot } from "./types";
 
 type AlarmRow = typeof alarmsTable.$inferSelect;
 type AlarmInsert = typeof alarmsTable.$inferInsert;
-type ScheduledAlarmRow = typeof scheduledAlarmsTable.$inferSelect;
-type ScheduledAlarmInsert = typeof scheduledAlarmsTable.$inferInsert;
 
 export function rowToAlarm(row: AlarmRow): Alarm {
   return {
@@ -96,49 +89,5 @@ export function alarmToSnapshot(
     isSnoozed,
     notificationTitle: DEFAULT_ALARM_NOTIFICATION_TITLE,
     notificationBody: DEFAULT_ALARM_NOTIFICATION_BODY,
-  };
-}
-
-export function scheduledRowToRecord(
-  row: ScheduledAlarmRow,
-): ScheduledAlarmRecord {
-  return {
-    id: row.id,
-    alarmId: row.alarmId,
-    weekday: row.weekday,
-    type: row.type as ScheduledAlarmType,
-    triggerAt: row.triggerAt,
-    payload: row.payload,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
-}
-
-export function recordToInsert(
-  record: Omit<ScheduledAlarmRecord, "createdAt" | "updatedAt">,
-  now: number,
-): ScheduledAlarmInsert {
-  return {
-    id: record.id,
-    alarmId: record.alarmId,
-    weekday: record.weekday,
-    type: record.type,
-    triggerAt: record.triggerAt,
-    payload: record.payload,
-    createdAt: now,
-    updatedAt: now,
-  };
-}
-
-export function recordToUpdateSet(
-  record: Omit<ScheduledAlarmRecord, "createdAt" | "updatedAt">,
-  now: number,
-): Omit<ScheduledAlarmInsert, "id" | "createdAt" | "alarmId"> {
-  return {
-    weekday: record.weekday,
-    type: record.type,
-    triggerAt: record.triggerAt,
-    payload: record.payload,
-    updatedAt: now,
   };
 }

@@ -1,13 +1,7 @@
 import { alarmToSnapshot } from "@/data/conversions";
 import { useAlarmStore } from "@/store/alarmStore";
-import { useScheduledAlarmsStore } from "@/store/scheduledAlarmsStore";
-import type {
-  Alarm,
-  AlarmSnapshot,
-  Difficulty,
-  ScheduledAlarmType,
-  TaskType,
-} from "@/data/types";
+import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
+import type { Alarm, AlarmSnapshot, Difficulty, TaskType } from "@/data/types";
 import { getAlarmScheduler } from "./AlarmScheduler";
 import {
   DEFAULT_ALARM_NOTIFICATION_BODY,
@@ -30,33 +24,20 @@ export {
 
 const SNOOZE_MINUTES = 5;
 
-interface RegistryEntry {
-  id: string;
-  alarmId: string;
-  weekday: number | null;
-  type: ScheduledAlarmType;
-  triggerAt: number;
-  payload: AlarmSnapshot;
-}
-
 export async function setAlarm(alarm: Alarm): Promise<void> {
   const native = getAlarmScheduler();
+  const registry = useAlarmRegistrationsStore.getState();
   await native.forceDismissFiring();
   await native.cancelAllForAlarm(alarm.id);
-  await useScheduledAlarmsStore.getState().removeForAlarm(alarm.id);
 
-  if (!alarm.enabled) return;
+  if (!alarm.enabled) {
+    await registry.remove(alarm.id, "weekly");
+    return;
+  }
 
   const weekdays = expandWeekdays(alarm);
-  const store = useScheduledAlarmsStore.getState();
   for (const weekday of weekdays) {
     const identifier = identifierFor(alarm.id, weekday);
-    const triggerAt = nextWeeklyTriggerTime(
-      weekday,
-      alarm.hour,
-      alarm.minute,
-      Date.now(),
-    );
     const payload = alarmToSnapshot(alarm, weekday, false);
     await native.scheduleWeekly({
       identifier,
@@ -67,21 +48,14 @@ export async function setAlarm(alarm: Alarm): Promise<void> {
       soundUri: alarm.sound,
       payload,
     });
-    await store.upsert({
-      id: identifier,
-      alarmId: alarm.id,
-      weekday,
-      type: "weekly",
-      triggerAt,
-      payload,
-    });
   }
+  await registry.upsert(alarm.id, "weekly");
 }
 
 export async function cancelAlarm(alarm: { id: string }): Promise<void> {
   const native = getAlarmScheduler();
   await native.cancelAllForAlarm(alarm.id);
-  await useScheduledAlarmsStore.getState().removeForAlarm(alarm.id);
+  await useAlarmRegistrationsStore.getState().removeForAlarm(alarm.id);
 }
 
 export async function rescheduleWeekly(alarm: Alarm): Promise<void> {
@@ -91,9 +65,14 @@ export async function rescheduleWeekly(alarm: Alarm): Promise<void> {
 
 export async function resetAlarm(snapshot: AlarmSnapshot): Promise<void> {
   const native = getAlarmScheduler();
+  const registry = useAlarmRegistrationsStore.getState();
   const identifier = identifierFor(snapshot.alarmId, snapshot.weekday);
   await native.cancel(identifier);
-  await useScheduledAlarmsStore.getState().remove(identifier);
+
+  if (snapshot.isSnoozed) {
+    await registry.remove(snapshot.alarmId, "snooze");
+  }
+
   if (snapshot.enabled) {
     const triggerAt = nextWeeklyTriggerTime(
       snapshot.weekday,
@@ -110,19 +89,12 @@ export async function resetAlarm(snapshot: AlarmSnapshot): Promise<void> {
       soundUri: soundUriFromSnapshot(snapshot),
       payload,
     });
-    await useScheduledAlarmsStore.getState().upsert({
-      id: identifier,
-      alarmId: snapshot.alarmId,
-      weekday: snapshot.weekday,
-      type: "weekly",
-      triggerAt,
-      payload,
-    });
   }
 }
 
 export async function snoozeAlarm(snapshot: AlarmSnapshot): Promise<void> {
   const native = getAlarmScheduler();
+  const registry = useAlarmRegistrationsStore.getState();
   await native.stopAlarmSound();
   const identifier = snoozeIdentifierFor(snapshot.alarmId);
   await native.cancel(identifier);
@@ -135,87 +107,48 @@ export async function snoozeAlarm(snapshot: AlarmSnapshot): Promise<void> {
     soundUri: soundUriFromSnapshot(snapshot),
     payload,
   });
-  await useScheduledAlarmsStore.getState().upsert({
-    id: identifier,
-    alarmId: snapshot.alarmId,
-    weekday: null,
-    type: "snooze",
-    triggerAt,
-    payload,
-  });
+  await registry.upsert(snapshot.alarmId, "snooze");
 }
 
 export async function reconcileSchedules(): Promise<void> {
   try {
     const alarms = useAlarmStore.getState().alarms;
-    const registry = useScheduledAlarmsStore.getState();
+    const registry = useAlarmRegistrationsStore.getState();
     const native = getAlarmScheduler();
+    const alarmIds = new Set(alarms.map((a) => a.id));
 
-    const expected = new Map<string, RegistryEntry>();
-    let weeklySlotCount = 0;
+    for (const record of registry.getAll()) {
+      if (!alarmIds.has(record.alarmId)) {
+        await native.cancelAllForAlarm(record.alarmId);
+        await registry.removeForAlarm(record.alarmId);
+      }
+    }
+
     for (const alarm of alarms) {
       if (!alarm.enabled) {
-        await native.cancelAllForAlarm(alarm.id);
-        await registry.removeForAlarm(alarm.id);
+        for (let w = 0; w <= 6; w++) {
+          await native.cancel(identifierFor(alarm.id, w));
+        }
+        await registry.remove(alarm.id, "weekly");
         continue;
       }
+
       const weekdays = expandWeekdays(alarm);
-      weeklySlotCount += weekdays.length;
       for (const weekday of weekdays) {
-        const id = identifierFor(alarm.id, weekday);
-        const triggerAt = nextWeeklyTriggerTime(
-          weekday,
-          alarm.hour,
-          alarm.minute,
-          Date.now(),
-        );
+        const identifier = identifierFor(alarm.id, weekday);
+        await native.cancel(identifier);
         const payload = alarmToSnapshot(alarm, weekday, false);
-        expected.set(id, {
-          id,
+        await native.scheduleWeekly({
+          identifier,
           alarmId: alarm.id,
           weekday,
-          type: "weekly",
-          triggerAt,
+          hour: alarm.hour,
+          minute: alarm.minute,
+          soundUri: alarm.sound,
           payload,
         });
       }
-    }
-
-    const IOS_NOTIFICATION_CAP = 64;
-    if (weeklySlotCount > IOS_NOTIFICATION_CAP * 0.75) {
-      console.warn(
-        `reconcileSchedules: ${weeklySlotCount} weekly slots scheduled, approaching the iOS 64-notification cap`,
-      );
-    }
-
-    for (const record of registry.getAll()) {
-      if (!expected.has(record.id)) {
-        await native.cancel(record.id);
-        await registry.remove(record.id);
-      }
-    }
-
-    for (const entry of expected.values()) {
-      const existing = registry.getById(entry.id);
-      const needsReschedule =
-        !existing ||
-        existing.triggerAt !== entry.triggerAt ||
-        existing.payload.hour !== entry.payload.hour ||
-        existing.payload.minute !== entry.payload.minute ||
-        existing.payload.enabled !== entry.payload.enabled;
-      if (!needsReschedule) continue;
-      const alarm = alarms.find((a) => a.id === entry.alarmId);
-      if (!alarm) continue;
-      await native.scheduleWeekly({
-        identifier: entry.id,
-        alarmId: entry.alarmId,
-        weekday: entry.weekday ?? 0,
-        hour: alarm.hour,
-        minute: alarm.minute,
-        soundUri: alarm.sound,
-        payload: entry.payload,
-      });
-      await registry.upsert(entry);
+      await registry.upsert(alarm.id, "weekly");
     }
   } catch (e) {
     console.warn("reconcileSchedules failed", e);

@@ -5,10 +5,11 @@ import {
 } from "@/alarms/scheduling";
 import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
+import { useAlarmStore } from "@/store/alarmStore";
 import { colors, radii, spacing, typography } from "@/theme";
 import { formatTime } from "@/utils/time";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { BackHandler, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -20,11 +21,29 @@ export default function AlarmDisplay() {
     params as Record<string, string | string[] | undefined>,
   );
 
+  const currentAlarm = useAlarmStore((s) =>
+    snapshot ? s.alarms.find((a) => a.id === snapshot.alarmId) : undefined,
+  );
+
+  const effectiveSnapshot = useMemo(
+    () =>
+      snapshot?.isSnoozed && currentAlarm
+        ? {
+            ...snapshot,
+            task: currentAlarm.task,
+            difficulty: currentAlarm.difficulty,
+            roundCount: currentAlarm.rounds,
+            sound: currentAlarm.sound ?? "Default",
+          }
+        : snapshot,
+    [snapshot, currentAlarm],
+  );
+
   useEffect(() => {
-    if (snapshot && !useAlarmFiringStore.getState().activeSnapshot) {
-      useAlarmFiringStore.getState().setActive(snapshot);
+    if (effectiveSnapshot && !useAlarmFiringStore.getState().activeSnapshot) {
+      useAlarmFiringStore.getState().setActive(effectiveSnapshot);
     }
-  }, [snapshot]);
+  }, [effectiveSnapshot]);
 
   useEffect(() => {
     const backSub = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -35,7 +54,7 @@ export default function AlarmDisplay() {
     return () => backSub.remove();
   }, []);
 
-  if (!snapshot) {
+  if (!effectiveSnapshot) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
@@ -53,29 +72,29 @@ export default function AlarmDisplay() {
   }
 
   const handleBegin = () => {
-    void resetAlarm(snapshot);
-    if (snapshot.task === "None") {
+    void resetAlarm(snapshot!);
+    if (effectiveSnapshot.task === "None") {
       void dismiss();
       return;
     }
-    const rounds = String(snapshot.roundCount || 1);
-    const difficulty = snapshot.difficulty;
-    if (snapshot.task === "Shake phone") {
+    const rounds = String(effectiveSnapshot.roundCount || 1);
+    const difficulty = effectiveSnapshot.difficulty;
+    if (effectiveSnapshot.task === "Shake phone") {
       router.push("/tasks/phone-shaking");
-    } else if (snapshot.task === "Memory") {
+    } else if (effectiveSnapshot.task === "Memory") {
       router.push(`/tasks/memory-game/${rounds}/${difficulty}`);
-    } else if (snapshot.task === "Math") {
+    } else if (effectiveSnapshot.task === "Math") {
       router.push(`/tasks/math-equation/${rounds}/${difficulty}`);
     }
   };
 
   const handleOff = () => {
-    void resetAlarm(snapshot);
+    void resetAlarm(snapshot!);
     void dismiss();
   };
 
   const handleSnooze = () => {
-    void snoozeAlarm(snapshot);
+    void snoozeAlarm(snapshot!);
     useAlarmFiringStore.getState().clearActive();
     router.dismissTo("/(main)");
   };
@@ -84,15 +103,15 @@ export default function AlarmDisplay() {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.time}>
-          {formatTime(snapshot.hour, snapshot.minute)}
+          {formatTime(effectiveSnapshot.hour, effectiveSnapshot.minute)}
         </Text>
         <Text style={styles.label}>
-          {snapshot.isSnoozed ? "Snoozed alarm" : "Alarm"}
+          {effectiveSnapshot.isSnoozed ? "Snoozed alarm" : "Alarm"}
         </Text>
-        <Text style={styles.task}>Task: {snapshot.task}</Text>
+        <Text style={styles.task}>Task: {effectiveSnapshot.task}</Text>
       </View>
       <View style={styles.actions}>
-        {snapshot.task === "None" ? (
+        {effectiveSnapshot.task === "None" ? (
           <Pressable
             style={({ pressed }) => [
               styles.button,
@@ -119,7 +138,7 @@ export default function AlarmDisplay() {
             <Text style={styles.primaryButtonText}>Begin</Text>
           </Pressable>
         )}
-        {snapshot.snooze ? (
+        {effectiveSnapshot.snooze ? (
           <Pressable
             style={({ pressed }) => [
               styles.button,
