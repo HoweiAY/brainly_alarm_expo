@@ -26,3 +26,10 @@ export const scheduledAlarmsTable = sqliteTable("scheduled_alarms", {
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });
+
+export const activeAlarmTable = sqliteTable("active_alarm", {
+  id: text("id").primaryKey(),
+  payload: text("payload", { mode: "json" }).$type<AlarmSnapshot>().notNull(),
+  createdAt: integer("created_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});

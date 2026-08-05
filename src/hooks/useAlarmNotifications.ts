@@ -1,11 +1,20 @@
-import { parseAlarmSnapshot, snapshotToQueryParams } from "@/alarms/scheduling";
+import {
+  parseAlarmSnapshot,
+  resetAlarm,
+  snapshotToQueryParams,
+} from "@/alarms/scheduling";
 import { getAlarmScheduler } from "@/alarms/AlarmScheduler";
-import { playAlarmSound, soundUriFromSnapshot } from "@/alarms/sound";
+import {
+  playAlarmSound,
+  stopAlarmSound,
+  soundUriFromSnapshot,
+} from "@/alarms/sound";
 import {
   clearDeliveredAlarmNotifications,
   initAlarmNotifications,
 } from "@/notifications/AlarmNotifications";
 import type { AlarmSnapshot } from "@/data/types";
+import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 import { useEffect } from "react";
@@ -35,6 +44,17 @@ function navigateToAlarm(
   }
 }
 
+export async function dismissOldAlarmIfActive(
+  incoming?: AlarmSnapshot,
+): Promise<void> {
+  const oldSnapshot = useAlarmFiringStore.getState().activeSnapshot;
+  if (!oldSnapshot) return;
+  if (incoming && incoming.alarmId === oldSnapshot.alarmId) return;
+  await stopAlarmSound();
+  await getAlarmScheduler().forceDismissFiring();
+  await resetAlarm(oldSnapshot);
+}
+
 export function useAlarmNotifications() {
   const router = useRouter();
 
@@ -44,10 +64,11 @@ export function useAlarmNotifications() {
     const firedSub = getAlarmScheduler().addListener(
       "onAlarmFired",
       (snapshot) => {
-        // The native side already starts sound playback and (on Android) launches
-        // the alarm screen via the deep link. Use this event only as a fallback
-        // navigation path when the app is already in the foreground.
-        navigateToAlarm(router, snapshot);
+        void (async () => {
+          await dismissOldAlarmIfActive();
+          useAlarmFiringStore.getState().setActive(snapshot);
+          navigateToAlarm(router, snapshot);
+        })();
       },
     );
 
@@ -65,8 +86,12 @@ export function useAlarmNotifications() {
             Record<string, unknown> | undefined,
         );
         if (!snapshot) return;
-        void playAlarmSound(soundUriFromSnapshot(snapshot));
-        navigateToAlarm(router, snapshot);
+        void (async () => {
+          await dismissOldAlarmIfActive(snapshot);
+          useAlarmFiringStore.getState().setActive(snapshot);
+          await playAlarmSound(soundUriFromSnapshot(snapshot));
+          navigateToAlarm(router, snapshot);
+        })();
       },
     );
 
@@ -77,11 +102,13 @@ export function useAlarmNotifications() {
             Record<string, unknown> | undefined,
         );
         if (!snapshot) return;
-        void playAlarmSound(soundUriFromSnapshot(snapshot));
-        navigateToAlarm(router, snapshot);
-        // Collapse to a single active alarm notification: dismiss any other
-        // delivered notifications so a previously-fired alarm alert is replaced.
-        void clearDeliveredAlarmNotifications();
+        void (async () => {
+          await dismissOldAlarmIfActive(snapshot);
+          useAlarmFiringStore.getState().setActive(snapshot);
+          await playAlarmSound(soundUriFromSnapshot(snapshot));
+          navigateToAlarm(router, snapshot);
+          void clearDeliveredAlarmNotifications();
+        })();
       },
     );
 

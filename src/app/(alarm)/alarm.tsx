@@ -4,10 +4,12 @@ import {
   snoozeAlarm,
 } from "@/alarms/scheduling";
 import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
+import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { colors, radii, spacing, typography } from "@/theme";
 import { formatTime } from "@/utils/time";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect } from "react";
+import { BackHandler, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AlarmDisplay() {
@@ -17,6 +19,21 @@ export default function AlarmDisplay() {
   const snapshot = parseAlarmSnapshot(
     params as Record<string, string | string[] | undefined>,
   );
+
+  useEffect(() => {
+    if (snapshot && !useAlarmFiringStore.getState().activeSnapshot) {
+      useAlarmFiringStore.getState().setActive(snapshot);
+    }
+  }, [snapshot]);
+
+  useEffect(() => {
+    const backSub = BackHandler.addEventListener("hardwareBackPress", () => {
+      const active = useAlarmFiringStore.getState().activeSnapshot;
+      if (active) return true;
+      return false;
+    });
+    return () => backSub.remove();
+  }, []);
 
   if (!snapshot) {
     return (
@@ -59,6 +76,7 @@ export default function AlarmDisplay() {
 
   const handleSnooze = () => {
     void snoozeAlarm(snapshot);
+    useAlarmFiringStore.getState().clearActive();
     router.dismissTo("/(main)");
   };
 

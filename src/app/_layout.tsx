@@ -5,7 +5,11 @@ import {
 } from "@/alarms/scheduling";
 import { useScheduledAlarmsStore } from "@/store/scheduledAlarmsStore";
 import { useAlarmStore } from "@/store/alarmStore";
-import { useAlarmNotifications } from "@/hooks/useAlarmNotifications";
+import { useAlarmFiringStore } from "@/store/alarmFiringStore";
+import {
+  dismissOldAlarmIfActive,
+  useAlarmNotifications,
+} from "@/hooks/useAlarmNotifications";
 import * as Linking from "expo-linking";
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -45,10 +49,14 @@ function handleAlarmUrl(
   >;
   const snapshot = parseAlarmSnapshot(queryParams);
   if (!snapshot) return;
-  router.replace({
-    pathname: "/alarm",
-    params: snapshotToQueryParams(snapshot),
-  });
+  void (async () => {
+    await dismissOldAlarmIfActive(snapshot);
+    useAlarmFiringStore.getState().setActive(snapshot);
+    router.replace({
+      pathname: "/alarm",
+      params: snapshotToQueryParams(snapshot),
+    });
+  })();
 }
 
 function AlarmStoreInit() {
@@ -61,8 +69,19 @@ function AlarmStoreInit() {
     const sub = Linking.addEventListener("url", ({ url }) =>
       handleAlarmUrl(url, router),
     );
-    Linking.getInitialURL().then((url) => {
-      if (url) handleAlarmUrl(url, router);
+    Linking.getInitialURL().then(async (url) => {
+      if (url) {
+        handleAlarmUrl(url, router);
+        return;
+      }
+      await useAlarmFiringStore.getState().init();
+      const persisted = useAlarmFiringStore.getState().activeSnapshot;
+      if (persisted) {
+        router.replace({
+          pathname: "/alarm",
+          params: snapshotToQueryParams(persisted),
+        });
+      }
     });
 
     let alarmsReady = useAlarmStore.getState().loaded;
