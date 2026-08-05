@@ -5,7 +5,7 @@ import {
   identifierFor,
   nextWeeklyTriggerTime,
   snoozeIdentifierFor,
-} from "../weeklyTrigger";
+} from "@/alarms/weeklyTrigger";
 
 function baseAlarm(over: Partial<Alarm> = {}): Alarm {
   return {
