@@ -69,7 +69,6 @@
     "test": "jest",
     "db:generate": "drizzle-kit generate",
     "build:native": "node ./scripts/build-native-module.js",
-    "db:squash": "node ./scripts/squash-migrations.js",
     "prepare": "husky"
   },
   "lint-staged": {
