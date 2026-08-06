@@ -72,20 +72,24 @@ function AlarmStoreInit() {
     const sub = Linking.addEventListener("url", ({ url }) =>
       handleAlarmUrl(url, router),
     );
-    Linking.getInitialURL().then(async (url) => {
-      if (url) {
-        handleAlarmUrl(url, router);
-        return;
-      }
-      await useAlarmFiringStore.getState().init();
-      const persisted = useAlarmFiringStore.getState().activeSnapshot;
-      if (persisted) {
-        router.replace({
-          pathname: "/alarm",
-          params: snapshotToQueryParams(persisted),
-        });
-      }
-    });
+    Linking.getInitialURL()
+      .then(async (url) => {
+        if (url) {
+          handleAlarmUrl(url, router);
+          return;
+        }
+        await useAlarmFiringStore.getState().init();
+        const persisted = useAlarmFiringStore.getState().activeSnapshot;
+        if (persisted) {
+          router.replace({
+            pathname: "/alarm",
+            params: snapshotToQueryParams(persisted),
+          });
+        }
+      })
+      .catch((err: unknown) => {
+        console.warn("getInitialURL / init failed", err);
+      });
 
     let alarmsReady = useAlarmStore.getState().loaded;
     let registryReady = useAlarmRegistrationsStore.getState().loaded;
