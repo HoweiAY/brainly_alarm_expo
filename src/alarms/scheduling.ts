@@ -31,6 +31,8 @@ export async function setAlarm(alarm: Alarm): Promise<void> {
   await native.cancelAllForAlarm(alarm.id);
 
   if (!alarm.enabled) {
+    await native.cancel(snoozeIdentifierFor(alarm.id));
+    await registry.remove(alarm.id, "snooze");
     await registry.remove(alarm.id, "weekly");
     return;
   }
@@ -129,6 +131,8 @@ export async function reconcileSchedules(): Promise<void> {
         for (let w = 0; w <= 6; w++) {
           await native.cancel(identifierFor(alarm.id, w));
         }
+        await native.cancel(snoozeIdentifierFor(alarm.id));
+        await registry.remove(alarm.id, "snooze");
         await registry.remove(alarm.id, "weekly");
         continue;
       }
