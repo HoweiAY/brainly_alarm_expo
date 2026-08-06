@@ -1,6 +1,7 @@
 import { alarmToSnapshot } from "@/data/conversions";
 import { useAlarmStore } from "@/store/alarmStore";
 import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
+import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import type { Alarm, AlarmSnapshot, Difficulty, TaskType } from "@/data/types";
 import { getAlarmScheduler } from "./AlarmScheduler";
 import {
@@ -27,7 +28,9 @@ const SNOOZE_MINUTES = 5;
 export async function setAlarm(alarm: Alarm): Promise<void> {
   const native = getAlarmScheduler();
   const registry = useAlarmRegistrationsStore.getState();
-  await native.forceDismissFiring();
+  if (useAlarmFiringStore.getState().activeSnapshot?.alarmId === alarm.id) {
+    await native.forceDismissFiring();
+  }
   await native.cancelAllForAlarm(alarm.id);
 
   if (!alarm.enabled) {
