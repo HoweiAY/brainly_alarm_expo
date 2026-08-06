@@ -7,8 +7,10 @@ import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 export function useAlarmDismissal() {
   const router = useRouter();
   return useCallback(async () => {
-    await stopAlarmSound();
-    await getAlarmScheduler().forceDismissFiring();
+    await Promise.allSettled([
+      stopAlarmSound(),
+      getAlarmScheduler().forceDismissFiring(),
+    ]);
     useAlarmFiringStore.getState().clearActive();
     router.dismissTo("/(main)");
   }, [router]);
