@@ -101,6 +101,10 @@ export const useAlarmRegistrationsStore = create<AlarmRegistrationsStoreState>(
             ],
             set: { alarmId, type },
           });
+        const records = get().records;
+        if (!records.some((r) => r.alarmId === alarmId && r.type === type)) {
+          set({ records: [...records, { alarmId, type }] });
+        }
       },
 
       remove: async (alarmId, type) => {
@@ -113,6 +117,11 @@ export const useAlarmRegistrationsStore = create<AlarmRegistrationsStoreState>(
               eq(alarmRegistrationsTable.type, type),
             ),
           );
+        set({
+          records: get().records.filter(
+            (r) => !(r.alarmId === alarmId && r.type === type),
+          ),
+        });
       },
 
       removeForAlarm: async (alarmId) => {
@@ -120,6 +129,7 @@ export const useAlarmRegistrationsStore = create<AlarmRegistrationsStoreState>(
         await db
           .delete(alarmRegistrationsTable)
           .where(eq(alarmRegistrationsTable.alarmId, alarmId));
+        set({ records: get().records.filter((r) => r.alarmId !== alarmId) });
       },
 
       getAll: () => get().records,
