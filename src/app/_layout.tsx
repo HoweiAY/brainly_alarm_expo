@@ -43,6 +43,7 @@ function handleAlarmUrl(
   router: ReturnType<typeof useRouter>,
 ): void {
   const parsed = Linking.parse(url);
+  if (parsed.path !== "alarm") return;
   const queryParams = (parsed.queryParams ?? {}) as Record<
     string,
     string | string[] | undefined
@@ -50,6 +51,8 @@ function handleAlarmUrl(
   const snapshot = parseAlarmSnapshot(queryParams);
   if (!snapshot) return;
   void (async () => {
+    const alarm = await useAlarmStore.getState().getAlarmById(snapshot.alarmId);
+    if (!alarm) return;
     await dismissOldAlarmIfActive(snapshot);
     useAlarmFiringStore.getState().setActive(snapshot);
     router.replace({
