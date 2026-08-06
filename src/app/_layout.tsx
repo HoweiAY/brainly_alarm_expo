@@ -87,7 +87,17 @@ function AlarmStoreInit() {
     let alarmsReady = useAlarmStore.getState().loaded;
     let registryReady = useAlarmRegistrationsStore.getState().loaded;
     const tryReconcile = () => {
-      if (alarmsReady && registryReady) void reconcileSchedules();
+      if (alarmsReady && registryReady) {
+        const alarmInitError = (
+          useAlarmStore.getState() as { initError?: string | null }
+        ).initError;
+        const regInitError = useAlarmRegistrationsStore.getState().initError;
+        if (alarmInitError)
+          console.warn("alarmStore init error:", alarmInitError);
+        if (regInitError)
+          console.warn("alarmRegistrationsStore init error:", regInitError);
+        void reconcileSchedules();
+      }
     };
     const disposers: (() => void)[] = [];
     if (!alarmsReady) {

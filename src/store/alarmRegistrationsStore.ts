@@ -74,6 +74,7 @@ export const useAlarmRegistrationsStore = create<AlarmRegistrationsStoreState>(
           } catch (e) {
             console.error("alarmRegistrationsStore.init failed", e);
             set({
+              loaded: true,
               loading: false,
               initError: e instanceof Error ? e.message : String(e),
             });
