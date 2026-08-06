@@ -72,7 +72,7 @@ export default function AlarmDisplay() {
   }
 
   const handleBegin = () => {
-    void resetAlarm(snapshot!);
+    void resetAlarm(effectiveSnapshot);
     if (effectiveSnapshot.task === "None") {
       void dismiss();
       return;
@@ -89,12 +89,12 @@ export default function AlarmDisplay() {
   };
 
   const handleOff = () => {
-    void resetAlarm(snapshot!);
+    void resetAlarm(effectiveSnapshot);
     void dismiss();
   };
 
   const handleSnooze = () => {
-    void snoozeAlarm(snapshot!);
+    void snoozeAlarm(effectiveSnapshot);
     useAlarmFiringStore.getState().clearActive();
     router.dismissTo("/(main)");
   };
