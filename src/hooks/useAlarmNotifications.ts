@@ -20,6 +20,8 @@ import * as Notifications from "expo-notifications";
 import { useEffect } from "react";
 import { AppState } from "react-native";
 
+let activeActivationId: string | null = null;
+
 function snapshotFromNotificationData(
   data: Record<string, unknown> | undefined,
 ): AlarmSnapshot | null {
@@ -55,6 +57,29 @@ export async function dismissOldAlarmIfActive(
   await resetAlarm(oldSnapshot);
 }
 
+async function activateAlarmForNotification(
+  snapshot: AlarmSnapshot,
+  router: ReturnType<typeof useRouter>,
+  shouldPlaySound: boolean,
+  shouldClearDelivered: boolean,
+): Promise<void> {
+  if (activeActivationId === snapshot.alarmId) return;
+  activeActivationId = snapshot.alarmId;
+  try {
+    await dismissOldAlarmIfActive(snapshot);
+    useAlarmFiringStore.getState().setActive(snapshot);
+    if (shouldPlaySound) {
+      await playAlarmSound(soundUriFromSnapshot(snapshot));
+    }
+    navigateToAlarm(router, snapshot);
+    if (shouldClearDelivered) {
+      void clearDeliveredAlarmNotifications();
+    }
+  } finally {
+    activeActivationId = null;
+  }
+}
+
 export function useAlarmNotifications() {
   const router = useRouter();
 
@@ -64,11 +89,7 @@ export function useAlarmNotifications() {
     const firedSub = getAlarmScheduler().addListener(
       "onAlarmFired",
       (snapshot) => {
-        void (async () => {
-          await dismissOldAlarmIfActive();
-          useAlarmFiringStore.getState().setActive(snapshot);
-          navigateToAlarm(router, snapshot);
-        })();
+        void activateAlarmForNotification(snapshot, router, false, false);
       },
     );
 
@@ -86,12 +107,7 @@ export function useAlarmNotifications() {
             Record<string, unknown> | undefined,
         );
         if (!snapshot) return;
-        void (async () => {
-          await dismissOldAlarmIfActive(snapshot);
-          useAlarmFiringStore.getState().setActive(snapshot);
-          await playAlarmSound(soundUriFromSnapshot(snapshot));
-          navigateToAlarm(router, snapshot);
-        })();
+        void activateAlarmForNotification(snapshot, router, true, false);
       },
     );
 
@@ -102,13 +118,7 @@ export function useAlarmNotifications() {
             Record<string, unknown> | undefined,
         );
         if (!snapshot) return;
-        void (async () => {
-          await dismissOldAlarmIfActive(snapshot);
-          useAlarmFiringStore.getState().setActive(snapshot);
-          await playAlarmSound(soundUriFromSnapshot(snapshot));
-          navigateToAlarm(router, snapshot);
-          void clearDeliveredAlarmNotifications();
-        })();
+        void activateAlarmForNotification(snapshot, router, true, true);
       },
     );
 
