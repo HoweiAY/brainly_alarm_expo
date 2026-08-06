@@ -1,4 +1,5 @@
 import { useMathEquation } from "@/tasks/useMathEquation";
+import { parseTaskParams } from "@/tasks/params";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
@@ -13,9 +14,7 @@ export default function MathEquationScreen() {
       rounds?: string;
       difficulty?: string;
     }>();
-  const rounds = Number(roundsParam) || 3;
-  const difficulty = (difficultyParam ?? "Normal") as
-    "Easy" | "Normal" | "Hard";
+  const { rounds, difficulty } = parseTaskParams(roundsParam, difficultyParam);
   const [focused, setFocused] = useState(false);
 
   const { equation, input, isCorrect, currentRound, setInput, submit } =

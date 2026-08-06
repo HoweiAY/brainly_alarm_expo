@@ -1,5 +1,6 @@
 import { type TileState } from "@/tasks/memoryGame";
 import { useMemoryGame } from "@/tasks/useMemoryGame";
+import { parseTaskParams } from "@/tasks/params";
 import { useLocalSearchParams } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,9 +21,7 @@ export default function MemoryGameScreen() {
       rounds?: string;
       difficulty?: string;
     }>();
-  const rounds = Number(roundsParam) || 3;
-  const difficulty = (difficultyParam ?? "Normal") as
-    "Easy" | "Normal" | "Hard";
+  const { rounds, difficulty } = parseTaskParams(roundsParam, difficultyParam);
 
   const {
     gridItems,
