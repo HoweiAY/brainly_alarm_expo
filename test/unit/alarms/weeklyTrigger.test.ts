@@ -88,4 +88,18 @@ describe("nextWeeklyTriggerTime", () => {
     const t = nextWeeklyTriggerTime(6, 9, 0, now);
     expect(new Date(t).getDate()).toBe(7);
   });
+
+  it("advances when now has seconds past the candidate minute", () => {
+    const nowWithSeconds = new Date(2024, 0, 3, 10, 0, 30, 0).getTime();
+    const t = nextWeeklyTriggerTime(2, 10, 0, nowWithSeconds);
+    expect(new Date(t).getDate()).toBe(10);
+    expect(new Date(t).getHours()).toBe(10);
+  });
+
+  it("does not advance when now is before the candidate minute", () => {
+    const nowBeforeMinute = new Date(2024, 0, 3, 9, 59, 30, 0).getTime();
+    const t = nextWeeklyTriggerTime(2, 10, 0, nowBeforeMinute);
+    expect(new Date(t).getDate()).toBe(3);
+    expect(new Date(t).getHours()).toBe(10);
+  });
 });

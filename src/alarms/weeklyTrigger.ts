@@ -35,7 +35,7 @@ export function nextWeeklyTriggerTime(
     .millisecond(0);
   if (reset) {
     candidate = candidate.add(7, "day");
-  } else if (candidate.valueOf() < nowDayjs.valueOf()) {
+  } else if (candidate.valueOf() <= now) {
     candidate = candidate.add(7, "day");
   }
   return candidate.valueOf();
