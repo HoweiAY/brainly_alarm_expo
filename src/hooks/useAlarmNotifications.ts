@@ -52,8 +52,10 @@ export async function dismissOldAlarmIfActive(
   const oldSnapshot = useAlarmFiringStore.getState().activeSnapshot;
   if (!oldSnapshot) return;
   if (incoming && incoming.alarmId === oldSnapshot.alarmId) return;
-  await stopAlarmSound();
-  await getAlarmScheduler().forceDismissFiring();
+  if (!incoming) {
+    await stopAlarmSound();
+    await getAlarmScheduler().forceDismissFiring();
+  }
   await resetAlarm(oldSnapshot);
 }
 
