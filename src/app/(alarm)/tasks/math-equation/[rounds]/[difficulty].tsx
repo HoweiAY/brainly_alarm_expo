@@ -1,27 +1,28 @@
-import { PROTOTYPE_ROUNDS } from "@/tasks/mathEquation";
 import { useMathEquation } from "@/tasks/useMathEquation";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { parseTaskParams } from "@/tasks/params";
+import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radii, spacing, typography } from "@/theme";
+import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
 
 export default function MathEquationScreen() {
-  const router = useRouter();
-  const { rounds, difficulty } = useLocalSearchParams<{
-    rounds?: string;
-    difficulty?: string;
-  }>();
-  void rounds;
-  void difficulty;
+  const dismiss = useAlarmDismissal();
+  const { rounds: roundsParam, difficulty: difficultyParam } =
+    useLocalSearchParams<{
+      rounds?: string;
+      difficulty?: string;
+    }>();
+  const { rounds, difficulty } = parseTaskParams(roundsParam, difficultyParam);
   const [focused, setFocused] = useState(false);
 
   const { equation, input, isCorrect, currentRound, setInput, submit } =
     useMathEquation({
-      rounds: PROTOTYPE_ROUNDS,
+      rounds,
+      difficulty,
       onComplete: () => {
-        router.dismissAll();
-        router.replace("/(main)");
+        void dismiss();
       },
     });
 
@@ -32,7 +33,7 @@ export default function MathEquationScreen() {
       </View>
       <View style={styles.column}>
         <Text style={styles.round}>
-          {currentRound}/{PROTOTYPE_ROUNDS}
+          {currentRound}/{rounds}
         </Text>
         <Text style={styles.instruction}>
           What is the result of the expression?

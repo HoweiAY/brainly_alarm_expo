@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   DIFFICULTY_CONFIG,
-  PROTOTYPE_DIFFICULTY,
+  type Difficulty,
   type TileState,
   evaluateTap,
   generateOrder,
@@ -10,6 +10,7 @@ import {
 
 export interface UseMemoryGameOptions {
   rounds: number;
+  difficulty: Difficulty;
   onComplete: () => void;
 }
 
@@ -25,9 +26,10 @@ export interface UseMemoryGameResult {
 
 export function useMemoryGame({
   rounds,
+  difficulty,
   onComplete,
 }: UseMemoryGameOptions): UseMemoryGameResult {
-  const config = DIFFICULTY_CONFIG[PROTOTYPE_DIFFICULTY];
+  const config = DIFFICULTY_CONFIG[difficulty];
 
   const [gridItems, setGridItems] = useState<TileState[]>(() =>
     newGrid(config.gridSize),

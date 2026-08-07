@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["AlarmSchedulerModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.alarmscheduler.AlarmSchedulerModule"]
+  }
+}

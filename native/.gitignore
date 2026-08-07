@@ -1,0 +1,19 @@
+# Gradle / Android build artifacts
+android/build/
+android/.cxx/
+android/.gradle
+android/local.properties
+
+# CocoaPods / iOS build artifacts
+ios/Pods/
+ios/build/
+ios/DerivedData/
+*.xcworkspace
+Podfile.lock
+
+# Kotlin / metadata caches
+.kotlin/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db

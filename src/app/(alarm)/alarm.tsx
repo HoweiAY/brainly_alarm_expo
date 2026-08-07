@@ -1,0 +1,223 @@
+import {
+  parseAlarmSnapshot,
+  resetAlarm,
+  snoozeAlarm,
+} from "@/alarms/scheduling";
+import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
+import { useAlarmFiringStore } from "@/store/alarmFiringStore";
+import { useAlarmStore } from "@/store/alarmStore";
+import { colors, radii, spacing, typography } from "@/theme";
+import { formatTime } from "@/utils/time";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useMemo } from "react";
+import { BackHandler, Pressable, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function AlarmDisplay() {
+  const router = useRouter();
+  const dismiss = useAlarmDismissal();
+  const params = useLocalSearchParams();
+  const snapshot = parseAlarmSnapshot(
+    params as Record<string, string | string[] | undefined>,
+  );
+
+  const currentAlarm = useAlarmStore((s) =>
+    snapshot ? s.alarms.find((a) => a.id === snapshot.alarmId) : undefined,
+  );
+
+  const effectiveSnapshot = useMemo(
+    () =>
+      snapshot?.isSnoozed && currentAlarm
+        ? {
+            ...snapshot,
+            task: currentAlarm.task,
+            difficulty: currentAlarm.difficulty,
+            roundCount: currentAlarm.rounds,
+            sound: currentAlarm.sound ?? "Default",
+          }
+        : snapshot,
+    [snapshot, currentAlarm],
+  );
+
+  useEffect(() => {
+    if (effectiveSnapshot && !useAlarmFiringStore.getState().activeSnapshot) {
+      useAlarmFiringStore.getState().setActive(effectiveSnapshot);
+    }
+  }, [effectiveSnapshot]);
+
+  useEffect(() => {
+    const backSub = BackHandler.addEventListener("hardwareBackPress", () => {
+      const active = useAlarmFiringStore.getState().activeSnapshot;
+      if (active) return true;
+      return false;
+    });
+    return () => backSub.remove();
+  }, []);
+
+  if (!effectiveSnapshot) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.center}>
+          <Text style={styles.missing}>No active alarm.</Text>
+          <Pressable
+            style={styles.button}
+            accessibilityRole="button"
+            onPress={() => void dismiss()}
+          >
+            <Text style={styles.buttonText}>Dismiss</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const handleBegin = () => {
+    void resetAlarm(effectiveSnapshot);
+    if (effectiveSnapshot.task === "None") {
+      void dismiss();
+      return;
+    }
+    const rounds = String(effectiveSnapshot.roundCount || 1);
+    const difficulty = effectiveSnapshot.difficulty;
+    if (effectiveSnapshot.task === "Shake phone") {
+      router.push("/tasks/phone-shaking");
+    } else if (effectiveSnapshot.task === "Memory") {
+      router.push(`/tasks/memory-game/${rounds}/${difficulty}`);
+    } else if (effectiveSnapshot.task === "Math") {
+      router.push(`/tasks/math-equation/${rounds}/${difficulty}`);
+    }
+  };
+
+  const handleOff = () => {
+    void resetAlarm(effectiveSnapshot);
+    void dismiss();
+  };
+
+  const handleSnooze = () => {
+    void snoozeAlarm(effectiveSnapshot);
+    useAlarmFiringStore.getState().clearActive();
+    router.dismissTo("/(main)");
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.time}>
+          {formatTime(effectiveSnapshot.hour, effectiveSnapshot.minute)}
+        </Text>
+        <Text style={styles.label}>
+          {effectiveSnapshot.isSnoozed ? "Snoozed alarm" : "Alarm"}
+        </Text>
+        <Text style={styles.task}>Task: {effectiveSnapshot.task}</Text>
+      </View>
+      <View style={styles.actions}>
+        {effectiveSnapshot.task === "None" ? (
+          <Pressable
+            style={({ pressed }) => [
+              styles.button,
+              styles.primaryButton,
+              pressed && styles.buttonPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Turn off"
+            onPress={handleOff}
+          >
+            <Text style={styles.primaryButtonText}>Turn Off</Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            style={({ pressed }) => [
+              styles.button,
+              styles.primaryButton,
+              pressed && styles.buttonPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Begin task"
+            onPress={handleBegin}
+          >
+            <Text style={styles.primaryButtonText}>Begin</Text>
+          </Pressable>
+        )}
+        {effectiveSnapshot.snooze ? (
+          <Pressable
+            style={({ pressed }) => [
+              styles.button,
+              styles.secondaryButton,
+              pressed && styles.buttonPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Snooze"
+            onPress={handleSnooze}
+          >
+            <Text style={styles.buttonText}>Snooze</Text>
+          </Pressable>
+        ) : null}
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  center: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.lg,
+  },
+  content: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+  },
+  time: {
+    ...typography.h1,
+    fontSize: 48,
+    lineHeight: 64,
+    color: colors.primary,
+  },
+  label: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
+  task: {
+    ...typography.caption,
+    color: colors.textSubtle,
+  },
+  missing: {
+    ...typography.h2,
+    color: colors.textMuted,
+  },
+  actions: {
+    gap: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xxl,
+  },
+  button: {
+    paddingVertical: spacing.lg,
+    borderRadius: radii.lg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  primaryButton: {
+    backgroundColor: colors.primary,
+  },
+  secondaryButton: {
+    backgroundColor: colors.surface,
+  },
+  buttonPressed: {
+    opacity: 0.8,
+  },
+  buttonText: {
+    ...typography.bodyEmphasis,
+    color: colors.text,
+  },
+  primaryButtonText: {
+    ...typography.bodyEmphasis,
+    color: colors.primaryFg,
+  },
+});

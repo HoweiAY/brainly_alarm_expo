@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  PROTOTYPE_DIFFICULTY,
+  type Difficulty,
   evaluateExpression,
   generateEquation,
   parseAnswer,
@@ -8,6 +8,7 @@ import {
 
 export interface UseMathEquationOptions {
   rounds: number;
+  difficulty: Difficulty;
   onComplete: () => void;
 }
 
@@ -22,10 +23,11 @@ export interface UseMathEquationResult {
 
 export function useMathEquation({
   rounds,
+  difficulty,
   onComplete,
 }: UseMathEquationOptions): UseMathEquationResult {
   const [equation, setEquation] = useState<string>(() =>
-    generateEquation(PROTOTYPE_DIFFICULTY),
+    generateEquation(difficulty),
   );
   const [input, setInput] = useState<string>("");
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
@@ -57,7 +59,7 @@ export function useMathEquation({
       } else {
         roundRef.current += 1;
         setCurrentRound(roundRef.current);
-        setEquation(generateEquation(PROTOTYPE_DIFFICULTY));
+        setEquation(generateEquation(difficulty));
       }
     } else {
       setIsCorrect(false);

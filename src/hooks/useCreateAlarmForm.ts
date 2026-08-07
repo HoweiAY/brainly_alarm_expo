@@ -1,8 +1,11 @@
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Alert } from "react-native";
+import { setAlarm } from "@/alarms/scheduling";
+import { findConflictingAlarm } from "@/alarms/conflicts";
 import { weekdays } from "@/data/constants";
 import { useAlarmStore } from "@/store/alarmStore";
+import { formatTime } from "@/utils/time";
 import type { Alarm, Difficulty, TaskType, Weekday } from "@/data/types";
 
 export type Period = "AM" | "PM";
@@ -181,12 +184,32 @@ export function useCreateAlarmForm(
   const handleConfirm = useCallback(() => {
     const draft = buildDraft();
     const store = useAlarmStore.getState();
+    const conflict = findConflictingAlarm(
+      store.alarms,
+      draft,
+      state.alarmId ?? undefined,
+    );
+    if (conflict) {
+      Alert.alert(
+        "Alarm already set",
+        `An alarm with the same time (${formatTime(draft.hour, draft.minute)}) has already been set.`,
+      );
+      return;
+    }
     const persist = async () => {
       try {
+        let alarm: Alarm;
         if (state.alarmId != null) {
-          await store.updateAlarm({ id: state.alarmId, ...draft });
+          alarm = { id: state.alarmId, ...draft };
+          await store.updateAlarm(alarm);
         } else {
-          await store.insertAlarm(draft);
+          const id = await store.insertAlarm(draft);
+          alarm = { id, ...draft };
+        }
+        try {
+          await setAlarm(alarm);
+        } catch (schedErr) {
+          console.error("setAlarm failed (alarm still saved)", schedErr);
         }
         router.back();
       } catch (e) {

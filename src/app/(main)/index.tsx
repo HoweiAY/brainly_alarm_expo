@@ -1,8 +1,10 @@
 import { AlarmCard } from "@/components/AlarmCard";
+import { cancelAlarm, setAlarm } from "@/alarms/scheduling";
+import { findConflictingAlarm } from "@/alarms/conflicts";
 import type { Alarm } from "@/data/types";
 import { useAlarmStore } from "@/store/alarmStore";
 import { colors, radii, spacing, typography } from "@/theme";
-import { computeNextAlarm, formatCountdown } from "@/utils/time";
+import { computeNextAlarm, formatCountdown, formatTime } from "@/utils/time";
 import { Lucide } from "@react-native-vector-icons/lucide";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
@@ -16,7 +18,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const TICK_MS = 60_000;
+const TICK_MS = 1000;
 
 export default function Home() {
   const router = useRouter();
@@ -41,27 +43,75 @@ export default function Home() {
   );
 
   const toggleEnabled = (alarm: Alarm) => {
-    void useAlarmStore
-      .getState()
-      .updateAlarm({ ...alarm, enabled: !alarm.enabled })
-      .catch((e) => {
+    if (!alarm.enabled) {
+      const conflict = findConflictingAlarm(alarms, alarm, alarm.id);
+      if (conflict) {
+        Alert.alert(
+          "Alarm already set",
+          `An alarm with the same time (${formatTime(alarm.hour, alarm.minute)}) has already been set.`,
+        );
+        return;
+      }
+    }
+    const next = { ...alarm, enabled: !alarm.enabled };
+    void (async () => {
+      try {
+        await useAlarmStore.getState().updateAlarm(next);
+        if (next.enabled) await setAlarm(next);
+        else await cancelAlarm(next);
+      } catch (e) {
         console.error("toggleEnabled failed", e);
         Alert.alert("Error", "Could not update the alarm. Please try again.");
-      });
+      }
+    })();
   };
 
   const turnAllOnOff = async () => {
     setOptionsExpanded(false);
     const allOn = alarms.length > 0 && alarms.every((a) => a.enabled);
     const store = useAlarmStore.getState();
+    if (allOn) {
+      const results = await Promise.allSettled(
+        alarms.map(async (a) => {
+          const next = { ...a, enabled: false };
+          await store.updateAlarm(next);
+          await cancelAlarm(next);
+        }),
+      );
+      const failed = results.filter((r) => r.status === "rejected").length;
+      if (failed > 0) {
+        Alert.alert(
+          "Error",
+          `Could not update ${failed} alarm${failed > 1 ? "s" : ""}. Please try again.`,
+        );
+      }
+      return;
+    }
+    let skipped = 0;
     const results = await Promise.allSettled(
-      alarms.map((a) => store.updateAlarm({ ...a, enabled: !allOn })),
+      alarms.map(async (a) => {
+        if (a.enabled) return;
+        const conflict = findConflictingAlarm(alarms, a, a.id);
+        if (conflict) {
+          skipped += 1;
+          return;
+        }
+        const next = { ...a, enabled: true };
+        await store.updateAlarm(next);
+        await setAlarm(next);
+      }),
     );
     const failed = results.filter((r) => r.status === "rejected").length;
     if (failed > 0) {
       Alert.alert(
         "Error",
         `Could not update ${failed} alarm${failed > 1 ? "s" : ""}. Please try again.`,
+      );
+    }
+    if (skipped > 0) {
+      Alert.alert(
+        "Alarm already set",
+        `${skipped} alarm${skipped > 1 ? "s" : ""} not enabled — same time as an existing alarm.`,
       );
     }
   };
@@ -108,7 +158,10 @@ export default function Home() {
   const performDelete = async () => {
     const store = useAlarmStore.getState();
     const results = await Promise.allSettled(
-      [...selectedIds].map((id) => store.deleteAlarm({ id })),
+      [...selectedIds].map(async (id) => {
+        await cancelAlarm({ id });
+        await store.deleteAlarm({ id });
+      }),
     );
     setSelectedIds(new Set());
     setEditEnabled(false);

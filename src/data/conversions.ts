@@ -6,8 +6,12 @@ import {
   taskTypeToStorage,
   weekdayToIndex,
 } from "./constants";
+import {
+  DEFAULT_ALARM_NOTIFICATION_BODY,
+  DEFAULT_ALARM_NOTIFICATION_TITLE,
+} from "@/notifications/AlarmNotifications";
 import type { alarmsTable } from "./schema";
-import type { Alarm } from "./types";
+import type { Alarm, AlarmSnapshot } from "./types";
 
 type AlarmRow = typeof alarmsTable.$inferSelect;
 type AlarmInsert = typeof alarmsTable.$inferInsert;
@@ -63,5 +67,27 @@ export function alarmToUpdateSet(
     sound: alarm.sound,
     isSnooze: alarm.snooze,
     isEnabled: alarm.enabled,
+  };
+}
+
+export function alarmToSnapshot(
+  alarm: Alarm,
+  weekday: number,
+  isSnoozed = false,
+): AlarmSnapshot {
+  return {
+    alarmId: alarm.id,
+    weekday,
+    hour: alarm.hour,
+    minute: alarm.minute,
+    task: alarm.task,
+    roundCount: alarm.rounds,
+    difficulty: alarm.difficulty,
+    sound: alarm.sound ?? "Default",
+    snooze: alarm.snooze,
+    enabled: alarm.enabled,
+    isSnoozed,
+    notificationTitle: DEFAULT_ALARM_NOTIFICATION_TITLE,
+    notificationBody: DEFAULT_ALARM_NOTIFICATION_BODY,
   };
 }

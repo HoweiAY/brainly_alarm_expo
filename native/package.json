@@ -1,0 +1,11 @@
+{
+  "name": "alarm-scheduler",
+  "version": "0.1.0",
+  "description": "Custom Expo module for exact wake-up recurring alarms (Brainly Alarm).",
+  "main": "index.ts",
+  "types": "index.ts",
+  "license": "MIT",
+  "author": "Brainly Alarm",
+  "homepage": "https://github.com/HoweiAY/brainly-alarm",
+  "private": true
+}
