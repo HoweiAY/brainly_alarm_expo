@@ -1,56 +1,194 @@
-# Welcome to your Expo app 👋
+# Brainly Alarm
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A task-based alarm clock app built with **React Native** and **Expo**. To turn off an alarm, you must complete a cognitive or physical task — a memory game, math equations, or shaking your phone — before the sound stops.
 
-## Get started
+> **Note:** This project is a **re-implementation of the original Brainly Alarm native Android app** (Kotlin/Jetpack Compose). The original repository is available at <https://github.com/HoweiAY/brainly-alarm>.
 
-1. Install dependencies
+## About
 
-   ```bash
-   npm install
-   ```
+Many people struggle to wake up due to **sleep inertia** — the grogginess and drowsiness experienced immediately after waking, which leads to disorientation, reduced performance, and oversleeping. Conventional alarm clocks do little to help: one tap and you're back to sleep.
 
-2. Start the app
+Brainly Alarm's philosophy is that waking up should require just enough **mental (or physical) engagement** to bridge the gap between sleep and full alertness. By forcing you to complete a short task before the alarm silences, the app stimulates your brain, combats sleep inertia, and helps you start the day productive.
 
-   ```bash
-   npx expo start
-   ```
+This repository is the **Expo-first re-implementation** of that original app. The authoritative product specifications for this port are in [`docs/`](docs/README.md); the original Kotlin source is reference-only.
 
-In the output, you'll find options to open the app in a
+## Features
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- **Task-based alarm dismissal** — the alarm keeps sounding until you finish the configured task:
+  - **Memory game** — watch a sequence of tiles light up on a grid, then repeat it in order (3×3 grid on Easy/Normal, 4×4 on Hard).
+  - **Math equation** — solve randomly generated arithmetic equations; difficulty controls operand count, ranges, and operators.
+  - **Shake phone** — physically shake the device a target number of times, detected via the accelerometer.
+  - **None** — a plain alarm with no task.
+- **Full alarm management** — create, edit, delete, and toggle multiple alarms from the home screen.
+- **Flexible scheduling** — pick a time with the wheel picker and choose specific weekdays; leaving all days unselected rings every day.
+- **Customizable tasks** — configure the number of rounds (1–5) and difficulty (Easy / Normal / Hard) per alarm.
+- **Alarm sound support** — alarms play the device's default alarm tone; the data model and native player support custom audio URIs.
+- **Snooze** — optional snooze that re-triggers the alarm 5 minutes later.
+- **Exact, wake-up alarms** — precise scheduling that wakes the device, with automatic re-arming after device reboot (Android, via a custom native module).
+- **Alarm notifications & deep links** — a high-priority notification fires with the alarm; tapping it opens the full-screen ringing screen directly.
+- **Local persistence** — all alarms are stored on-device in SQLite with versioned migrations.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Tech Stack
 
-## Get a fresh project
+| Layer            | Technology                                                                                                                                                     |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Language         | TypeScript                                                                                                                                                     |
+| Framework        | [Expo](https://expo.dev) SDK ~57 (managed workflow + dev client), React Native 0.86, React 19                                                                  |
+| Navigation       | [Expo Router](https://docs.expo.dev/router/introduction/) (file-based routing, route groups, full-screen modal alarm flow)                                     |
+| State management | [Zustand](https://github.com/pmndrs/zustand) (+ Immer) — shared `alarmStore`, firing/registration stores                                                       |
+| Persistence      | [expo-sqlite](https://docs.expo.dev/versions/latest/sdk/sqlite/) + [Drizzle ORM](https://orm.drizzle.team) (`drizzle-orm/expo-sqlite`), drizzle-kit migrations |
+| Alarm scheduling | Custom Expo native module (`alarm-scheduler`) — Kotlin on Android (`AlarmManager`, wake-up broadcasts, boot receiver), Swift on iOS                            |
+| Notifications    | `expo-notifications` + deep links (`brainlyalarmexpo://alarm`)                                                                                                 |
+| Sensors          | `expo-sensors` (Accelerometer) for the shake task                                                                                                              |
+| Math evaluation  | [`expr-eval`](https://github.com/silentmatt/expr-eval) (safe expression parsing — no `eval`)                                                                   |
+| UI               | `@expo/ui`, Lucide icons (`@react-native-vector-icons/lucide`), Geist font family                                                                              |
+| Testing          | Jest (unit tests for pure scheduling/task logic)                                                                                                               |
+| Tooling          | ESLint (`eslint-config-expo`), Prettier, Husky + lint-staged, TypeScript                                                                                       |
 
-When you're ready, run:
+> **Note on iOS:** iOS does not allow third-party apps to schedule exact wake-up alarms, so alarm behavior is degraded there compared to Android. This is a platform limitation, not a bug.
+
+## Get Started
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (LTS) and npm
+- **Android:** Android Studio with the Android SDK and a JDK (for building the custom native module)
+- **iOS:** macOS with Xcode and CocoaPods
+- A physical device or emulator/simulator
+
+> **Expo Go is not supported.** The app relies on a custom native module (`alarm-scheduler`), so you must use a [development build](https://docs.expo.dev/develop/development-builds/introduction/) via `expo run:android` / `expo run:ios`.
+
+### Install
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+This also sets up Husky git hooks automatically (via the `prepare` script).
 
-### Other setup steps
+### Run the app
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+# Start the Metro dev server
+npm start
 
-## Learn more
+# Build the native project and run on Android (device or emulator)
+npm run android
 
-To learn more about developing your project with Expo, look at the following resources:
+# Build the native project and run on iOS (simulator or device, macOS only)
+npm run ios
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+The first `expo run:*` invocation runs `expo prebuild` to generate the `android/` / `ios/` native projects, then compiles a dev client. Afterwards, use `npm start` and reload in the dev client for everyday development.
 
-## Join the community
+```bash
+# Web preview (UI only — native alarm scheduling is unavailable)
+npm run web
+```
 
-Join our community of developers creating universal apps.
+### Build the native module
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The custom `alarm-scheduler` module lives in [`native/`](native/). Rebuild it after changing anything under `native/android/` (Kotlin sources, `build.gradle`, `AndroidManifest.xml`) or `native/ios/` (Swift sources, podspec):
+
+```bash
+# Build for both platforms (default), or pass android | ios | all
+npm run build:native
+npm run build:native android
+npm run build:native ios
+```
+
+The script runs `expo prebuild` if the native project directories are missing, then compiles just the module: `./gradlew :expo.modules.alarmscheduler:assembleRelease` on Android, `pod install` on iOS. The module is auto-linked via `expo.autolinking.nativeModulesDir` in `package.json`, and its config plugin (`native/app.plugin.js`) is registered in `app.json`.
+
+### Database migrations
+
+The schema is defined in [`src/data/schema.ts`](src/data/schema.ts) and managed with drizzle-kit. After editing the schema:
+
+```bash
+# Generate a new SQL migration into drizzle/
+npm run db:generate
+```
+
+Migrations are applied automatically at app startup by `src/data/db.ts`. Include the generated `drizzle/` artifacts when committing schema changes.
+
+### Test, lint, and typecheck
+
+```bash
+# Run the Jest unit tests (test/)
+npm test
+
+# Lint with ESLint
+npm run lint
+
+# Typecheck
+npx tsc --noEmit
+
+# Format with Prettier
+npm run format
+```
+
+### All scripts
+
+| Script                            | Description                                                              |
+| --------------------------------- | ------------------------------------------------------------------------ |
+| `npm start`                       | Start the Expo dev server (Metro)                                        |
+| `npm run android`                 | Prebuild (if needed), build, and run the app on Android                  |
+| `npm run ios`                     | Prebuild (if needed), build, and run the app on iOS                      |
+| `npm run web`                     | Start a web preview (no native alarm scheduling)                         |
+| `npm test`                        | Run Jest unit tests                                                      |
+| `npm run lint`                    | Run ESLint                                                               |
+| `npm run format`                  | Format the codebase with Prettier                                        |
+| `npm run db:generate`             | Generate Drizzle SQL migrations from `src/data/schema.ts`                |
+| `npm run build:native [platform]` | Compile the `alarm-scheduler` native module (`android`, `ios`, or `all`) |
+
+## Project Structure
+
+```
+brainly_alarm_expo/
+├── app.json                  # Expo config (plugins, scheme, icons)
+├── package.json              # Dependencies and npm scripts
+├── drizzle.config.ts         # drizzle-kit config (SQLite / expo driver)
+├── babel.config.js           # babel-plugin-inline-import (.sql migrations)
+├── metro.config.js           # Metro config (adds .sql to sourceExts)
+├── jest.config.js            # Jest config
+│
+├── src/
+│   ├── app/                  # Expo Router routes (file-based)
+│   │   ├── _layout.tsx       #   Root stack, store init, deep-link handling
+│   │   ├── (main)/           #   Main group: home (alarm list) + create/edit alarm
+│   │   └── (alarm)/          #   Alarm group (full-screen modal): ringing screen
+│   │       └── tasks/        #     Memory game, math equation, shake screens
+│   ├── alarms/               # Alarm scheduling domain logic (native module facade,
+│   │                         #   weekly triggers, snooze, conflicts, sound)
+│   ├── components/           # Reusable UI (AlarmCard, CreateAlarmForm,
+│   │                         #   TimeWheelPicker, WeekdayTextButton, ...)
+│   ├── data/                 # Persistence: Drizzle schema, db + migrations runner,
+│   │                         #   conversions, constants, types
+│   ├── hooks/                # Shared hooks (useAlarmDismissal, useAlarmNotifications, ...)
+│   ├── notifications/        # Alarm notification channel & content
+│   ├── store/                # Zustand stores (alarmStore, alarmFiringStore,
+│   │                         #   alarmRegistrationsStore)
+│   ├── tasks/                # Pure, testable dismissal-task logic + React hooks
+│   ├── theme/                # Colors, spacing, radii, typography
+│   └── utils/                # Time helpers
+│
+├── native/                   # Custom "alarm-scheduler" Expo native module
+│   ├── android/              #   Kotlin: AlarmSchedulerModule, AlarmReceiver,
+│   │                         #   AlarmSoundService, BootReceiver
+│   ├── ios/                  #   Swift: AlarmSchedulerModule
+│   └── app.plugin.js         #   Expo config plugin
+│
+├── drizzle/                  # Generated SQL migrations + metadata
+├── test/                     # Jest unit tests
+├── scripts/                  # Build tooling (build-native-module.js)
+├── assets/                   # Fonts (Geist), icons, splash images
+├── android/                  # Prebuilt native Android project (generated)
+└── docs/                     # Product & architecture specifications (source of truth)
+```
+
+## Documentation
+
+The [`docs/`](docs/README.md) folder contains the authoritative specifications for this app — the data layer, scheduling system, navigation/UI architecture, dismissal-task state machines, sound/notifications, and the React Native migration guide. Read the relevant doc before modifying a subsystem.
+
+## License
+
+See [LICENSE](LICENSE).
