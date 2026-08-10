@@ -7,9 +7,9 @@ import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { useAlarmStore } from "@/store/alarmStore";
 import { colors, radii, spacing, typography } from "@/theme";
-import { formatTime } from "@/utils/time";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo } from "react";
+import dayjs from "dayjs";
+import { useEffect, useMemo, useState } from "react";
 import { BackHandler, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -52,6 +52,15 @@ export default function AlarmDisplay() {
       return false;
     });
     return () => backSub.remove();
+  }, []);
+
+  const [currentTime, setCurrentTime] = useState(() => dayjs().format("HH:mm"));
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(dayjs().format("HH:mm"));
+    }, 1000);
+    return () => clearInterval(timer);
   }, []);
 
   if (!effectiveSnapshot) {
@@ -102,9 +111,7 @@ export default function AlarmDisplay() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.time}>
-          {formatTime(effectiveSnapshot.hour, effectiveSnapshot.minute)}
-        </Text>
+        <Text style={styles.time}>{currentTime}</Text>
         <Text style={styles.label}>
           {effectiveSnapshot.isSnoozed ? "Snoozed alarm" : "Alarm"}
         </Text>
