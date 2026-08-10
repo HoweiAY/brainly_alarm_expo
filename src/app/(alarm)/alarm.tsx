@@ -138,7 +138,7 @@ export default function AlarmDisplay() {
             <Text style={styles.primaryButtonText}>Begin</Text>
           </Pressable>
         )}
-        {effectiveSnapshot.snooze ? (
+        {effectiveSnapshot.snooze && !effectiveSnapshot.isSnoozed ? (
           <Pressable
             style={({ pressed }) => [
               styles.button,
