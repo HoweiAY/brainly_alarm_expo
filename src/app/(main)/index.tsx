@@ -28,6 +28,8 @@ export default function Home() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [now, setNow] = useState<Date>(() => new Date());
 
+  const snoozedCount = useAlarmStore((s) => s.snoozedCount);
+
   useEffect(() => {
     useAlarmStore.getState().loadAlarms();
   }, []);
@@ -41,6 +43,34 @@ export default function Home() {
     () => formatCountdown(computeNextAlarm(alarms, now)),
     [alarms, now],
   );
+
+  const dismissSnoozed = () => {
+    Alert.alert(
+      "Dismiss snoozed alarms?",
+      `${snoozedCount} snoozed alarm${snoozedCount > 1 ? "s" : ""} will be dismissed.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Dismiss all",
+          style: "destructive",
+          onPress: () => {
+            void (async () => {
+              try {
+                await useAlarmStore.getState().dismissAllSnoozedAlarms();
+              } catch (e) {
+                console.error("dismissSnoozed failed", e);
+                Alert.alert(
+                  "Error",
+                  "Could not dismiss snoozed alarms. Please try again.",
+                );
+              }
+            })();
+          },
+        },
+      ],
+      { cancelable: true },
+    );
+  };
 
   const toggleEnabled = (alarm: Alarm) => {
     if (!alarm.enabled) {
@@ -198,6 +228,24 @@ export default function Home() {
         <Text style={styles.greeting}>Welcome to Brainly Alarm!</Text>
         <Text style={styles.countdown}>{countdown}</Text>
       </View>
+
+      {snoozedCount > 0 ? (
+        <Pressable
+          style={({ pressed }) => [
+            styles.snoozedBadge,
+            pressed && styles.snoozedBadgePressed,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={`${snoozedCount} snoozed alarm${snoozedCount > 1 ? "s" : ""}`}
+          onPress={dismissSnoozed}
+        >
+          <Lucide name="bell" size={16} color={colors.accent} />
+          <Text style={styles.snoozedBadgeText}>
+            {snoozedCount} snoozed alarm{snoozedCount > 1 ? "s" : ""}
+          </Text>
+          <Lucide name="x" size={16} color={colors.accent} />
+        </Pressable>
+      ) : null}
 
       <View style={styles.listContainer}>
         <View
@@ -514,5 +562,28 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.danger,
     fontWeight: "600",
+  },
+  snoozedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  snoozedBadgePressed: {
+    backgroundColor: colors.surfaceElevated,
+  },
+  snoozedBadgeText: {
+    ...typography.caption,
+    color: colors.accent,
+    fontWeight: "600",
+    flex: 1,
+    marginLeft: spacing.sm,
   },
 });
