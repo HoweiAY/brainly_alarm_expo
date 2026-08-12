@@ -40,6 +40,7 @@ export function AlarmCard({
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
       onPress={() => onPress(alarm)}
       onLongPress={() => onLongPress(alarm)}
+      accessibilityLabel={`${formatTime(alarm.hour, alarm.minute)} alarm, ${alarm.task} task, ${getDaysString(alarm.days)}`}
     >
       <View style={styles.left}>
         <Text style={styles.time}>{formatTime(alarm.hour, alarm.minute)}</Text>
