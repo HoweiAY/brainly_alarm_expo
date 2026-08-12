@@ -1,5 +1,5 @@
 import * as SQLite from "expo-sqlite";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { create } from "zustand";
 import { db, dbReady } from "@/data/db";
 import { alarmRegistrationsTable } from "@/data/schema";
@@ -93,22 +93,23 @@ export const useAlarmRegistrationsStore = create<AlarmRegistrationsStoreState>(
 
       upsert: async (alarmId, type) => {
         await dbReady;
-        const existing = get().records.find(
-          (r) => r.alarmId === alarmId && r.type === type,
-        );
-        const generation = existing ? existing.generation + 1 : 0;
-        await db
+        const [returned] = await db
           .insert(alarmRegistrationsTable)
-          .values({ alarmId, type, generation })
+          .values({ alarmId, type, generation: 0 })
           .onConflictDoUpdate({
             target: [
               alarmRegistrationsTable.alarmId,
               alarmRegistrationsTable.type,
             ],
-            set: { generation },
-          });
+            set: { generation: sql`generation + 1` },
+          })
+          .returning();
+        const generation = returned.generation;
+        const exists = get().records.some(
+          (r) => r.alarmId === alarmId && r.type === type,
+        );
         set({
-          records: existing
+          records: exists
             ? get().records.map((r) =>
                 r.alarmId === alarmId && r.type === type
                   ? { ...r, generation }
