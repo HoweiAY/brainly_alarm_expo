@@ -60,7 +60,7 @@ export function computeNextAlarm(
         .second(0)
         .millisecond(0);
       const adjusted =
-        candidate.valueOf() < nowDayjs.valueOf()
+        candidate.valueOf() <= nowDayjs.valueOf()
           ? candidate.add(7, "day")
           : candidate;
       const ms = adjusted.valueOf() - nowDayjs.valueOf();
