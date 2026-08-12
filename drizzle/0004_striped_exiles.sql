@@ -1,0 +1,1 @@
+ALTER TABLE `alarm_registrations` ADD `generation` integer DEFAULT 0 NOT NULL;

@@ -11,6 +11,13 @@ import type { Alarm } from "@/data/types";
 import { colors, radii, spacing, typography } from "@/theme";
 import { formatTime, getDaysString } from "@/utils/time";
 
+const taskIcons = {
+  Math: "sigma",
+  Memory: "brain",
+  "Shake phone": "vibrate",
+  None: "alarm-clock",
+} as const;
+
 interface AlarmCardProps {
   alarm: Alarm;
   editEnabled: boolean;
@@ -33,10 +40,18 @@ export function AlarmCard({
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
       onPress={() => onPress(alarm)}
       onLongPress={() => onLongPress(alarm)}
+      accessibilityLabel={`${formatTime(alarm.hour, alarm.minute)} alarm, ${alarm.task} task, ${getDaysString(alarm.days)}`}
     >
       <View style={styles.left}>
         <Text style={styles.time}>{formatTime(alarm.hour, alarm.minute)}</Text>
-        <Text style={styles.days}>{getDaysString(alarm.days)}</Text>
+        <View style={styles.row}>
+          <Lucide
+            name={taskIcons[alarm.task]}
+            size={14}
+            color={colors.textMuted}
+          />
+          <Text style={styles.days}>{getDaysString(alarm.days)}</Text>
+        </View>
       </View>
       {editEnabled ? (
         <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
@@ -81,6 +96,11 @@ const styles = StyleSheet.create({
   left: {
     flexDirection: "column",
     gap: spacing.xs,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   time: {
     ...typography.numeric,

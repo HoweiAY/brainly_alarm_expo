@@ -10,12 +10,16 @@ import {
 import { db, dbReady } from "@/data/db";
 import { alarmsTable } from "@/data/schema";
 import type { Alarm } from "@/data/types";
+import { getAlarmScheduler } from "@/alarms/AlarmScheduler";
+import { snoozeIdentifierFor } from "@/alarms/weeklyTrigger";
+import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
 
 interface AlarmStoreState {
   alarms: Alarm[];
   loaded: boolean;
   loading: boolean;
   initError: string | null;
+  snoozedCount: number;
   _disposer: (() => void) | null;
   _initializing: boolean;
   init: () => void;
@@ -25,6 +29,7 @@ interface AlarmStoreState {
   deleteAlarm: (alarm: { id: string }) => Promise<void>;
   getAlarmById: (id: string) => Promise<Alarm | null>;
   getAllAlarms: () => Alarm[];
+  dismissAllSnoozedAlarms: () => Promise<number>;
 }
 
 export const useAlarmStore = create<AlarmStoreState>((set, get) => {
@@ -36,11 +41,20 @@ export const useAlarmStore = create<AlarmStoreState>((set, get) => {
     set({ alarms: rows.map(rowToAlarm), loaded: true, loading: false });
   };
 
+  const syncSnoozedCount = () => {
+    const registryState = useAlarmRegistrationsStore.getState();
+    const count = registryState.records.filter(
+      (r) => r.type === "snooze",
+    ).length;
+    set({ snoozedCount: count });
+  };
+
   return {
     alarms: [],
     loaded: false,
     loading: false,
     initError: null,
+    snoozedCount: 0,
     _disposer: null,
     _initializing: false,
 
@@ -60,10 +74,31 @@ export const useAlarmStore = create<AlarmStoreState>((set, get) => {
         try {
           await dbReady;
           await fetchAlarms();
-          const subscription = SQLite.addDatabaseChangeListener((event) => {
+
+          const registryStore = useAlarmRegistrationsStore.getState();
+          if (!registryStore._disposer || !registryStore.loaded) {
+            registryStore.init();
+          }
+
+          syncSnoozedCount();
+
+          const dbSubscription = SQLite.addDatabaseChangeListener((event) => {
             if (event.tableName === "alarms") void fetchAlarms();
           });
-          set({ _disposer: () => subscription.remove() });
+
+          const unsubReg = useAlarmRegistrationsStore.subscribe((state) => {
+            const count = state.records.filter(
+              (r) => r.type === "snooze",
+            ).length;
+            set({ snoozedCount: count });
+          });
+
+          set({
+            _disposer: () => {
+              dbSubscription.remove();
+              unsubReg();
+            },
+          });
         } catch (e) {
           console.error("alarmStore.init failed", e);
           set({
@@ -112,5 +147,43 @@ export const useAlarmStore = create<AlarmStoreState>((set, get) => {
     },
 
     getAllAlarms: () => get().alarms,
+
+    dismissAllSnoozedAlarms: async () => {
+      const registryStore = useAlarmRegistrationsStore.getState();
+      const snoozed = registryStore.records
+        .filter((r) => r.type === "snooze")
+        .map((r) => ({ alarmId: r.alarmId, generation: r.generation }));
+
+      if (snoozed.length === 0) return 0;
+
+      const native = getAlarmScheduler();
+
+      const results = await Promise.allSettled(
+        snoozed.map(async ({ alarmId, generation }) => {
+          const current = useAlarmRegistrationsStore
+            .getState()
+            .records.find((r) => r.alarmId === alarmId && r.type === "snooze");
+          if (!current || current.generation !== generation) {
+            return;
+          }
+          await native.cancel(snoozeIdentifierFor(alarmId));
+          await registryStore.remove(alarmId, "snooze");
+        }),
+      );
+
+      const rejected = results.filter((r) => r.status === "rejected");
+      const failed = rejected.length;
+      if (failed > 0) {
+        const reasons = rejected.map(
+          (r) => (r as PromiseRejectedResult).reason,
+        );
+        console.error(`Failed to dismiss ${failed} snoozed alarm(s)`, reasons);
+        throw new Error(
+          `Failed to dismiss ${failed} snoozed alarm(s): ${reasons.join(", ")}`,
+        );
+      }
+
+      return results.filter((r) => r.status === "fulfilled").length;
+    },
   };
 });

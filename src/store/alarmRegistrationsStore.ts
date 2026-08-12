@@ -1,5 +1,5 @@
 import * as SQLite from "expo-sqlite";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { create } from "zustand";
 import { db, dbReady } from "@/data/db";
 import { alarmRegistrationsTable } from "@/data/schema";
@@ -9,6 +9,7 @@ export type RegistrationType = "weekly" | "snooze";
 export interface RegistrationRecord {
   alarmId: string;
   type: RegistrationType;
+  generation: number;
 }
 
 interface AlarmRegistrationsStoreState {
@@ -36,6 +37,7 @@ export const useAlarmRegistrationsStore = create<AlarmRegistrationsStoreState>(
         records: rows.map((r) => ({
           alarmId: r.alarmId,
           type: r.type as RegistrationType,
+          generation: r.generation,
         })),
         loaded: true,
         loading: false,
@@ -91,20 +93,30 @@ export const useAlarmRegistrationsStore = create<AlarmRegistrationsStoreState>(
 
       upsert: async (alarmId, type) => {
         await dbReady;
-        await db
+        const [returned] = await db
           .insert(alarmRegistrationsTable)
-          .values({ alarmId, type })
+          .values({ alarmId, type, generation: 0 })
           .onConflictDoUpdate({
             target: [
               alarmRegistrationsTable.alarmId,
               alarmRegistrationsTable.type,
             ],
-            set: { alarmId, type },
-          });
-        const records = get().records;
-        if (!records.some((r) => r.alarmId === alarmId && r.type === type)) {
-          set({ records: [...records, { alarmId, type }] });
-        }
+            set: { generation: sql`generation + 1` },
+          })
+          .returning();
+        const generation = returned.generation;
+        const exists = get().records.some(
+          (r) => r.alarmId === alarmId && r.type === type,
+        );
+        set({
+          records: exists
+            ? get().records.map((r) =>
+                r.alarmId === alarmId && r.type === type
+                  ? { ...r, generation }
+                  : r,
+              )
+            : [...get().records, { alarmId, type, generation }],
+        });
       },
 
       remove: async (alarmId, type) => {
