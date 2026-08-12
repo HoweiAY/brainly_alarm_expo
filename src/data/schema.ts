@@ -26,6 +26,7 @@ export const alarmRegistrationsTable = sqliteTable(
   {
     alarmId: text("alarm_id").notNull(),
     type: text("type").notNull(),
+    generation: integer("generation").notNull().default(0),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.alarmId, table.type] }),

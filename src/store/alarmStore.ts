@@ -150,32 +150,40 @@ export const useAlarmStore = create<AlarmStoreState>((set, get) => {
 
     dismissAllSnoozedAlarms: async () => {
       const registryStore = useAlarmRegistrationsStore.getState();
-      const snoozedIds = registryStore.records
+      const snoozed = registryStore.records
         .filter((r) => r.type === "snooze")
-        .map((r) => r.alarmId);
+        .map((r) => ({ alarmId: r.alarmId, generation: r.generation }));
 
-      if (snoozedIds.length === 0) return 0;
+      if (snoozed.length === 0) return 0;
 
       const native = getAlarmScheduler();
 
       const results = await Promise.allSettled(
-        snoozedIds.map(async (alarmId) => {
+        snoozed.map(async ({ alarmId, generation }) => {
+          const current = useAlarmRegistrationsStore
+            .getState()
+            .records.find((r) => r.alarmId === alarmId && r.type === "snooze");
+          if (!current || current.generation !== generation) {
+            return;
+          }
           await native.cancel(snoozeIdentifierFor(alarmId));
           await registryStore.remove(alarmId, "snooze");
         }),
       );
 
-      const failed = results.filter((r) => r.status === "rejected").length;
+      const rejected = results.filter((r) => r.status === "rejected");
+      const failed = rejected.length;
       if (failed > 0) {
-        console.error(
-          `Failed to dismiss ${failed} snoozed alarm(s)`,
-          results
-            .filter((r) => r.status === "rejected")
-            .map((r) => (r as PromiseRejectedResult).reason),
+        const reasons = rejected.map(
+          (r) => (r as PromiseRejectedResult).reason,
+        );
+        console.error(`Failed to dismiss ${failed} snoozed alarm(s)`, reasons);
+        throw new Error(
+          `Failed to dismiss ${failed} snoozed alarm(s): ${reasons.join(", ")}`,
         );
       }
 
-      return snoozedIds.length - failed;
+      return results.filter((r) => r.status === "fulfilled").length;
     },
   };
 });
