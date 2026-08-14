@@ -1,7 +1,13 @@
 import { useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Alert } from "react-native";
-import { defaultSoundSelection, soundLabelFor } from "@/alarms/audioSelection";
+import {
+  defaultSoundSelection,
+  deleteCustomSoundFile,
+  isDefaultSound,
+  isSoundFileReferenced,
+  soundLabelFor,
+} from "@/alarms/audioSelection";
 import { findConflictingAlarm } from "@/alarms/conflicts";
 import { pickAlarmSoundFromDevice } from "@/alarms/pickAlarmSound";
 import { setAlarm } from "@/alarms/scheduling";
@@ -102,6 +108,7 @@ export function useCreateAlarmForm(
   initial?: Alarm | null,
 ): UseCreateAlarmFormResult {
   const router = useRouter();
+  const stagedFileUriRef = useRef<string | null>(null);
   const [state, setState] = useState<CreateAlarmUiState>(() => ({
     alarmId: initial?.id ?? null,
     ...(initial ? fromAlarm(initial) : DEFAULTS),
@@ -113,6 +120,10 @@ export function useCreateAlarmForm(
   );
 
   const reset = useCallback((alarm?: Alarm | null) => {
+    if (stagedFileUriRef.current) {
+      deleteCustomSoundFile(stagedFileUriRef.current);
+      stagedFileUriRef.current = null;
+    }
     setState({
       alarmId: alarm?.id ?? null,
       ...(alarm ? fromAlarm(alarm) : DEFAULTS),
@@ -169,8 +180,12 @@ export function useCreateAlarmForm(
   const pickSound = useCallback(() => {
     const pick = async () => {
       try {
+        if (stagedFileUriRef.current) {
+          deleteCustomSoundFile(stagedFileUriRef.current);
+        }
         const selection = await pickAlarmSoundFromDevice();
         if (selection) {
+          stagedFileUriRef.current = selection.alarmSoundUri;
           setState((prev) => ({ ...prev, ...selection }));
         }
       } catch (e) {
@@ -185,6 +200,10 @@ export function useCreateAlarmForm(
   }, []);
 
   const setToDefault = useCallback(() => {
+    if (stagedFileUriRef.current) {
+      deleteCustomSoundFile(stagedFileUriRef.current);
+      stagedFileUriRef.current = null;
+    }
     setState((prev) => ({ ...prev, ...defaultSoundSelection() }));
   }, []);
 
@@ -217,16 +236,28 @@ export function useCreateAlarmForm(
       );
       return;
     }
+    const previousSound =
+      state.alarmId != null
+        ? (store.alarms.find((a) => a.id === state.alarmId)?.sound ?? null)
+        : null;
     const persist = async () => {
       try {
         let alarm: Alarm;
         if (state.alarmId != null) {
           alarm = { id: state.alarmId, ...draft };
           await store.updateAlarm(alarm);
+          if (
+            previousSound !== alarm.sound &&
+            !isDefaultSound(previousSound) &&
+            !isSoundFileReferenced(previousSound)
+          ) {
+            deleteCustomSoundFile(previousSound);
+          }
         } else {
           const id = await store.insertAlarm(draft);
           alarm = { id, ...draft };
         }
+        stagedFileUriRef.current = null;
         try {
           await setAlarm(alarm);
         } catch (schedErr) {
@@ -235,6 +266,10 @@ export function useCreateAlarmForm(
         router.back();
       } catch (e) {
         console.error("persistAlarm failed", e);
+        if (stagedFileUriRef.current) {
+          deleteCustomSoundFile(stagedFileUriRef.current);
+          stagedFileUriRef.current = null;
+        }
         Alert.alert("Error", "Could not save the alarm. Please try again.");
       }
     };
@@ -242,6 +277,9 @@ export function useCreateAlarmForm(
   }, [buildDraft, router, state.alarmId]);
 
   const handleCancel = useCallback(() => {
+    if (stagedFileUriRef.current) {
+      deleteCustomSoundFile(stagedFileUriRef.current);
+    }
     router.back();
   }, [router]);
 

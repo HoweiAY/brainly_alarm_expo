@@ -1,3 +1,6 @@
+import { File } from "expo-file-system";
+import { useAlarmStore } from "@/store/alarmStore";
+
 export const DEFAULT_SOUND_LABEL = "Default";
 
 export interface SoundSelection {
@@ -64,4 +67,21 @@ export function buildSoundSelection(
       trimmed && trimmed.length > 0 ? trimmed : soundLabelFor(uri),
     alarmSoundUri: uri,
   };
+}
+
+export function deleteCustomSoundFile(uri: string | null): void {
+  if (isDefaultSound(uri)) return;
+  try {
+    const file = new File(uri as string);
+    if (file.exists) {
+      file.delete();
+    }
+  } catch (e) {
+    console.warn("Failed to delete custom sound file", uri, e);
+  }
+}
+
+export function isSoundFileReferenced(uri: string | null): boolean {
+  if (isDefaultSound(uri)) return false;
+  return useAlarmStore.getState().alarms.some((a) => a.sound === uri);
 }
