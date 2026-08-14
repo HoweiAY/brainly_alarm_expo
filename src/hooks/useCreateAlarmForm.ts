@@ -1,8 +1,10 @@
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Alert } from "react-native";
-import { setAlarm } from "@/alarms/scheduling";
+import { defaultSoundSelection, soundLabelFor } from "@/alarms/audioSelection";
 import { findConflictingAlarm } from "@/alarms/conflicts";
+import { pickAlarmSoundFromDevice } from "@/alarms/pickAlarmSound";
+import { setAlarm } from "@/alarms/scheduling";
 import { weekdays } from "@/data/constants";
 import { useAlarmStore } from "@/store/alarmStore";
 import { formatTime } from "@/utils/time";
@@ -54,6 +56,7 @@ export interface UseCreateAlarmFormResult extends CreateAlarmUiState {
   setRounds: (rounds: number) => void;
   setDifficulty: (difficulty: Difficulty) => void;
   pickSound: () => void;
+  setToDefault: () => void;
   toggleSnooze: () => void;
   expandTaskSelector: (expanded: boolean) => void;
   buildDraft: () => Omit<Alarm, "id">;
@@ -69,8 +72,7 @@ const DEFAULTS: Omit<CreateAlarmUiState, "alarmId"> = {
   taskSelected: "Memory",
   roundsSelected: 1,
   difficultySelected: "Easy",
-  alarmSoundSelected: "Default",
-  alarmSoundUri: null,
+  ...defaultSoundSelection(),
   snoozeEnabled: true,
   taskSelectorExpanded: false,
   enabled: true,
@@ -81,7 +83,6 @@ function isTaskConfigurable(task: TaskType): boolean {
 }
 
 function fromAlarm(alarm: Alarm): Omit<CreateAlarmUiState, "alarmId"> {
-  const isCustom = alarm.sound !== null;
   return {
     weekdaysSelected: [...alarm.days],
     hourSelected: alarm.hour,
@@ -89,7 +90,7 @@ function fromAlarm(alarm: Alarm): Omit<CreateAlarmUiState, "alarmId"> {
     taskSelected: alarm.task,
     roundsSelected: alarm.rounds,
     difficultySelected: alarm.difficulty,
-    alarmSoundSelected: isCustom ? (alarm.sound ?? "Default") : "Default",
+    alarmSoundSelected: soundLabelFor(alarm.sound),
     alarmSoundUri: alarm.sound,
     snoozeEnabled: alarm.snooze,
     taskSelectorExpanded: false,
@@ -165,7 +166,27 @@ export function useCreateAlarmForm(
     setState((prev) => ({ ...prev, taskSelectorExpanded: expanded }));
   }, []);
 
-  const pickSound = useCallback(() => {}, []);
+  const pickSound = useCallback(() => {
+    const pick = async () => {
+      try {
+        const selection = await pickAlarmSoundFromDevice();
+        if (selection) {
+          setState((prev) => ({ ...prev, ...selection }));
+        }
+      } catch (e) {
+        console.error("pickAlarmSoundFromDevice failed", e);
+        Alert.alert(
+          "Error",
+          "Could not select the audio file. Please try again.",
+        );
+      }
+    };
+    void pick();
+  }, []);
+
+  const setToDefault = useCallback(() => {
+    setState((prev) => ({ ...prev, ...defaultSoundSelection() }));
+  }, []);
 
   const buildDraft = useCallback((): Omit<Alarm, "id"> => {
     return {
@@ -235,6 +256,7 @@ export function useCreateAlarmForm(
     setRounds,
     setDifficulty,
     pickSound,
+    setToDefault,
     toggleSnooze,
     expandTaskSelector,
     buildDraft,

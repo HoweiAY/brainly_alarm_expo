@@ -173,16 +173,39 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
         <View style={styles.card}>
           <View style={styles.rowBetween}>
             <Text style={styles.sectionLabel}>Sound</Text>
-            <Pressable
-              style={({ pressed }) => [
-                styles.selectButton,
-                pressed && styles.selectButtonPressed,
-              ]}
-              accessibilityRole="button"
-              onPress={form.pickSound}
-            >
-              <Text style={styles.selectButtonText}>Select</Text>
-            </Pressable>
+            <View style={styles.actionsRow}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.selectButton,
+                  pressed && styles.selectButtonPressed,
+                ]}
+                accessibilityRole="button"
+                onPress={form.pickSound}
+              >
+                <Text style={styles.selectButtonText}>Select</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.selectButton,
+                  form.alarmSoundUri == null && styles.selectButtonDisabled,
+                  pressed && styles.selectButtonPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: form.alarmSoundUri == null }}
+                disabled={form.alarmSoundUri == null}
+                onPress={form.setToDefault}
+              >
+                <Text
+                  style={[
+                    styles.selectButtonText,
+                    form.alarmSoundUri == null &&
+                      styles.selectButtonTextDisabled,
+                  ]}
+                >
+                  Set to default
+                </Text>
+              </Pressable>
+            </View>
           </View>
           <Text style={styles.helperText}>{form.alarmSoundSelected}</Text>
         </View>
@@ -352,6 +375,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: spacing.lg,
   },
+  actionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+  },
   selectButton: {
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.md,
@@ -361,10 +389,16 @@ const styles = StyleSheet.create({
   selectButtonPressed: {
     backgroundColor: colors.border,
   },
+  selectButtonDisabled: {
+    opacity: 0.5,
+  },
   selectButtonText: {
     ...typography.caption,
     color: colors.primary,
     fontWeight: "600",
+  },
+  selectButtonTextDisabled: {
+    color: colors.textMuted,
   },
   footer: {
     flexDirection: "row",
