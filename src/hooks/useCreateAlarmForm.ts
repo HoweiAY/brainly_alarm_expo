@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert } from "react-native";
 import {
   defaultSoundSelection,
@@ -109,6 +109,18 @@ export function useCreateAlarmForm(
 ): UseCreateAlarmFormResult {
   const router = useRouter();
   const stagedFileUriRef = useRef<string | null>(null);
+  const disposedRef = useRef(false);
+
+  useEffect(() => {
+    disposedRef.current = false;
+    return () => {
+      disposedRef.current = true;
+      if (stagedFileUriRef.current) {
+        deleteCustomSoundFile(stagedFileUriRef.current);
+        stagedFileUriRef.current = null;
+      }
+    };
+  }, []);
   const [state, setState] = useState<CreateAlarmUiState>(() => ({
     alarmId: initial?.id ?? null,
     ...(initial ? fromAlarm(initial) : DEFAULTS),
@@ -180,14 +192,22 @@ export function useCreateAlarmForm(
   const pickSound = useCallback(() => {
     const pick = async () => {
       try {
-        if (stagedFileUriRef.current) {
-          deleteCustomSoundFile(stagedFileUriRef.current);
-        }
         const selection = await pickAlarmSoundFromDevice();
-        if (selection) {
-          stagedFileUriRef.current = selection.alarmSoundUri;
-          setState((prev) => ({ ...prev, ...selection }));
+        if (disposedRef.current) {
+          if (selection) {
+            deleteCustomSoundFile(selection.alarmSoundUri);
+          }
+          return;
         }
+        if (!selection) {
+          return;
+        }
+        const previousUri = stagedFileUriRef.current;
+        if (previousUri && previousUri !== selection.alarmSoundUri) {
+          deleteCustomSoundFile(previousUri);
+        }
+        stagedFileUriRef.current = selection.alarmSoundUri;
+        setState((prev) => ({ ...prev, ...selection }));
       } catch (e) {
         console.error("pickAlarmSoundFromDevice failed", e);
         Alert.alert(
@@ -240,6 +260,8 @@ export function useCreateAlarmForm(
       state.alarmId != null
         ? (store.alarms.find((a) => a.id === state.alarmId)?.sound ?? null)
         : null;
+    const pendingSoundUri = stagedFileUriRef.current;
+    stagedFileUriRef.current = null;
     const persist = async () => {
       try {
         let alarm: Alarm;
@@ -257,18 +279,22 @@ export function useCreateAlarmForm(
           const id = await store.insertAlarm(draft);
           alarm = { id, ...draft };
         }
-        stagedFileUriRef.current = null;
         try {
           await setAlarm(alarm);
         } catch (schedErr) {
           console.error("setAlarm failed (alarm still saved)", schedErr);
         }
-        router.back();
+        if (!disposedRef.current) {
+          router.back();
+        }
       } catch (e) {
         console.error("persistAlarm failed", e);
-        if (stagedFileUriRef.current) {
-          deleteCustomSoundFile(stagedFileUriRef.current);
-          stagedFileUriRef.current = null;
+        if (disposedRef.current) {
+          if (pendingSoundUri) {
+            deleteCustomSoundFile(pendingSoundUri);
+          }
+        } else if (pendingSoundUri) {
+          stagedFileUriRef.current = pendingSoundUri;
         }
         Alert.alert("Error", "Could not save the alarm. Please try again.");
       }
@@ -279,6 +305,7 @@ export function useCreateAlarmForm(
   const handleCancel = useCallback(() => {
     if (stagedFileUriRef.current) {
       deleteCustomSoundFile(stagedFileUriRef.current);
+      stagedFileUriRef.current = null;
     }
     router.back();
   }, [router]);
