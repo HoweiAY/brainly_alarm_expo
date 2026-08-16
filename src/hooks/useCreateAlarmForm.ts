@@ -210,10 +210,12 @@ export function useCreateAlarmForm(
         setState((prev) => ({ ...prev, ...selection }));
       } catch (e) {
         console.error("pickAlarmSoundFromDevice failed", e);
-        Alert.alert(
-          "Error",
-          "Could not select the audio file. Please try again.",
-        );
+        if (!disposedRef.current) {
+          Alert.alert(
+            "Error",
+            "Could not select the audio file. Please try again.",
+          );
+        }
       }
     };
     void pick();
@@ -296,7 +298,9 @@ export function useCreateAlarmForm(
         } else if (pendingSoundUri) {
           stagedFileUriRef.current = pendingSoundUri;
         }
-        Alert.alert("Error", "Could not save the alarm. Please try again.");
+        if (!disposedRef.current) {
+          Alert.alert("Error", "Could not save the alarm. Please try again.");
+        }
       }
     };
     void persist();
