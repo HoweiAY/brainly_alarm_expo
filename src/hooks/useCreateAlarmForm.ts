@@ -110,6 +110,7 @@ export function useCreateAlarmForm(
   const router = useRouter();
   const stagedFileUriRef = useRef<string | null>(null);
   const disposedRef = useRef(false);
+  const saveGenerationRef = useRef(0);
 
   useEffect(() => {
     disposedRef.current = false;
@@ -136,6 +137,7 @@ export function useCreateAlarmForm(
       deleteCustomSoundFile(stagedFileUriRef.current);
       stagedFileUriRef.current = null;
     }
+    saveGenerationRef.current += 1;
     setState({
       alarmId: alarm?.id ?? null,
       ...(alarm ? fromAlarm(alarm) : DEFAULTS),
@@ -207,6 +209,7 @@ export function useCreateAlarmForm(
           deleteCustomSoundFile(previousUri);
         }
         stagedFileUriRef.current = selection.alarmSoundUri;
+        saveGenerationRef.current += 1;
         setState((prev) => ({ ...prev, ...selection }));
       } catch (e) {
         console.error("pickAlarmSoundFromDevice failed", e);
@@ -226,6 +229,7 @@ export function useCreateAlarmForm(
       deleteCustomSoundFile(stagedFileUriRef.current);
       stagedFileUriRef.current = null;
     }
+    saveGenerationRef.current += 1;
     setState((prev) => ({ ...prev, ...defaultSoundSelection() }));
   }, []);
 
@@ -262,6 +266,7 @@ export function useCreateAlarmForm(
       state.alarmId != null
         ? (store.alarms.find((a) => a.id === state.alarmId)?.sound ?? null)
         : null;
+    const saveGen = saveGenerationRef.current;
     const pendingSoundUri = stagedFileUriRef.current;
     stagedFileUriRef.current = null;
     const persist = async () => {
@@ -291,15 +296,15 @@ export function useCreateAlarmForm(
         }
       } catch (e) {
         console.error("persistAlarm failed", e);
-        if (disposedRef.current) {
-          if (pendingSoundUri) {
-            deleteCustomSoundFile(pendingSoundUri);
-          }
-        } else if (pendingSoundUri) {
-          stagedFileUriRef.current = pendingSoundUri;
-        }
         if (!disposedRef.current) {
           Alert.alert("Error", "Could not save the alarm. Please try again.");
+        }
+        if (pendingSoundUri) {
+          if (!disposedRef.current && saveGenerationRef.current === saveGen) {
+            stagedFileUriRef.current = pendingSoundUri;
+          } else {
+            deleteCustomSoundFile(pendingSoundUri);
+          }
         }
       }
     };
