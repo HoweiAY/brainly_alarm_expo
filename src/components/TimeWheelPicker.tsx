@@ -14,6 +14,7 @@ interface TimeWheelPickerProps {
   hour24: number;
   minute: number;
   onChange: (next: { hour24: number; minute: number }) => void;
+  disabled?: boolean;
 }
 
 const ITEM_HEIGHT = 44;
@@ -32,9 +33,16 @@ interface WheelProps {
   index: number;
   width: number | `${number}%` | undefined;
   onIndexChange: (index: number) => void;
+  disabled?: boolean;
 }
 
-function Wheel({ data, index, width, onIndexChange }: WheelProps) {
+function Wheel({
+  data,
+  index,
+  width,
+  onIndexChange,
+  disabled = false,
+}: WheelProps) {
   const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -45,6 +53,7 @@ function Wheel({ data, index, width, onIndexChange }: WheelProps) {
   }, [index]);
 
   const handleEnd = (y: number) => {
+    if (disabled) return;
     const i = Math.max(
       0,
       Math.min(data.length - 1, Math.round(y / ITEM_HEIGHT)),
@@ -53,7 +62,7 @@ function Wheel({ data, index, width, onIndexChange }: WheelProps) {
   };
 
   const handleItemPress = (i: number) => {
-    if (i === index) return;
+    if (disabled || i === index) return;
     scrollRef.current?.scrollTo({ y: ITEM_HEIGHT * i, animated: true });
     onIndexChange(i);
   };
@@ -67,6 +76,7 @@ function Wheel({ data, index, width, onIndexChange }: WheelProps) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.wheelContent}
         nestedScrollEnabled
+        scrollEnabled={!disabled}
         style={{ height: WHEEL_HEIGHT }}
         onMomentumScrollEnd={(e) => handleEnd(e.nativeEvent.contentOffset.y)}
         onScrollEndDrag={(e) => handleEnd(e.nativeEvent.contentOffset.y)}
@@ -92,6 +102,7 @@ export function TimeWheelPicker({
   hour24,
   minute,
   onChange,
+  disabled = false,
 }: TimeWheelPickerProps) {
   const { hour12, period } = to12Hour(hour24);
 
@@ -112,6 +123,7 @@ export function TimeWheelPicker({
         index={hour12 - 1}
         width={72}
         onIndexChange={handleHour}
+        disabled={disabled}
       />
       <Text style={styles.colon}>:</Text>
       <Wheel
@@ -119,12 +131,14 @@ export function TimeWheelPicker({
         index={minute}
         width={72}
         onIndexChange={handleMinute}
+        disabled={disabled}
       />
       <Wheel
         data={[...PERIODS]}
         index={period === "AM" ? 0 : 1}
         width={56}
         onIndexChange={handlePeriod}
+        disabled={disabled}
       />
     </View>
   );

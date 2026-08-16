@@ -6,23 +6,27 @@ interface WeekdayTextButtonProps {
   weekday: Weekday;
   selected: boolean;
   onToggle: (weekday: Weekday) => void;
+  disabled?: boolean;
 }
 
 export function WeekdayTextButton({
   weekday,
   selected,
   onToggle,
+  disabled = false,
 }: WeekdayTextButtonProps) {
   return (
     <Pressable
       style={({ pressed }) => [
         styles.pill,
         selected && styles.pillSelected,
-        pressed && styles.pillPressed,
+        pressed && !disabled && styles.pillPressed,
+        disabled && styles.pillDisabled,
       ]}
       accessibilityRole="button"
-      accessibilityState={{ selected }}
+      accessibilityState={{ selected, disabled }}
       accessibilityLabel={`${weekday} ${selected ? "selected" : "not selected"}`}
+      disabled={disabled}
       onPress={() => onToggle(weekday)}
     >
       <Text style={[styles.label, selected && styles.labelSelected]}>
@@ -49,6 +53,9 @@ const styles = StyleSheet.create({
   },
   pillPressed: {
     backgroundColor: colors.surfaceElevated,
+  },
+  pillDisabled: {
+    opacity: 0.4,
   },
   label: {
     ...typography.caption,

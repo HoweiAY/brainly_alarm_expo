@@ -50,6 +50,7 @@ export interface CreateAlarmUiState {
   snoozeEnabled: boolean;
   taskSelectorExpanded: boolean;
   enabled: boolean;
+  saving: boolean;
 }
 
 export interface UseCreateAlarmFormResult extends CreateAlarmUiState {
@@ -82,6 +83,7 @@ const DEFAULTS: Omit<CreateAlarmUiState, "alarmId"> = {
   snoozeEnabled: true,
   taskSelectorExpanded: false,
   enabled: true,
+  saving: false,
 };
 
 function isTaskConfigurable(task: TaskType): boolean {
@@ -101,6 +103,7 @@ function fromAlarm(alarm: Alarm): Omit<CreateAlarmUiState, "alarmId"> {
     snoozeEnabled: alarm.snooze,
     taskSelectorExpanded: false,
     enabled: alarm.enabled,
+    saving: false,
   };
 }
 
@@ -111,6 +114,7 @@ export function useCreateAlarmForm(
   const stagedFileUriRef = useRef<string | null>(null);
   const disposedRef = useRef(false);
   const saveGenerationRef = useRef(0);
+  const persistingRef = useRef(false);
 
   useEffect(() => {
     disposedRef.current = false;
@@ -133,6 +137,9 @@ export function useCreateAlarmForm(
   );
 
   const reset = useCallback((alarm?: Alarm | null) => {
+    if (persistingRef.current) {
+      return;
+    }
     if (stagedFileUriRef.current) {
       deleteCustomSoundFile(stagedFileUriRef.current);
       stagedFileUriRef.current = null;
@@ -145,6 +152,9 @@ export function useCreateAlarmForm(
   }, []);
 
   const toggleWeekday = useCallback((weekday: Weekday) => {
+    if (persistingRef.current) {
+      return;
+    }
     setState((prev) => {
       const present = prev.weekdaysSelected.includes(weekday);
       const next = present
@@ -155,18 +165,30 @@ export function useCreateAlarmForm(
   }, []);
 
   const selectAllDays = useCallback(() => {
+    if (persistingRef.current) {
+      return;
+    }
     setState((prev) => ({ ...prev, weekdaysSelected: [...weekdays] }));
   }, []);
 
   const setHour = useCallback((hour24: number) => {
+    if (persistingRef.current) {
+      return;
+    }
     setState((prev) => ({ ...prev, hourSelected: hour24 }));
   }, []);
 
   const setMinute = useCallback((minute: number) => {
+    if (persistingRef.current) {
+      return;
+    }
     setState((prev) => ({ ...prev, minuteSelected: minute }));
   }, []);
 
   const setTask = useCallback((task: TaskType) => {
+    if (persistingRef.current) {
+      return;
+    }
     setState((prev) => ({
       ...prev,
       taskSelected: task,
@@ -175,23 +197,38 @@ export function useCreateAlarmForm(
   }, []);
 
   const setRounds = useCallback((rounds: number) => {
+    if (persistingRef.current) {
+      return;
+    }
     const clamped = Math.max(1, Math.min(5, Math.round(rounds)));
     setState((prev) => ({ ...prev, roundsSelected: clamped }));
   }, []);
 
   const setDifficulty = useCallback((difficulty: Difficulty) => {
+    if (persistingRef.current) {
+      return;
+    }
     setState((prev) => ({ ...prev, difficultySelected: difficulty }));
   }, []);
 
   const toggleSnooze = useCallback(() => {
+    if (persistingRef.current) {
+      return;
+    }
     setState((prev) => ({ ...prev, snoozeEnabled: !prev.snoozeEnabled }));
   }, []);
 
   const expandTaskSelector = useCallback((expanded: boolean) => {
+    if (persistingRef.current) {
+      return;
+    }
     setState((prev) => ({ ...prev, taskSelectorExpanded: expanded }));
   }, []);
 
   const pickSound = useCallback(() => {
+    if (persistingRef.current) {
+      return;
+    }
     const pick = async () => {
       try {
         const selection = await pickAlarmSoundFromDevice();
@@ -225,6 +262,9 @@ export function useCreateAlarmForm(
   }, []);
 
   const setToDefault = useCallback(() => {
+    if (persistingRef.current) {
+      return;
+    }
     if (stagedFileUriRef.current) {
       deleteCustomSoundFile(stagedFileUriRef.current);
       stagedFileUriRef.current = null;
@@ -248,6 +288,9 @@ export function useCreateAlarmForm(
   }, [state]);
 
   const handleConfirm = useCallback(() => {
+    if (persistingRef.current) {
+      return;
+    }
     const draft = buildDraft();
     const store = useAlarmStore.getState();
     const conflict = findConflictingAlarm(
@@ -262,6 +305,8 @@ export function useCreateAlarmForm(
       );
       return;
     }
+    persistingRef.current = true;
+    setState((prev) => ({ ...prev, saving: true }));
     const previousSound =
       state.alarmId != null
         ? (store.alarms.find((a) => a.id === state.alarmId)?.sound ?? null)
@@ -306,12 +351,20 @@ export function useCreateAlarmForm(
             deleteCustomSoundFile(pendingSoundUri);
           }
         }
+      } finally {
+        persistingRef.current = false;
+        if (!disposedRef.current) {
+          setState((prev) => ({ ...prev, saving: false }));
+        }
       }
     };
     void persist();
   }, [buildDraft, router, state.alarmId]);
 
   const handleCancel = useCallback(() => {
+    if (persistingRef.current) {
+      return;
+    }
     if (stagedFileUriRef.current) {
       deleteCustomSoundFile(stagedFileUriRef.current);
       stagedFileUriRef.current = null;
