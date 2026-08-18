@@ -115,6 +115,7 @@ export function useCreateAlarmForm(
   const disposedRef = useRef(false);
   const saveGenerationRef = useRef(0);
   const persistingRef = useRef(false);
+  const pickGenerationRef = useRef(0);
 
   useEffect(() => {
     disposedRef.current = false;
@@ -145,6 +146,7 @@ export function useCreateAlarmForm(
       stagedFileUriRef.current = null;
     }
     saveGenerationRef.current += 1;
+    pickGenerationRef.current += 1;
     setState({
       alarmId: alarm?.id ?? null,
       ...(alarm ? fromAlarm(alarm) : DEFAULTS),
@@ -229,10 +231,18 @@ export function useCreateAlarmForm(
     if (persistingRef.current) {
       return;
     }
+    pickGenerationRef.current += 1;
+    const gen = pickGenerationRef.current;
     const pick = async () => {
       try {
         const selection = await pickAlarmSoundFromDevice();
         if (disposedRef.current) {
+          if (selection) {
+            deleteCustomSoundFile(selection.alarmSoundUri);
+          }
+          return;
+        }
+        if (pickGenerationRef.current !== gen || persistingRef.current) {
           if (selection) {
             deleteCustomSoundFile(selection.alarmSoundUri);
           }
@@ -270,6 +280,7 @@ export function useCreateAlarmForm(
       stagedFileUriRef.current = null;
     }
     saveGenerationRef.current += 1;
+    pickGenerationRef.current += 1;
     setState((prev) => ({ ...prev, ...defaultSoundSelection() }));
   }, []);
 
@@ -306,6 +317,7 @@ export function useCreateAlarmForm(
       return;
     }
     persistingRef.current = true;
+    pickGenerationRef.current += 1;
     setState((prev) => ({ ...prev, saving: true }));
     const previousSound =
       state.alarmId != null
