@@ -1,6 +1,3 @@
-import { useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert } from "react-native";
 import {
   defaultSoundSelection,
   deleteCustomSoundFile,
@@ -12,9 +9,12 @@ import { findConflictingAlarm } from "@/alarms/conflicts";
 import { pickAlarmSoundFromDevice } from "@/alarms/pickAlarmSound";
 import { setAlarm } from "@/alarms/scheduling";
 import { weekdays } from "@/data/constants";
+import type { Alarm, Difficulty, TaskType, Weekday } from "@/data/types";
 import { useAlarmStore } from "@/store/alarmStore";
 import { formatTime } from "@/utils/time";
-import type { Alarm, Difficulty, TaskType, Weekday } from "@/data/types";
+import { useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Alert } from "react-native";
 
 export type Period = "AM" | "PM";
 
@@ -377,6 +377,7 @@ export function useCreateAlarmForm(
     if (persistingRef.current) {
       return;
     }
+    pickGenerationRef.current += 1;
     if (stagedFileUriRef.current) {
       deleteCustomSoundFile(stagedFileUriRef.current);
       stagedFileUriRef.current = null;
