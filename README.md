@@ -28,6 +28,23 @@ This repository is the **Expo-first re-implementation** of that original app. Th
 - **Alarm notifications & deep links** — a high-priority notification fires with the alarm; tapping it opens the full-screen ringing screen directly.
 - **Local persistence** — all alarms are stored on-device in SQLite with versioned migrations.
 
+## Screenshots
+
+### Menus
+
+<div align="center">
+  <img src="docs/images/screenshots/main_menu_1.jpg" width="360" alt="Brainly Alarm home screen showing the list of configured alarms with toggles and a button to create a new alarm" />
+  <img src="docs/images/screenshots/create_alarm_menu_1.jpg" width="360" alt="Create alarm screen with a time wheel picker, weekday selector, task type, rounds and difficulty options" />
+</div>
+
+### Alarm dismissal tasks
+
+<div align="center">
+  <img src="docs/images/screenshots/memory_game_1.jpg" width="240" alt="Memory game task: a grid of tiles where a sequence lights up and must be repeated in order" />
+  <img src="docs/images/screenshots/math_equation_1.jpg" width="240" alt="Math equation task: a randomly generated arithmetic equation that must be solved to stop the alarm" />
+  <img src="docs/images/screenshots/phone_shaking_1.jpg" width="240" alt="Shake phone task: a progress indicator showing how many shakes remain to silence the alarm" />
+</div>
+
 ## Tech Stack
 
 | Layer            | Technology                                                                                                                                                     |
@@ -183,11 +200,13 @@ brainly_alarm_expo/
 ├── assets/                   # Fonts (Geist), icons, splash images
 ├── android/                  # Prebuilt native Android project (generated)
 └── docs/                     # Product & architecture specifications (source of truth)
+    └── images/               #   Media assets (screenshots, diagrams)
+        └── screenshots/      #   App screenshots featured in the README
 ```
 
 ## Documentation
 
-The [`docs/`](docs/README.md) folder contains the authoritative specifications for this app — the data layer, scheduling system, navigation/UI architecture, dismissal-task state machines, sound/notifications, and the React Native migration guide. Read the relevant doc before modifying a subsystem.
+The [`docs/`](docs/README.md) folder contains the authoritative specifications for this app — the data layer, scheduling system, navigation/UI architecture, dismissal-task state machines, sound/notifications, and the React Native migration guide. The [`docs/images/`](docs/images/) folder holds the media assets referenced by the specs and the README (notably the app screenshots in `docs/images/screenshots/`). Read the relevant doc before modifying a subsystem.
 
 ## License
 
