@@ -229,7 +229,7 @@ export default function Home() {
         <Text
           style={styles.countdown}
           accessibilityLiveRegion="polite"
-          accessibilityLabel={`Next alarm in ${countdown}`}
+          accessibilityLabel={countdown}
         >
           {countdown}
         </Text>
