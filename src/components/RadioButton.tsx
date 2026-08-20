@@ -22,6 +22,7 @@ export function RadioButton({
         pressed && !disabled && styles.rowPressed,
       ]}
       accessibilityRole="radio"
+      accessibilityLabel={`${label}, ${selected ? "selected" : "not selected"}`}
       accessibilityState={{ selected, disabled }}
       disabled={disabled}
       onPress={onSelect}
