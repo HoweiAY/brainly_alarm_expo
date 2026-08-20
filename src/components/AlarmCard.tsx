@@ -40,7 +40,14 @@ export function AlarmCard({
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
       onPress={() => onPress(alarm)}
       onLongPress={() => onLongPress(alarm)}
+      accessibilityRole="button"
       accessibilityLabel={`${formatTime(alarm.hour, alarm.minute)} alarm, ${alarm.task} task, ${getDaysString(alarm.days)}`}
+      accessibilityHint={
+        editEnabled
+          ? `Tap to ${selected ? "deselect" : "select"} alarm`
+          : "Tap to edit alarm"
+      }
+      accessibilityState={{ selected: editEnabled ? selected : undefined }}
     >
       <View style={styles.left}>
         <Text style={styles.time}>{formatTime(alarm.hour, alarm.minute)}</Text>
@@ -49,12 +56,16 @@ export function AlarmCard({
             name={taskIcons[alarm.task]}
             size={14}
             color={colors.textMuted}
+            importantForAccessibility="no"
           />
           <Text style={styles.days}>{getDaysString(alarm.days)}</Text>
         </View>
       </View>
       {editEnabled ? (
-        <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
+        <View
+          style={[styles.checkbox, selected && styles.checkboxSelected]}
+          accessibilityLabel={`${formatTime(alarm.hour, alarm.minute)} alarm ${selected ? "checked" : "unchecked"}`}
+        >
           {selected ? (
             <Lucide name="check" color={colors.primaryFg} size={16} />
           ) : null}
@@ -72,6 +83,7 @@ export function AlarmCard({
               : undefined
           }
           ios_backgroundColor={colors.border}
+          accessibilityLabel={`${formatTime(alarm.hour, alarm.minute)} alarm ${alarm.enabled ? "enabled" : "disabled"}`}
         />
       )}
     </Pressable>
