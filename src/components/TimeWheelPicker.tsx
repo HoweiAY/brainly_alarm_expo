@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { colors, spacing, typography } from "@/theme";
 import { to12Hour, to24Hour } from "@/hooks/useCreateAlarmForm";
+import { formatTime } from "@/utils/time";
 
 interface TimeWheelPickerProps {
   hour24: number;
@@ -85,6 +86,8 @@ function Wheel({
           <Pressable
             key={item}
             style={styles.item}
+            importantForAccessibility="no"
+            accessible={false}
             onPress={() => handleItemPress(i)}
           >
             <Text style={[styles.itemText, i !== index && styles.itemTextDim]}>
@@ -117,7 +120,13 @@ export function TimeWheelPicker({
   };
 
   return (
-    <View style={styles.row}>
+    <View
+      style={styles.row}
+      accessible
+      accessibilityRole="adjustable"
+      accessibilityLabel={`Time: ${formatTime(hour24, minute)}`}
+      accessibilityValue={{ min: 0, max: 1439, now: hour24 * 60 + minute }}
+    >
       <Wheel
         data={HOURS_12}
         index={hour12 - 1}

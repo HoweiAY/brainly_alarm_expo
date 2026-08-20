@@ -57,6 +57,23 @@ export function FormSlider({
       style={[styles.wrapper, disabled && styles.wrapperDisabled]}
       onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
       {...panResponder.panHandlers}
+      accessible
+      accessibilityRole="adjustable"
+      accessibilityLabel={`Rounds: ${value} of ${max}`}
+      accessibilityValue={{ now: value, min, max }}
+      accessibilityActions={[
+        { name: "increment", label: "Increase rounds" },
+        { name: "decrement", label: "Decrease rounds" },
+      ]}
+      onAccessibilityAction={(event) => {
+        if (event.nativeEvent.actionName === "increment") {
+          const next = Math.min(max, value + step);
+          if (next !== value) onChange(next);
+        } else if (event.nativeEvent.actionName === "decrement") {
+          const next = Math.max(min, value - step);
+          if (next !== value) onChange(next);
+        }
+      }}
     >
       <View style={styles.track}>
         <View style={[styles.fill, { width: fillWidth }]} />
