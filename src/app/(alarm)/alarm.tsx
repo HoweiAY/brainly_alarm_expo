@@ -118,7 +118,10 @@ export default function AlarmDisplay() {
         >
           {currentTime}
         </Text>
-        <Text style={styles.label}>
+        <Text
+          style={styles.label}
+          accessibilityLabel={`${effectiveSnapshot.isSnoozed ? "Snoozed alarm" : "Alarm"}. Task: ${effectiveSnapshot.task}`}
+        >
           {effectiveSnapshot.isSnoozed ? "Snoozed alarm" : "Alarm"}
         </Text>
         <Text style={styles.task}>Task: {effectiveSnapshot.task}</Text>
