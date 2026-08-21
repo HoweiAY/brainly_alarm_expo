@@ -136,6 +136,7 @@ export default function AlarmDisplay() {
             ]}
             accessibilityRole="button"
             accessibilityLabel="Turn off"
+            accessibilityHint="Stops the alarm immediately"
             onPress={handleOff}
           >
             <Text style={styles.primaryButtonText}>Turn Off</Text>
@@ -149,6 +150,7 @@ export default function AlarmDisplay() {
             ]}
             accessibilityRole="button"
             accessibilityLabel="Begin task"
+            accessibilityHint={`Starts the ${effectiveSnapshot.task} dismissal task`}
             onPress={handleBegin}
           >
             <Text style={styles.primaryButtonText}>Begin</Text>
@@ -163,6 +165,7 @@ export default function AlarmDisplay() {
             ]}
             accessibilityRole="button"
             accessibilityLabel="Snooze"
+            accessibilityHint="Snoozes the alarm for 5 minutes"
             onPress={handleSnooze}
           >
             <Text style={styles.buttonText}>Snooze</Text>
