@@ -67,10 +67,13 @@ export default function AlarmDisplay() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
-          <Text style={styles.missing}>No active alarm.</Text>
+          <Text style={styles.missing} accessibilityRole="header">
+            No active alarm.
+          </Text>
           <Pressable
             style={styles.button}
             accessibilityRole="button"
+            accessibilityHint="Returns to home screen"
             onPress={() => void dismiss()}
           >
             <Text style={styles.buttonText}>Dismiss</Text>
