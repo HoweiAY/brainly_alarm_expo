@@ -111,7 +111,13 @@ export default function AlarmDisplay() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.time}>{currentTime}</Text>
+        <Text
+          style={styles.time}
+          accessibilityLiveRegion="polite"
+          accessibilityLabel={`Current time: ${currentTime}`}
+        >
+          {currentTime}
+        </Text>
         <Text style={styles.label}>
           {effectiveSnapshot.isSnoozed ? "Snoozed alarm" : "Alarm"}
         </Text>
