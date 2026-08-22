@@ -48,17 +48,34 @@ export default function MemoryGameScreen() {
       </View>
       <View style={styles.column}>
         {gameStarted ? (
-          <Text style={styles.round}>
+          <Text
+            style={styles.round}
+            accessibilityLabel={`Round ${currentRound} of ${rounds}`}
+          >
             Round: {currentRound}/{rounds}
           </Text>
         ) : null}
-        <Text style={styles.title}>{titleText}</Text>
+        <Text
+          style={styles.title}
+          accessibilityRole="header"
+          accessibilityLiveRegion="polite"
+        >
+          {titleText}
+        </Text>
         <View style={styles.grid}>
           {Array.from({ length: gridSize }).map((_, row) => (
             <View key={row} style={styles.row}>
               {Array.from({ length: gridSize }).map((_, col) => {
                 const index = row * gridSize + col;
                 const state = gridItems[index];
+                const tileStateLabel =
+                  state === "SHOWING"
+                    ? "highlighted"
+                    : state === "CORRECT"
+                      ? "correct"
+                      : state === "INCORRECT"
+                        ? "incorrect"
+                        : "";
                 return (
                   <Pressable
                     key={index}
@@ -67,6 +84,16 @@ export default function MemoryGameScreen() {
                       { backgroundColor: TILE_COLORS[state] },
                     ]}
                     disabled={!playerTurn}
+                    accessibilityRole="button"
+                    accessibilityLabel={[`Tile ${index + 1}`, tileStateLabel]
+                      .filter(Boolean)
+                      .join(", ")}
+                    accessibilityHint={
+                      playerTurn
+                        ? "Tap to select this tile"
+                        : "Wait for your turn"
+                    }
+                    accessibilityState={{ disabled: !playerTurn }}
                     onPress={() => {
                       void handleTilePress(index);
                     }}
@@ -83,6 +110,8 @@ export default function MemoryGameScreen() {
               pressed && styles.startPressed,
             ]}
             accessibilityRole="button"
+            accessibilityLabel="Start memory game"
+            accessibilityHint="Reveals the tile sequence"
             onPress={() => void start()}
           >
             <Text style={styles.startText}>Start</Text>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { announce } from "@/hooks/useAccessibility";
 import {
   DIFFICULTY_CONFIG,
   type Difficulty,
@@ -84,6 +85,7 @@ export function useMemoryGame({
     for (const idx of order) {
       await delay(500);
       if (cancelledRef.current) return;
+      announce(`Tile ${idx + 1}`);
       setTile(idx, "SHOWING");
       await delay(500);
       if (cancelledRef.current) return;
