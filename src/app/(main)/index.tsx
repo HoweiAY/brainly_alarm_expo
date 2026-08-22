@@ -2,12 +2,13 @@ import { AlarmCard } from "@/components/AlarmCard";
 import { cancelAlarm, setAlarm } from "@/alarms/scheduling";
 import { findConflictingAlarm } from "@/alarms/conflicts";
 import type { Alarm } from "@/data/types";
+import { announce } from "@/hooks/useAccessibility";
 import { useAlarmStore } from "@/store/alarmStore";
 import { colors, radii, spacing, typography } from "@/theme";
 import { computeNextAlarm, formatCountdown, formatTime } from "@/utils/time";
 import { Lucide } from "@react-native-vector-icons/lucide";
 import { useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -29,6 +30,8 @@ export default function Home() {
   const [now, setNow] = useState<Date>(() => new Date());
 
   const snoozedCount = useAlarmStore((s) => s.snoozedCount);
+  const loaded = useAlarmStore((s) => s.loaded);
+  const announcedRef = useRef(false);
 
   useEffect(() => {
     useAlarmStore.getState().loadAlarms();
@@ -43,6 +46,12 @@ export default function Home() {
     () => formatCountdown(computeNextAlarm(alarms, now)),
     [alarms, now],
   );
+
+  useEffect(() => {
+    if (!loaded || announcedRef.current) return;
+    announcedRef.current = true;
+    announce(`Welcome to Brainly Alarm! ${countdown}`);
+  }, [loaded, countdown]);
 
   const dismissSnoozed = () => {
     Alert.alert(
