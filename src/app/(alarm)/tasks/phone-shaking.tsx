@@ -24,14 +24,31 @@ export default function PhoneShakingScreen() {
         <Text style={styles.headerText}>Shake</Text>
       </View>
       <View style={styles.column}>
-        <Text style={styles.title}>Shake your phone to stop the alarm!</Text>
-        <Text style={styles.counter} accessibilityLabel={counterText}>
+        <Text style={styles.title} accessibilityRole="header">
+          Shake your phone to stop the alarm!
+        </Text>
+        <Text
+          style={styles.counter}
+          accessibilityLabel={counterText}
+          accessibilityLiveRegion="polite"
+        >
           {counterText}
         </Text>
         <View style={styles.iconWrap}>
-          <Lucide name="vibrate" size={160} color={colors.primary} />
+          <Lucide
+            name="vibrate"
+            size={160}
+            color={colors.primary}
+            importantForAccessibility="no"
+          />
         </View>
-        <View style={styles.progressTrack}>
+        <View
+          accessible
+          style={styles.progressTrack}
+          accessibilityRole="progressbar"
+          accessibilityLabel={`Progress: ${remainingShakes} of ${total} shakes remaining`}
+          accessibilityValue={{ now: remainingShakes, min: 0, max: total }}
+        >
           <View
             style={[styles.progressFill, { width: `${progress * 100}%` }]}
           />
