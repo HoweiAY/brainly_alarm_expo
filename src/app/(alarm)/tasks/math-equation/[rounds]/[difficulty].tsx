@@ -1,11 +1,12 @@
 import { useMathEquation } from "@/tasks/useMathEquation";
 import { parseTaskParams } from "@/tasks/params";
 import { useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radii, spacing, typography } from "@/theme";
 import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
+import { announce } from "@/hooks/useAccessibility";
 
 export default function MathEquationScreen() {
   const dismiss = useAlarmDismissal();
@@ -26,19 +27,35 @@ export default function MathEquationScreen() {
       },
     });
 
+  const prevCorrectRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (isCorrect === false && prevCorrectRef.current !== false) {
+      announce("Incorrect answer, try again");
+    }
+    prevCorrectRef.current = isCorrect;
+  }, [isCorrect]);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerText}>Math</Text>
       </View>
       <View style={styles.column}>
-        <Text style={styles.round}>
+        <Text
+          style={styles.round}
+          accessibilityLabel={`Round ${currentRound} of ${rounds}`}
+        >
           {currentRound}/{rounds}
         </Text>
-        <Text style={styles.instruction}>
+        <Text style={styles.instruction} accessibilityRole="header">
           What is the result of the expression?
         </Text>
-        <Text style={styles.expression}>{equation}</Text>
+        <Text
+          style={styles.expression}
+          accessibilityLabel={`Equation: ${equation}`}
+        >
+          {equation}
+        </Text>
         <TextInput
           style={[
             styles.input,
@@ -56,6 +73,7 @@ export default function MathEquationScreen() {
           placeholderTextColor={colors.textSubtle}
           selectionColor={colors.primary}
           accessibilityLabel="Answer"
+          accessibilityHint="Type the result and press Submit"
         />
         {isCorrect === null ? (
           <Pressable
@@ -65,6 +83,8 @@ export default function MathEquationScreen() {
             ]}
             onPress={submit}
             accessibilityRole="button"
+            accessibilityLabel="Submit answer"
+            accessibilityHint="Evaluates your answer"
           >
             <Text style={styles.submitText}>Submit</Text>
           </Pressable>
@@ -74,6 +94,9 @@ export default function MathEquationScreen() {
               styles.result,
               { color: isCorrect ? colors.success : colors.danger },
             ]}
+            accessibilityRole="text"
+            accessibilityLabel={isCorrect ? "Correct" : "Incorrect"}
+            accessibilityLiveRegion="assertive"
           >
             {isCorrect ? "✓" : "✗"}
           </Text>
