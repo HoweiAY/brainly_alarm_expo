@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 import type { Alarm } from "@/data/types";
+import { announce } from "@/hooks/useAccessibility";
 import { colors, radii, spacing, typography } from "@/theme";
 import { formatTime, getDaysString } from "@/utils/time";
 
@@ -35,6 +36,14 @@ export function AlarmCard({
   onPress,
   onLongPress,
 }: AlarmCardProps) {
+  const handleToggleEnabled = () => {
+    const nextEnabled = !alarm.enabled;
+    onToggleEnabled(alarm);
+    announce(
+      `${formatTime(alarm.hour, alarm.minute)} alarm, ${getDaysString(alarm.days)}, ${nextEnabled ? "enabled" : "disabled"}`,
+    );
+  };
+
   return (
     <View style={styles.card}>
       <Pressable
@@ -83,7 +92,7 @@ export function AlarmCard({
       ) : (
         <Switch
           value={alarm.enabled}
-          onValueChange={() => onToggleEnabled(alarm)}
+          onValueChange={handleToggleEnabled}
           trackColor={{ false: colors.surface, true: colors.primary }}
           thumbColor={
             Platform.OS === "android"
@@ -93,7 +102,7 @@ export function AlarmCard({
               : undefined
           }
           ios_backgroundColor={colors.border}
-          accessibilityLabel={`${formatTime(alarm.hour, alarm.minute)} alarm ${alarm.enabled ? "enabled" : "disabled"}`}
+          accessibilityLabel={`${formatTime(alarm.hour, alarm.minute)} alarm, ${getDaysString(alarm.days)}, ${alarm.enabled ? "enabled" : "disabled"}`}
         />
       )}
     </View>
