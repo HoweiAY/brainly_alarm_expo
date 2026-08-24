@@ -17,7 +17,6 @@ import { taskDifficulties, taskTypes, weekdays } from "@/data/constants";
 import type { Difficulty, TaskType } from "@/data/types";
 import type { UseCreateAlarmFormResult } from "@/hooks/useCreateAlarmForm";
 import { colors, radii, spacing, typography } from "@/theme";
-import { formatTime } from "@/utils/time";
 
 interface CreateAlarmFormProps {
   title: string;
@@ -51,10 +50,7 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
         contentContainerStyle={styles.bodyContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View
-          style={styles.card}
-          accessibilityLabel={`Time selector: ${formatTime(form.hourSelected, form.minuteSelected)}`}
-        >
+        <View style={styles.card}>
           <Text style={styles.sectionLabel}>Time</Text>
           <TimeWheelPicker
             hour24={form.hourSelected}
@@ -141,8 +137,11 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
                     pressed && !form.saving && styles.dropdownItemPressed,
                   ]}
                   accessibilityRole="button"
-                  accessibilityLabel={`${task} task ${task === form.taskSelected ? "selected" : "not selected"}`}
-                  accessibilityState={{ disabled: form.saving }}
+                  accessibilityLabel={`${task} task`}
+                  accessibilityState={{
+                    selected: task === form.taskSelected,
+                    disabled: form.saving,
+                  }}
                   disabled={form.saving}
                   onPress={() => form.setTask(task)}
                 >
@@ -190,10 +189,7 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
           style={[styles.card, !form.taskConfigurable && styles.cardDisabled]}
         >
           <Text style={styles.sectionLabel}>Difficulty</Text>
-          <View
-            style={styles.radiosRow}
-            accessibilityLabel="Difficulty selection"
-          >
+          <View style={styles.radiosRow}>
             {taskDifficulties.map((d: Difficulty) => (
               <RadioButton
                 key={d}

@@ -61,11 +61,13 @@ export function FormSlider({
       accessibilityRole="adjustable"
       accessibilityLabel={`Rounds: ${value} of ${max}`}
       accessibilityValue={{ now: value, min, max }}
+      accessibilityState={{ disabled }}
       accessibilityActions={[
         { name: "increment", label: "Increase rounds" },
         { name: "decrement", label: "Decrease rounds" },
       ]}
       onAccessibilityAction={(event) => {
+        if (disabled) return;
         if (event.nativeEvent.actionName === "increment") {
           const next = Math.min(max, value + step);
           if (next !== value) onChange(next);
