@@ -34,13 +34,12 @@ export default function PhoneShakingScreen() {
         >
           {counterText}
         </Text>
-        <View style={styles.iconWrap}>
-          <Lucide
-            name="vibrate"
-            size={160}
-            color={colors.primary}
-            importantForAccessibility="no"
-          />
+        <View
+          style={styles.iconWrap}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <Lucide name="vibrate" size={160} color={colors.primary} />
         </View>
         <View
           accessible

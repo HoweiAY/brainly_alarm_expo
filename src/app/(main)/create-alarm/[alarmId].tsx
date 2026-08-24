@@ -33,12 +33,11 @@ export default function EditAlarmScreen() {
       {loading ? (
         <View
           style={styles.loadingContainer}
+          accessible
+          accessibilityRole="progressbar"
           accessibilityLabel="Loading alarm"
         >
-          <ActivityIndicator
-            color={colors.primary}
-            accessibilityLabel="Loading"
-          />
+          <ActivityIndicator color={colors.primary} />
           <Text style={styles.loadingText}>Loading alarm…</Text>
         </View>
       ) : error ? (

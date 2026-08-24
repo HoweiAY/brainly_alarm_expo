@@ -96,7 +96,6 @@ export default function MathEquationScreen() {
             ]}
             accessibilityRole="text"
             accessibilityLabel={isCorrect ? "Correct" : "Incorrect"}
-            accessibilityLiveRegion="assertive"
           >
             {isCorrect ? "✓" : "✗"}
           </Text>
