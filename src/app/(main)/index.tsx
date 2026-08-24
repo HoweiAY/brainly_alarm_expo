@@ -12,6 +12,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   FlatList,
+  Modal,
   Pressable,
   StyleSheet,
   Text,
@@ -235,11 +236,7 @@ export default function Home() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.greeting}>Welcome to Brainly Alarm!</Text>
-        <Text
-          style={styles.countdown}
-          accessibilityLiveRegion="polite"
-          accessibilityLabel={countdown}
-        >
+        <Text style={styles.countdown} accessibilityLabel={countdown}>
           {countdown}
         </Text>
       </View>
@@ -321,7 +318,11 @@ export default function Home() {
                 accessibilityLabel={
                   optionsExpanded ? "Close menu" : "More options"
                 }
-                accessibilityHint="Shows menu with turn all on/off and edit options"
+                accessibilityHint={
+                  optionsExpanded
+                    ? "Closes the options menu"
+                    : "Shows menu with turn all on/off and edit options"
+                }
                 accessibilityState={{ expanded: optionsExpanded }}
                 onPress={() => setOptionsExpanded((v) => !v)}
               >
@@ -335,7 +336,7 @@ export default function Home() {
           )}
         </View>
         <FlatList
-          accessibilityLabel={`Alarm list, ${alarms.length} alarms`}
+          accessibilityLabel={`Alarm list, ${alarms.length} alarm${alarms.length === 1 ? "" : "s"}`}
           data={alarms}
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
@@ -350,17 +351,17 @@ export default function Home() {
           )}
           ListEmptyComponent={
             editEnabled ? null : (
-              <View
-                style={styles.emptyState}
-                accessibilityLabel="No alarms configured. Create alarm button below."
-              >
+              <View style={styles.emptyState}>
                 <Lucide
                   name="alarm-clock-off"
                   size={48}
                   color={colors.textSubtle}
                 />
                 <Text style={styles.emptyTitle}>No alarms yet</Text>
-                <Text style={styles.emptySubtitle}>
+                <Text
+                  style={styles.emptySubtitle}
+                  accessibilityLabel="No alarms configured. Create alarm button below."
+                >
                   Add your first alarm to get started.
                 </Text>
                 <Pressable
@@ -393,7 +394,11 @@ export default function Home() {
             ]}
             accessibilityRole="button"
             accessibilityLabel="Delete selected alarms"
-            accessibilityHint={`Opens confirmation, ${selectedIds.size} selected`}
+            accessibilityHint={
+              selectedIds.size === 0
+                ? "Select alarms to delete them"
+                : `Opens confirmation, ${selectedIds.size} selected`
+            }
             disabled={selectedIds.size === 0}
             onPress={deleteSelected}
           >
@@ -403,44 +408,52 @@ export default function Home() {
         </View>
       ) : null}
 
-      {optionsExpanded ? (
-        <>
+      <Modal
+        visible={optionsExpanded}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setOptionsExpanded(false)}
+      >
+        <Pressable
+          style={styles.backdrop}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss menu"
+          onPress={() => setOptionsExpanded(false)}
+        />
+        <View style={styles.dropdown}>
           <Pressable
-            style={styles.backdrop}
+            style={({ pressed }) => [
+              styles.dropdownItem,
+              alarms.length === 0 && styles.dropdownItemDisabled,
+              pressed && alarms.length > 0 && styles.dropdownItemPressed,
+            ]}
             accessibilityRole="button"
-            accessibilityLabel="Dismiss menu"
-            onPress={() => setOptionsExpanded(false)}
-          />
-          <View style={styles.dropdown}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.dropdownItem,
-                pressed && styles.dropdownItemPressed,
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={`Turn all alarms ${
-                alarms.length > 0 && alarms.every((a) => a.enabled)
-                  ? "off"
-                  : "on"
-              }`}
-              onPress={turnAllOnOff}
-            >
-              <Text style={styles.dropdownItemText}>Turn all on/off</Text>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [
-                styles.dropdownItem,
-                pressed && styles.dropdownItemPressed,
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Edit alarms"
-              onPress={enterEdit}
-            >
-              <Text style={styles.dropdownItemText}>Edit</Text>
-            </Pressable>
-          </View>
-        </>
-      ) : null}
+            accessibilityState={{ disabled: alarms.length === 0 }}
+            accessibilityLabel={
+              alarms.length === 0
+                ? "Turn all alarms"
+                : `Turn all alarms ${
+                    alarms.every((a) => a.enabled) ? "off" : "on"
+                  }`
+            }
+            disabled={alarms.length === 0}
+            onPress={turnAllOnOff}
+          >
+            <Text style={styles.dropdownItemText}>Turn all on/off</Text>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [
+              styles.dropdownItem,
+              pressed && styles.dropdownItemPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Edit alarms"
+            onPress={enterEdit}
+          >
+            <Text style={styles.dropdownItemText}>Edit</Text>
+          </Pressable>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -522,6 +535,9 @@ const styles = StyleSheet.create({
   },
   dropdownItemPressed: {
     backgroundColor: colors.surfaceElevated,
+  },
+  dropdownItemDisabled: {
+    opacity: 0.4,
   },
   dropdownItemText: {
     ...typography.body,
