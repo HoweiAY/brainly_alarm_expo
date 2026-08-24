@@ -82,7 +82,7 @@ export default function Home() {
     );
   };
 
-  const toggleEnabled = (alarm: Alarm) => {
+  const toggleEnabled = async (alarm: Alarm): Promise<boolean> => {
     if (!alarm.enabled) {
       const conflict = findConflictingAlarm(alarms, alarm, alarm.id);
       if (conflict) {
@@ -90,20 +90,20 @@ export default function Home() {
           "Alarm already set",
           `An alarm with the same time (${formatTime(alarm.hour, alarm.minute)}) has already been set.`,
         );
-        return;
+        return false;
       }
     }
     const next = { ...alarm, enabled: !alarm.enabled };
-    void (async () => {
-      try {
-        await useAlarmStore.getState().updateAlarm(next);
-        if (next.enabled) await setAlarm(next);
-        else await cancelAlarm(next);
-      } catch (e) {
-        console.error("toggleEnabled failed", e);
-        Alert.alert("Error", "Could not update the alarm. Please try again.");
-      }
-    })();
+    try {
+      await useAlarmStore.getState().updateAlarm(next);
+      if (next.enabled) await setAlarm(next);
+      else await cancelAlarm(next);
+      return true;
+    } catch (e) {
+      console.error("toggleEnabled failed", e);
+      Alert.alert("Error", "Could not update the alarm. Please try again.");
+      return false;
+    }
   };
 
   const turnAllOnOff = async () => {

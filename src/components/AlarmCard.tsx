@@ -1,3 +1,7 @@
+import type { Alarm } from "@/data/types";
+import { announce } from "@/hooks/useAccessibility";
+import { colors, radii, spacing, typography } from "@/theme";
+import { formatTime, getDaysString } from "@/utils/time";
 import { Lucide } from "@react-native-vector-icons/lucide";
 import {
   Platform,
@@ -7,10 +11,6 @@ import {
   Text,
   View,
 } from "react-native";
-import type { Alarm } from "@/data/types";
-import { announce } from "@/hooks/useAccessibility";
-import { colors, radii, spacing, typography } from "@/theme";
-import { formatTime, getDaysString } from "@/utils/time";
 
 const taskIcons = {
   Math: "sigma",
@@ -23,7 +23,7 @@ interface AlarmCardProps {
   alarm: Alarm;
   editEnabled: boolean;
   selected: boolean;
-  onToggleEnabled: (alarm: Alarm) => void;
+  onToggleEnabled: (alarm: Alarm) => Promise<boolean>;
   onPress: (alarm: Alarm) => void;
   onLongPress: (alarm: Alarm) => void;
 }
@@ -36,12 +36,14 @@ export function AlarmCard({
   onPress,
   onLongPress,
 }: AlarmCardProps) {
-  const handleToggleEnabled = () => {
+  const handleToggleEnabled = async () => {
     const nextEnabled = !alarm.enabled;
-    onToggleEnabled(alarm);
-    announce(
-      `${formatTime(alarm.hour, alarm.minute)} alarm, ${getDaysString(alarm.days)}, ${nextEnabled ? "enabled" : "disabled"}`,
-    );
+    const updated = await onToggleEnabled(alarm);
+    if (updated) {
+      announce(
+        `${formatTime(alarm.hour, alarm.minute)} alarm, ${getDaysString(alarm.days)}, ${nextEnabled ? "enabled" : "disabled"}`,
+      );
+    }
   };
 
   return (
