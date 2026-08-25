@@ -1,5 +1,6 @@
 import { AlarmCard } from "@/components/AlarmCard";
 import { cancelAlarm, setAlarm } from "@/alarms/scheduling";
+import { toggleAlarmEnabled } from "@/alarms/toggleAlarmEnabled";
 import { findConflictingAlarm } from "@/alarms/conflicts";
 import type { Alarm } from "@/data/types";
 import { announce } from "@/hooks/useAccessibility";
@@ -93,17 +94,15 @@ export default function Home() {
         return false;
       }
     }
-    const next = { ...alarm, enabled: !alarm.enabled };
-    try {
-      await useAlarmStore.getState().updateAlarm(next);
-      if (next.enabled) await setAlarm(next);
-      else await cancelAlarm(next);
-      return true;
-    } catch (e) {
-      console.error("toggleEnabled failed", e);
+    const ok = await toggleAlarmEnabled(alarm, {
+      updateAlarm: (a) => useAlarmStore.getState().updateAlarm(a),
+      setAlarm,
+      cancelAlarm,
+    });
+    if (!ok) {
       Alert.alert("Error", "Could not update the alarm. Please try again.");
-      return false;
     }
+    return ok;
   };
 
   const turnAllOnOff = async () => {
