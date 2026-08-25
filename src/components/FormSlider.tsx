@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
-import { PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
 import { useScreenReaderEnabled } from "@/hooks/useAccessibility";
 import { colors, radii, spacing, typography } from "@/theme";
+import { useMemo, useState } from "react";
+import { PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
 
 interface FormSliderProps {
   min: number;
@@ -72,7 +72,7 @@ export function FormSlider({
             ]}
             accessibilityRole="radio"
             accessibilityState={{ selected: option === value, disabled }}
-            accessibilityLabel={`${option} rounds`}
+            accessibilityLabel={`${option} ${option === 1 ? "round" : "rounds"}`}
             disabled={disabled}
             onPress={() => {
               if (option !== value) onChange(option);
