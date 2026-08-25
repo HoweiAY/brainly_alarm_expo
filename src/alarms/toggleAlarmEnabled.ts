@@ -24,9 +24,16 @@ export async function toggleAlarmEnabled(
     if (storeUpdated) {
       try {
         await deps.updateAlarm(alarm);
+      } catch (rollbackError) {
+        console.error(
+          "toggleAlarmEnabled rollback update failed",
+          rollbackError,
+        );
+      }
+      try {
         await deps.setAlarm(alarm);
       } catch (rollbackError) {
-        console.error("toggleAlarmEnabled rollback failed", rollbackError);
+        console.error("toggleAlarmEnabled rollback set failed", rollbackError);
       }
     }
     return false;
