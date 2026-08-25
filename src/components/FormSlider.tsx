@@ -59,7 +59,7 @@ export function FormSlider({
     });
   }, [disabled, min, step, steps, value, onChange, trackWidth, usable]);
 
-  if (screenReaderEnabled) {
+  if (screenReaderEnabled !== false) {
     return (
       <View style={[styles.optionsRow, disabled && styles.wrapperDisabled]}>
         {options.map((option) => (

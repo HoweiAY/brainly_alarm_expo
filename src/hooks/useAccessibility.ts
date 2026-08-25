@@ -5,8 +5,8 @@ export function announce(message: string): void {
   AccessibilityInfo.announceForAccessibility(message);
 }
 
-export function useScreenReaderEnabled(): boolean {
-  const [enabled, setEnabled] = useState(false);
+export function useScreenReaderEnabled(): boolean | null {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
     let mounted = true;
