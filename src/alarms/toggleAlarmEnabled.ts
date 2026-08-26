@@ -31,9 +31,13 @@ export async function toggleAlarmEnabled(
         );
       }
       try {
-        await deps.setAlarm(alarm);
+        if (alarm.enabled) await deps.setAlarm(alarm);
+        else await deps.cancelAlarm(alarm);
       } catch (rollbackError) {
-        console.error("toggleAlarmEnabled rollback set failed", rollbackError);
+        console.error(
+          "toggleAlarmEnabled rollback scheduler restore failed",
+          rollbackError,
+        );
       }
     }
     return false;
