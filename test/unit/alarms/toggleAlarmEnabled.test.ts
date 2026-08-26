@@ -50,8 +50,7 @@ describe("toggleAlarmEnabled", () => {
       .mockResolvedValue(undefined);
     const setAlarm = jest
       .fn<(alarm: Alarm) => Promise<void>>()
-      .mockRejectedValueOnce(new Error("schedule failed"))
-      .mockResolvedValueOnce(undefined);
+      .mockRejectedValueOnce(new Error("schedule failed"));
     const cancelAlarm = jest
       .fn<(alarm: { id: string }) => Promise<void>>()
       .mockResolvedValue(undefined);
@@ -65,9 +64,10 @@ describe("toggleAlarmEnabled", () => {
     expect(result).toBe(false);
     expect(updateAlarm).toHaveBeenNthCalledWith(1, next);
     expect(updateAlarm).toHaveBeenNthCalledWith(2, alarm);
-    expect(setAlarm).toHaveBeenCalledTimes(2);
-    expect(setAlarm).toHaveBeenNthCalledWith(2, alarm);
-    expect(cancelAlarm).not.toHaveBeenCalled();
+    expect(setAlarm).toHaveBeenCalledTimes(1);
+    expect(setAlarm).toHaveBeenNthCalledWith(1, next);
+    expect(cancelAlarm).toHaveBeenCalledTimes(1);
+    expect(cancelAlarm).toHaveBeenCalledWith(alarm);
   });
 
   it("still restores the scheduler when the rollback update rejects", async () => {
@@ -79,8 +79,7 @@ describe("toggleAlarmEnabled", () => {
       .mockRejectedValueOnce(new Error("rollback db failed"));
     const setAlarm = jest
       .fn<(alarm: Alarm) => Promise<void>>()
-      .mockRejectedValueOnce(new Error("schedule failed"))
-      .mockResolvedValueOnce(undefined);
+      .mockRejectedValueOnce(new Error("schedule failed"));
     const cancelAlarm = jest
       .fn<(alarm: { id: string }) => Promise<void>>()
       .mockResolvedValue(undefined);
@@ -94,9 +93,10 @@ describe("toggleAlarmEnabled", () => {
     expect(result).toBe(false);
     expect(updateAlarm).toHaveBeenNthCalledWith(1, next);
     expect(updateAlarm).toHaveBeenNthCalledWith(2, alarm);
-    expect(setAlarm).toHaveBeenCalledTimes(2);
-    expect(setAlarm).toHaveBeenNthCalledWith(2, alarm);
-    expect(cancelAlarm).not.toHaveBeenCalled();
+    expect(setAlarm).toHaveBeenCalledTimes(1);
+    expect(setAlarm).toHaveBeenNthCalledWith(1, next);
+    expect(cancelAlarm).toHaveBeenCalledTimes(1);
+    expect(cancelAlarm).toHaveBeenCalledWith(alarm);
   });
 
   it("does not restore when the store update itself rejects", async () => {
