@@ -70,6 +70,34 @@ describe("toggleAlarmEnabled", () => {
     expect(cancelAlarm).toHaveBeenCalledWith(alarm);
   });
 
+  it("restores store and scheduler when cancelAlarm rejects", async () => {
+    const alarm = makeAlarm(true);
+    const next = { ...alarm, enabled: false };
+    const updateAlarm = jest
+      .fn<(alarm: Alarm) => Promise<void>>()
+      .mockResolvedValue(undefined);
+    const setAlarm = jest
+      .fn<(alarm: Alarm) => Promise<void>>()
+      .mockResolvedValue(undefined);
+    const cancelAlarm = jest
+      .fn<(alarm: { id: string }) => Promise<void>>()
+      .mockRejectedValueOnce(new Error("cancel failed"));
+
+    const result = await toggleAlarmEnabled(alarm, {
+      updateAlarm,
+      setAlarm,
+      cancelAlarm,
+    });
+
+    expect(result).toBe(false);
+    expect(updateAlarm).toHaveBeenNthCalledWith(1, next);
+    expect(updateAlarm).toHaveBeenNthCalledWith(2, alarm);
+    expect(setAlarm).toHaveBeenCalledTimes(1);
+    expect(setAlarm).toHaveBeenNthCalledWith(1, alarm);
+    expect(cancelAlarm).toHaveBeenCalledTimes(1);
+    expect(cancelAlarm).toHaveBeenCalledWith(next);
+  });
+
   it("still restores the scheduler when the rollback update rejects", async () => {
     const alarm = makeAlarm(false);
     const next = { ...alarm, enabled: true };
