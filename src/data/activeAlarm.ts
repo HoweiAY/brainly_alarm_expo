@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { eq } from "drizzle-orm";
 import { db, dbReady } from "./db";
 import { activeAlarmTable } from "./schema";
@@ -7,7 +8,7 @@ export async function persistActiveAlarm(
   snapshot: AlarmSnapshot,
 ): Promise<void> {
   await dbReady;
-  const now = Date.now();
+  const now = dayjs().valueOf();
   await db
     .insert(activeAlarmTable)
     .values({

@@ -1,4 +1,4 @@
-import dayjs from "dayjs";
+import type { Dayjs } from "dayjs";
 import { weekdays } from "@/data/constants";
 import type { Alarm, Weekday } from "@/data/types";
 
@@ -41,12 +41,12 @@ function msToDelta(ms: number): AlarmDelta {
 
 export function computeNextAlarm(
   alarms: Alarm[],
-  now: Date,
+  now: Dayjs,
 ): AlarmDelta | null {
   const enabled = alarms.filter((a) => a.enabled);
   if (enabled.length === 0) return null;
 
-  const nowDayjs = dayjs(now).second(0).millisecond(0);
+  const nowDayjs = now.second(0).millisecond(0);
 
   let bestMs: number | null = null;
   for (const alarm of enabled) {

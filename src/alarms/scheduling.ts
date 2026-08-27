@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { alarmToSnapshot } from "@/data/conversions";
 import { useAlarmStore } from "@/store/alarmStore";
 import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
@@ -83,7 +84,7 @@ export async function resetAlarm(snapshot: AlarmSnapshot): Promise<void> {
       snapshot.weekday,
       snapshot.hour,
       snapshot.minute,
-      Date.now(),
+      dayjs().valueOf(),
       true,
     );
     const payload: AlarmSnapshot = { ...snapshot, isSnoozed: false };
@@ -103,7 +104,7 @@ export async function snoozeAlarm(snapshot: AlarmSnapshot): Promise<void> {
   await native.stopAlarmSound();
   const identifier = snoozeIdentifierFor(snapshot.alarmId);
   await native.cancel(identifier);
-  const triggerAt = Date.now() + SNOOZE_MINUTES * 60_000;
+  const triggerAt = dayjs().add(SNOOZE_MINUTES, "minute").valueOf();
   const payload: AlarmSnapshot = { ...snapshot, isSnoozed: true };
   await native.scheduleOneShot({
     identifier,

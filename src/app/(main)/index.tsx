@@ -8,6 +8,7 @@ import { useAlarmStore } from "@/store/alarmStore";
 import { colors, radii, spacing, typography } from "@/theme";
 import { computeNextAlarm, formatCountdown, formatTime } from "@/utils/time";
 import { Lucide } from "@react-native-vector-icons/lucide";
+import dayjs, { type Dayjs } from "dayjs";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -29,7 +30,7 @@ export default function Home() {
   const [editEnabled, setEditEnabled] = useState(false);
   const [optionsExpanded, setOptionsExpanded] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
-  const [now, setNow] = useState<Date>(() => new Date());
+  const [now, setNow] = useState<Dayjs>(() => dayjs());
 
   const snoozedCount = useAlarmStore((s) => s.snoozedCount);
   const loaded = useAlarmStore((s) => s.loaded);
@@ -40,7 +41,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), TICK_MS);
+    const id = setInterval(() => setNow(dayjs()), TICK_MS);
     return () => clearInterval(id);
   }, []);
 

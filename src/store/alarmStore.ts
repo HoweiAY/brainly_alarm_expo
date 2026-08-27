@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import * as Crypto from "expo-crypto";
 import * as SQLite from "expo-sqlite";
 import { asc, eq } from "drizzle-orm";
@@ -119,7 +120,9 @@ export const useAlarmStore = create<AlarmStoreState>((set, get) => {
     insertAlarm: async (draft) => {
       await dbReady;
       const id = Crypto.randomUUID();
-      await db.insert(alarmsTable).values(draftToInsert(draft, id, Date.now()));
+      await db
+        .insert(alarmsTable)
+        .values(draftToInsert(draft, id, dayjs().valueOf()));
       return id;
     },
 
@@ -127,7 +130,7 @@ export const useAlarmStore = create<AlarmStoreState>((set, get) => {
       await dbReady;
       await db
         .update(alarmsTable)
-        .set(alarmToUpdateSet(alarm, Date.now()))
+        .set(alarmToUpdateSet(alarm, dayjs().valueOf()))
         .where(eq(alarmsTable.id, alarm.id));
     },
 
