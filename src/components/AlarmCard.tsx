@@ -1,3 +1,7 @@
+import type { Alarm } from "@/data/types";
+import { announce } from "@/hooks/useAccessibility";
+import { colors, radii, spacing, typography } from "@/theme";
+import { formatTime, getDaysString } from "@/utils/time";
 import { Lucide } from "@react-native-vector-icons/lucide";
 import {
   Platform,
@@ -7,9 +11,6 @@ import {
   Text,
   View,
 } from "react-native";
-import type { Alarm } from "@/data/types";
-import { colors, radii, spacing, typography } from "@/theme";
-import { formatTime, getDaysString } from "@/utils/time";
 
 const taskIcons = {
   Math: "sigma",
@@ -22,7 +23,7 @@ interface AlarmCardProps {
   alarm: Alarm;
   editEnabled: boolean;
   selected: boolean;
-  onToggleEnabled: (alarm: Alarm) => void;
+  onToggleEnabled: (alarm: Alarm) => Promise<boolean>;
   onPress: (alarm: Alarm) => void;
   onLongPress: (alarm: Alarm) => void;
 }
@@ -35,34 +36,65 @@ export function AlarmCard({
   onPress,
   onLongPress,
 }: AlarmCardProps) {
+  const handleToggleEnabled = async () => {
+    const nextEnabled = !alarm.enabled;
+    const updated = await onToggleEnabled(alarm);
+    if (updated) {
+      announce(
+        `${formatTime(alarm.hour, alarm.minute)} alarm, ${getDaysString(alarm.days)}, ${nextEnabled ? "enabled" : "disabled"}`,
+      );
+    }
+  };
+
   return (
-    <Pressable
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-      onPress={() => onPress(alarm)}
-      onLongPress={() => onLongPress(alarm)}
-      accessibilityLabel={`${formatTime(alarm.hour, alarm.minute)} alarm, ${alarm.task} task, ${getDaysString(alarm.days)}`}
-    >
-      <View style={styles.left}>
-        <Text style={styles.time}>{formatTime(alarm.hour, alarm.minute)}</Text>
-        <View style={styles.row}>
-          <Lucide
-            name={taskIcons[alarm.task]}
-            size={14}
-            color={colors.textMuted}
-          />
-          <Text style={styles.days}>{getDaysString(alarm.days)}</Text>
+    <View style={styles.card}>
+      <Pressable
+        style={({ pressed }) => [
+          styles.cardBody,
+          pressed && styles.cardBodyPressed,
+        ]}
+        onPress={() => onPress(alarm)}
+        onLongPress={() => onLongPress(alarm)}
+        accessibilityRole="button"
+        accessibilityLabel={`${formatTime(alarm.hour, alarm.minute)} alarm, ${alarm.task} task, ${getDaysString(alarm.days)}`}
+        accessibilityHint={
+          editEnabled
+            ? `Tap to ${selected ? "deselect" : "select"} alarm`
+            : "Tap to edit alarm"
+        }
+        accessibilityState={{ selected: editEnabled ? selected : undefined }}
+      >
+        <View style={styles.left}>
+          <Text style={styles.time}>
+            {formatTime(alarm.hour, alarm.minute)}
+          </Text>
+          <View style={styles.row}>
+            <Lucide
+              name={taskIcons[alarm.task]}
+              size={14}
+              color={colors.textMuted}
+              importantForAccessibility="no"
+            />
+            <Text style={styles.days}>{getDaysString(alarm.days)}</Text>
+          </View>
         </View>
-      </View>
+      </Pressable>
       {editEnabled ? (
-        <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
+        <Pressable
+          style={[styles.checkbox, selected && styles.checkboxSelected]}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: selected }}
+          accessibilityLabel={`${formatTime(alarm.hour, alarm.minute)} alarm`}
+          onPress={() => onPress(alarm)}
+        >
           {selected ? (
             <Lucide name="check" color={colors.primaryFg} size={16} />
           ) : null}
-        </View>
+        </Pressable>
       ) : (
         <Switch
           value={alarm.enabled}
-          onValueChange={() => onToggleEnabled(alarm)}
+          onValueChange={handleToggleEnabled}
           trackColor={{ false: colors.surface, true: colors.primary }}
           thumbColor={
             Platform.OS === "android"
@@ -72,9 +104,10 @@ export function AlarmCard({
               : undefined
           }
           ios_backgroundColor={colors.border}
+          accessibilityLabel={`${formatTime(alarm.hour, alarm.minute)} alarm, ${getDaysString(alarm.days)}, ${alarm.enabled ? "enabled" : "disabled"}`}
         />
       )}
-    </Pressable>
+    </View>
   );
 }
 
@@ -90,8 +123,13 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
-  cardPressed: {
-    backgroundColor: colors.surfaceElevated,
+  cardBody: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  cardBodyPressed: {
+    opacity: 0.7,
   },
   left: {
     flexDirection: "column",

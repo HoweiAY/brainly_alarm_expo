@@ -34,6 +34,7 @@ interface WheelProps {
   width: number | `${number}%` | undefined;
   onIndexChange: (index: number) => void;
   disabled?: boolean;
+  accessibilityLabel: string;
 }
 
 function Wheel({
@@ -42,6 +43,7 @@ function Wheel({
   width,
   onIndexChange,
   disabled = false,
+  accessibilityLabel,
 }: WheelProps) {
   const scrollRef = useRef<ScrollView>(null);
 
@@ -68,7 +70,26 @@ function Wheel({
   };
 
   return (
-    <View style={[styles.wheel, { width: width as ViewStyle["width"] }]}>
+    <View
+      style={[styles.wheel, { width: width as ViewStyle["width"] }]}
+      accessible
+      accessibilityRole="adjustable"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityValue={{ text: data[index] }}
+      accessibilityState={{ disabled }}
+      accessibilityActions={[
+        { name: "increment", label: "Increase" },
+        { name: "decrement", label: "Decrease" },
+      ]}
+      onAccessibilityAction={(event) => {
+        if (disabled) return;
+        if (event.nativeEvent.actionName === "increment") {
+          if (index < data.length - 1) onIndexChange(index + 1);
+        } else if (event.nativeEvent.actionName === "decrement") {
+          if (index > 0) onIndexChange(index - 1);
+        }
+      }}
+    >
       <ScrollView
         ref={scrollRef}
         snapToInterval={ITEM_HEIGHT}
@@ -85,6 +106,8 @@ function Wheel({
           <Pressable
             key={item}
             style={styles.item}
+            importantForAccessibility="no"
+            accessible={false}
             onPress={() => handleItemPress(i)}
           >
             <Text style={[styles.itemText, i !== index && styles.itemTextDim]}>
@@ -124,6 +147,7 @@ export function TimeWheelPicker({
         width={72}
         onIndexChange={handleHour}
         disabled={disabled}
+        accessibilityLabel="Hour"
       />
       <Text style={styles.colon}>:</Text>
       <Wheel
@@ -132,6 +156,7 @@ export function TimeWheelPicker({
         width={72}
         onIndexChange={handleMinute}
         disabled={disabled}
+        accessibilityLabel="Minute"
       />
       <Wheel
         data={[...PERIODS]}
@@ -139,6 +164,7 @@ export function TimeWheelPicker({
         width={56}
         onIndexChange={handlePeriod}
         disabled={disabled}
+        accessibilityLabel="Period"
       />
     </View>
   );

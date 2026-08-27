@@ -31,7 +31,12 @@ export default function EditAlarmScreen() {
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       {loading ? (
-        <View style={styles.loadingContainer}>
+        <View
+          style={styles.loadingContainer}
+          accessible
+          accessibilityRole="progressbar"
+          accessibilityLabel="Loading alarm"
+        >
           <ActivityIndicator color={colors.primary} />
           <Text style={styles.loadingText}>Loading alarm…</Text>
         </View>
@@ -39,7 +44,12 @@ export default function EditAlarmScreen() {
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Couldn’t load alarms.</Text>
           <Text style={styles.errorDetail}>{error}</Text>
-          <Pressable accessibilityRole="button" onPress={retry}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Retry loading alarms"
+            accessibilityHint="Attempts to reload alarms from storage"
+            onPress={retry}
+          >
             <Text style={styles.createLink}>Try again</Text>
           </Pressable>
         </View>
@@ -50,6 +60,8 @@ export default function EditAlarmScreen() {
           <Text style={styles.loadingText}>Alarm not found.</Text>
           <Pressable
             accessibilityRole="button"
+            accessibilityLabel="Alarm not found. Create a new alarm"
+            accessibilityHint="Navigates to alarm creation form"
             onPress={() => router.replace("/create-alarm")}
           >
             <Text style={styles.createLink}>Create a new alarm</Text>

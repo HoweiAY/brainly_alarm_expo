@@ -1,6 +1,7 @@
+import { useScreenReaderEnabled } from "@/hooks/useAccessibility";
+import { colors, radii, spacing, typography } from "@/theme";
 import { useMemo, useState } from "react";
-import { PanResponder, StyleSheet, View } from "react-native";
-import { colors, radii } from "@/theme";
+import { PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
 
 interface FormSliderProps {
   min: number;
@@ -23,6 +24,7 @@ export function FormSlider({
   onChange,
   disabled = false,
 }: FormSliderProps) {
+  const screenReaderEnabled = useScreenReaderEnabled();
   const [trackWidth, setTrackWidth] = useState(0);
 
   const steps = Math.max(0, Math.round((max - min) / step));
@@ -30,6 +32,11 @@ export function FormSlider({
   const snappedIndex = steps > 0 ? Math.round((value - min) / step) : 0;
   const thumbLeft = steps > 0 ? (snappedIndex / steps) * usable : 0;
   const fillWidth = thumbLeft + THUMB_SIZE / 2;
+
+  const options = useMemo(
+    () => Array.from({ length: steps + 1 }, (_, i) => min + i * step),
+    [min, step, steps],
+  );
 
   const panResponder = useMemo(() => {
     const applyFraction = (frac: number) => {
@@ -51,6 +58,39 @@ export function FormSlider({
       },
     });
   }, [disabled, min, step, steps, value, onChange, trackWidth, usable]);
+
+  if (screenReaderEnabled !== false) {
+    return (
+      <View style={[styles.optionsRow, disabled && styles.wrapperDisabled]}>
+        {options.map((option) => (
+          <Pressable
+            key={option}
+            style={({ pressed }) => [
+              styles.optionPill,
+              option === value && styles.optionPillSelected,
+              pressed && !disabled && styles.optionPillPressed,
+            ]}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: option === value, disabled }}
+            accessibilityLabel={`${option} ${option === 1 ? "round" : "rounds"}`}
+            disabled={disabled}
+            onPress={() => {
+              if (option !== value) onChange(option);
+            }}
+          >
+            <Text
+              style={[
+                styles.optionLabel,
+                option === value && styles.optionLabelSelected,
+              ]}
+            >
+              {option}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    );
+  }
 
   return (
     <View
@@ -80,6 +120,35 @@ const styles = StyleSheet.create({
   },
   wrapperDisabled: {
     opacity: 0.4,
+  },
+  optionsRow: {
+    flexDirection: "row",
+    gap: spacing.xs,
+  },
+  optionPill: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.full,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  optionPillSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  optionPillPressed: {
+    backgroundColor: colors.surfaceElevated,
+  },
+  optionLabel: {
+    ...typography.caption,
+    color: colors.textMuted,
+    fontWeight: "600",
+  },
+  optionLabelSelected: {
+    color: colors.primaryFg,
   },
   track: {
     height: TRACK_HEIGHT,

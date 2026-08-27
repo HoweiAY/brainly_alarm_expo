@@ -67,10 +67,13 @@ export default function AlarmDisplay() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
-          <Text style={styles.missing}>No active alarm.</Text>
+          <Text style={styles.missing} accessibilityRole="header">
+            No active alarm.
+          </Text>
           <Pressable
             style={styles.button}
             accessibilityRole="button"
+            accessibilityHint="Returns to home screen"
             onPress={() => void dismiss()}
           >
             <Text style={styles.buttonText}>Dismiss</Text>
@@ -111,7 +114,12 @@ export default function AlarmDisplay() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.time}>{currentTime}</Text>
+        <Text
+          style={styles.time}
+          accessibilityLabel={`Current time: ${currentTime}`}
+        >
+          {currentTime}
+        </Text>
         <Text style={styles.label}>
           {effectiveSnapshot.isSnoozed ? "Snoozed alarm" : "Alarm"}
         </Text>
@@ -127,6 +135,7 @@ export default function AlarmDisplay() {
             ]}
             accessibilityRole="button"
             accessibilityLabel="Turn off"
+            accessibilityHint="Stops the alarm immediately"
             onPress={handleOff}
           >
             <Text style={styles.primaryButtonText}>Turn Off</Text>
@@ -140,6 +149,7 @@ export default function AlarmDisplay() {
             ]}
             accessibilityRole="button"
             accessibilityLabel="Begin task"
+            accessibilityHint={`Starts the ${effectiveSnapshot.task} dismissal task`}
             onPress={handleBegin}
           >
             <Text style={styles.primaryButtonText}>Begin</Text>
@@ -154,6 +164,7 @@ export default function AlarmDisplay() {
             ]}
             accessibilityRole="button"
             accessibilityLabel="Snooze"
+            accessibilityHint="Snoozes the alarm for 5 minutes"
             onPress={handleSnooze}
           >
             <Text style={styles.buttonText}>Snooze</Text>
