@@ -1,4 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
+import dayjs from "dayjs";
 import type { Alarm } from "@/data/types";
 import { computeNextAlarm } from "@/utils/time";
 
@@ -21,16 +22,18 @@ function baseAlarm(over: Partial<Alarm> = {}): Alarm {
 describe("computeNextAlarm", () => {
   it("returns null when no alarms are enabled", () => {
     const now = new Date(2024, 0, 3, 10, 0, 0, 0);
-    expect(computeNextAlarm([baseAlarm({ enabled: false })], now)).toBeNull();
+    expect(
+      computeNextAlarm([baseAlarm({ enabled: false })], dayjs(now)),
+    ).toBeNull();
   });
 
   it("returns null when alarms list is empty", () => {
     const now = new Date(2024, 0, 3, 10, 0, 0, 0);
-    expect(computeNextAlarm([], now)).toBeNull();
+    expect(computeNextAlarm([], dayjs(now))).toBeNull();
   });
 
   describe("boundary conditions", () => {
-    const now = new Date(2024, 0, 3, 10, 0, 0, 0);
+    const now = dayjs(new Date(2024, 0, 3, 10, 0, 0, 0));
 
     it("rolls forward one week when candidate equals now", () => {
       const result = computeNextAlarm(
