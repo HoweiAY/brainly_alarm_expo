@@ -31,7 +31,7 @@ Always read the relevant `docs/` section before implementing a subsystem; the do
 - **Sound:** `expo-audio` (or `expo-av`) looping on the alarm audio category; override silent/DND where the platform allows. Keep playback alive in the background while ringing.
 - **Audio picking:** `expo-document-picker` + `expo-file-system` copy to sandbox (fixes the persisted-URI bug from doc 06 §2.3).
 - **Sensors:** `expo-sensors` `Accelerometer` for the shake task (recalibrate the 11 m/s² threshold).
-- **Date/time:** `date-fns` + native `Date`.
+- **Date/time:** `dayjs` (prioritized over native `Date`).
 - **Math evaluation:** hand-written tokenizer or sanitized `Function("return " + expr)` with `/^[\d+\-*\s]+$/` allow-list. Never `eval` arbitrary input.
 
 ## Data Model
@@ -55,9 +55,10 @@ Always read the relevant `docs/` section before implementing a subsystem; the do
 8. **Shared completion handler.** Implement one `useAlarmDismissal()` hook wrapping `stopAlarmSound()` + the native dismiss callback; every task calls it.
 9. **Alarm flow is modal.** The `(alarm)` group uses `presentation: 'fullScreenModal'`. Task completion calls `router.replace('/(main)')` (not `router.back()`) to discard the alarm stack, mirroring `onAlarmDismissed`'s `FLAG_ACTIVITY_CLEAR_TOP`.
 10. **Permissions:** request exact-alarm (`SCHEDULE_EXACT_ALARM`, Android 12+), `POST_NOTIFICATIONS`, and audio-picker access at runtime. See `docs/06` §7.
-11. **Don't add comments** unless asked. Match existing code style.
-12. **Verify before declaring done.** Run `npm run lint` and typecheck (`npx tsc --noEmit`) after non-trivial changes. Prefer unit tests for pure logic (`mathEquation`, `memoryGame`, `time`/next-alarm computation).
-13. **Don't commit** unless explicitly asked.
+11. **Use dayjs for all date/time operations.** Prefer `dayjs` over native `Date` in production code (`src/**`). Use `dayjs().valueOf()` in place of `Date.now()` for epoch-millis timestamps, and type time values as `Dayjs` (e.g. `computeNextAlarm`'s `now` argument). dayjs instances are immutable — create fresh `dayjs()` instances (e.g. inside interval callbacks) rather than mutating shared ones. Keep epoch-millis `number` at the native scheduler boundary (e.g. `nextWeeklyTriggerTime`), since platform-native Kotlin/Swift code cannot use dayjs.
+12. **Don't add comments** unless asked. Match existing code style.
+13. **Verify before declaring done.** Run `npm run lint` and typecheck (`npx tsc --noEmit`) after non-trivial changes. Prefer unit tests for pure logic (`mathEquation`, `memoryGame`, `time`/next-alarm computation).
+14. **Don't commit** unless explicitly asked.
 
 ## Out of Scope
 

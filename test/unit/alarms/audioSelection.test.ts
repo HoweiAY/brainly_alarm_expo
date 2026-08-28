@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it, jest } from "@jest/globals";
 import {
   buildSoundSelection,
   DEFAULT_SOUND_LABEL,
@@ -7,6 +7,17 @@ import {
   sanitizeAudioFileName,
   soundLabelFor,
 } from "@/alarms/audioSelection";
+
+jest.mock("expo-file-system", () => ({
+  File: class {
+    exists = false;
+    delete() {}
+  },
+}));
+
+jest.mock("@/store/alarmStore", () => ({
+  useAlarmStore: { getState: () => ({ alarms: [] }) },
+}));
 
 describe("isDefaultSound", () => {
   it("returns true for null", () => {

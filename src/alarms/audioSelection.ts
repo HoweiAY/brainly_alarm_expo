@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { File } from "expo-file-system";
 import { useAlarmStore } from "@/store/alarmStore";
 
@@ -53,7 +54,7 @@ export function sanitizeAudioFileName(name: string | null | undefined): string {
   const stem = extMatch ? base.slice(0, -extMatch[1].length) : base;
   const ext = extMatch ? extMatch[1] : "";
   const safeStem = stem.length > 0 ? stem : "alarm_sound";
-  const unique = `${Date.now()}${fileNameCounter++}`;
+  const unique = `${dayjs().valueOf()}${fileNameCounter++}`;
   return `${unique}_${safeStem}${ext}`;
 }
 

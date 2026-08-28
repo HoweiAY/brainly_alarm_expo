@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { useEffect, useRef, useState } from "react";
 import { Accelerometer } from "expo-sensors";
 import {
@@ -37,7 +38,7 @@ export function usePhoneShaking({
     const sub = Accelerometer.addListener(({ x, y, z }) => {
       if (cancelledRef.current || completedRef.current) return;
       const mag = computeMagnitude(x, y, z);
-      const now = Date.now();
+      const now = dayjs().valueOf();
       if (!isShake(mag, lastShakeTimeRef.current, now)) return;
       lastShakeTimeRef.current = now;
       remainingRef.current = Math.max(0, remainingRef.current - 1);
