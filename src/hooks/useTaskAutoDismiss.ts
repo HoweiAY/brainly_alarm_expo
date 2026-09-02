@@ -51,6 +51,7 @@ export function useTaskAutoDismiss({
   const [state, setState] = useState<TaskTimeoutState>(initial.state);
   const onTimeoutRef = useRef(onTimeout);
   const completedRef = useRef(false);
+  const inFlightRef = useRef(false);
 
   useEffect(() => {
     onTimeoutRef.current = onTimeout;
@@ -68,9 +69,25 @@ export function useTaskAutoDismiss({
         ? current
         : nextState,
     );
-    if (nextState.phase === "expired" && !completedRef.current) {
-      completedRef.current = true;
-      void onTimeoutRef.current();
+    if (
+      nextState.phase === "expired" &&
+      !completedRef.current &&
+      !inFlightRef.current
+    ) {
+      inFlightRef.current = true;
+      try {
+        void Promise.resolve(onTimeoutRef.current()).then(
+          () => {
+            completedRef.current = true;
+            inFlightRef.current = false;
+          },
+          () => {
+            inFlightRef.current = false;
+          },
+        );
+      } catch {
+        inFlightRef.current = false;
+      }
     }
     return nextState;
   }, []);
