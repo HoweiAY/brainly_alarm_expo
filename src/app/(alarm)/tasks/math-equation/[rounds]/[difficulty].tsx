@@ -1,12 +1,13 @@
-import { useMathEquation } from "@/tasks/useMathEquation";
+import { TaskHeader } from "@/components/TaskHeader";
+import { announce } from "@/hooks/useAccessibility";
+import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
 import { parseTaskParams } from "@/tasks/params";
+import { useMathEquation } from "@/tasks/useMathEquation";
+import { colors, radii, spacing, typography } from "@/theme";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, radii, spacing, typography } from "@/theme";
-import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
-import { announce } from "@/hooks/useAccessibility";
 
 export default function MathEquationScreen() {
   const dismiss = useAlarmDismissal();
@@ -37,9 +38,7 @@ export default function MathEquationScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Math</Text>
-      </View>
+      <TaskHeader title="Math" onAutoDismiss={dismiss} />
       <View style={styles.column}>
         <Text
           style={styles.round}
@@ -109,18 +108,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  header: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  headerText: {
-    ...typography.caption,
-    color: colors.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 1,
   },
   column: {
     flex: 1,
