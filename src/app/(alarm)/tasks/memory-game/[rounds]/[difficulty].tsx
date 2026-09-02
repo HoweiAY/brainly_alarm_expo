@@ -1,11 +1,12 @@
+import { TaskHeader } from "@/components/TaskHeader";
+import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
 import { type TileState } from "@/tasks/memoryGame";
-import { useMemoryGame } from "@/tasks/useMemoryGame";
 import { parseTaskParams } from "@/tasks/params";
+import { useMemoryGame } from "@/tasks/useMemoryGame";
+import { colors, radii, spacing, typography } from "@/theme";
 import { useLocalSearchParams } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
-import { colors, radii, spacing, typography } from "@/theme";
 
 const TILE_COLORS: Record<TileState, string> = {
   DEFAULT: colors.surface,
@@ -43,9 +44,7 @@ export default function MemoryGameScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Memory</Text>
-      </View>
+      <TaskHeader title="Memory" onAutoDismiss={dismiss} />
       <View style={styles.column}>
         {gameStarted ? (
           <Text
@@ -126,18 +125,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  header: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  headerText: {
-    ...typography.caption,
-    color: colors.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 1,
   },
   column: {
     flex: 1,

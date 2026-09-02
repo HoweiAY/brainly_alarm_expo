@@ -1,10 +1,11 @@
+import { TaskHeader } from "@/components/TaskHeader";
+import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
+import { INITIAL_SHAKE_MAX } from "@/tasks/phoneShaking";
+import { usePhoneShaking } from "@/tasks/usePhoneShaking";
+import { colors, radii, spacing, typography } from "@/theme";
 import { Lucide } from "@react-native-vector-icons/lucide";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { usePhoneShaking } from "@/tasks/usePhoneShaking";
-import { colors, radii, spacing, typography } from "@/theme";
-import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
-import { INITIAL_SHAKE_MAX } from "@/tasks/phoneShaking";
 
 export default function PhoneShakingScreen() {
   const dismiss = useAlarmDismissal();
@@ -20,9 +21,7 @@ export default function PhoneShakingScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Shake</Text>
-      </View>
+      <TaskHeader title="Shake" onAutoDismiss={dismiss} />
       <View style={styles.column}>
         <Text style={styles.title} accessibilityRole="header">
           Shake your phone to stop the alarm!
@@ -61,18 +60,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  header: {
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.lg,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  headerText: {
-    ...typography.caption,
-    color: colors.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 1,
   },
   column: {
     flex: 1,

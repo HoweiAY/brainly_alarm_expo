@@ -250,3 +250,17 @@ When `alarm.task == "None"` (the 4th entry of `taskTypes`):
 4. **exp4j replacement** — use a controlled-expression evaluator; the generator only ever emits `[0-9]`, `+`, `-`, `*`, and spaces, so a strict regex validation + `Function("return " + expr)` is safe.
 5. **Shake sensor threshold calibration** — verify the threshold against `expo-sensors` accelerometer output on real devices, since units/normalization differ from the Android `SensorManager`.
 6. **Accessibility** — none of the current tasks have accessibility labels (no `contentDescription` on task tiles, no screen-reader hints). The RN port should add `accessibilityLabel` / `accessibilityRole` to tiles, the answer input, and the shake counter.
+
+---
+
+## 6. Task Auto-Dismiss Timeout
+
+The RN port applies an auto-dismiss timeout to Memory, Math, and Phone Shaking. The `None` option is excluded because it dismisses directly from `AlarmDisplay` and never opens a task route.
+
+- Timing starts when the task screen opens after the user selects **Begin**. For Memory, time spent before pressing the screen's internal **Start** button counts toward the timeout.
+- The timeout UI remains hidden for the first 240 seconds.
+- After 240 seconds, the task header displays `Auto dismiss in N seconds` at the top right and counts down from 60 seconds.
+- A **Skip** button is shown beside the countdown. Skip is repeatable: each press hides the countdown for 60 seconds, then starts a fresh 60-second countdown.
+- Reaching 0 uses the same shared completion handler as successful task completion, stopping the alarm sound, dismissing the native firing state, clearing active alarm state, and returning to Home.
+- The mechanism is enabled by default. Its enabled flag and timing configuration remain injectable so a future global or per-alarm preference can disable or customize it without changing task-screen behavior.
+- Countdown state is derived from absolute `dayjs` deadlines rather than decrement-only timers. If JavaScript is suspended while the app is backgrounded, an overdue task dismisses as soon as the app becomes active again; exact dismissal while suspended is not guaranteed.
