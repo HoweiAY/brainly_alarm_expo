@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
-import { useEffect, useRef, useState } from "react";
 import { Accelerometer } from "expo-sensors";
+import { useEffect, useRef, useState } from "react";
 import {
   UPDATE_INTERVAL_MS,
   computeMagnitude,
@@ -14,14 +14,14 @@ export interface UsePhoneShakingOptions {
 
 export interface UsePhoneShakingResult {
   remainingShakes: number;
+  totalShakes: number;
 }
 
 export function usePhoneShaking({
   onComplete,
 }: UsePhoneShakingOptions): UsePhoneShakingResult {
-  const [remainingShakes, setRemainingShakes] = useState<number>(() =>
-    generateInitialShakeCount(),
-  );
+  const [totalShakes] = useState<number>(() => generateInitialShakeCount());
+  const [remainingShakes, setRemainingShakes] = useState<number>(totalShakes);
 
   const remainingRef = useRef<number>(remainingShakes);
   const lastShakeTimeRef = useRef<number>(0);
@@ -54,5 +54,5 @@ export function usePhoneShaking({
     };
   }, []);
 
-  return { remainingShakes };
+  return { remainingShakes, totalShakes };
 }
