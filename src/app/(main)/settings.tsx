@@ -6,6 +6,7 @@ import {
 import { SettingsSection } from "@/components/settings/SettingsSection";
 import { SnoozeDurationModal } from "@/components/settings/SnoozeDurationModal";
 import type { UserSettings } from "@/data/types";
+import { useScreenReaderEnabled } from "@/hooks/useAccessibility";
 import { useSettingsStore } from "@/store/settingsStore";
 import { colors, radii, spacing, typography } from "@/theme";
 import { Lucide } from "@react-native-vector-icons/lucide";
@@ -27,6 +28,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const settings = useSettingsStore((s) => s.settings);
   const loaded = useSettingsStore((s) => s.loaded);
+  const screenReaderEnabled = useScreenReaderEnabled();
   const [snoozeModalVisible, setSnoozeModalVisible] = useState(false);
 
   const update = async (patch: Partial<UserSettings>) => {
@@ -121,11 +123,16 @@ export default function SettingsScreen() {
           <SettingsRow
             label="Show tile numbers"
             description="Number the tiles in the Memory task"
-            disabled={!loaded}
+            helperText={
+              screenReaderEnabled === true
+                ? "Always enabled while a screen reader is active"
+                : undefined
+            }
+            disabled={!loaded || screenReaderEnabled === true}
           >
             <SettingsSwitch
-              value={settings.showTileNumbers}
-              disabled={!loaded}
+              value={screenReaderEnabled === true || settings.showTileNumbers}
+              disabled={!loaded || screenReaderEnabled === true}
               onValueChange={(next) => void update({ showTileNumbers: next })}
               accessibilityLabel={`Show tile numbers ${settings.showTileNumbers ? "enabled" : "disabled"}`}
               accessibilityHint="Toggles numbers on Memory task tiles"

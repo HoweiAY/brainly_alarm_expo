@@ -1,4 +1,5 @@
 import { TaskHeader } from "@/components/TaskHeader";
+import { useScreenReaderEnabled } from "@/hooks/useAccessibility";
 import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
 import { useSettingsStore } from "@/store/settingsStore";
 import { type TileState } from "@/tasks/memoryGame";
@@ -18,7 +19,12 @@ const TILE_COLORS: Record<TileState, string> = {
 
 export default function MemoryGameScreen() {
   const dismiss = useAlarmDismissal();
-  const showTileNumbers = useSettingsStore((s) => s.settings.showTileNumbers);
+  const screenReaderEnabled = useScreenReaderEnabled();
+  const showTileNumbersSetting = useSettingsStore(
+    (s) => s.settings.showTileNumbers,
+  );
+  const showTileNumbers =
+    screenReaderEnabled === true || showTileNumbersSetting;
   const { rounds: roundsParam, difficulty: difficultyParam } =
     useLocalSearchParams<{
       rounds?: string;
