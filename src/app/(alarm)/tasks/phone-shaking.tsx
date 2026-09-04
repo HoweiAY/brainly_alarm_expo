@@ -1,6 +1,5 @@
 import { TaskHeader } from "@/components/TaskHeader";
 import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
-import { getShakeProgress } from "@/tasks/phoneShaking";
 import { usePhoneShaking } from "@/tasks/usePhoneShaking";
 import { colors, radii, spacing, typography } from "@/theme";
 import { Lucide } from "@react-native-vector-icons/lucide";
@@ -9,14 +8,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PhoneShakingScreen() {
   const dismiss = useAlarmDismissal();
-  const { remainingShakes, totalShakes } = usePhoneShaking({
+  const { remainingShakes, totalShakes, progress } = usePhoneShaking({
     onComplete: () => {
       void dismiss();
     },
   });
 
   const counterText = `${remainingShakes} shake(s) to go!`;
-  const progress = getShakeProgress(remainingShakes, totalShakes);
 
   return (
     <SafeAreaView style={styles.container}>

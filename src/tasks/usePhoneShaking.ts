@@ -5,6 +5,7 @@ import {
   UPDATE_INTERVAL_MS,
   computeMagnitude,
   generateInitialShakeCount,
+  getShakeProgress,
   isShake,
 } from "./phoneShaking";
 
@@ -15,6 +16,7 @@ export interface UsePhoneShakingOptions {
 export interface UsePhoneShakingResult {
   remainingShakes: number;
   totalShakes: number;
+  progress: number;
 }
 
 export function usePhoneShaking({
@@ -54,5 +56,9 @@ export function usePhoneShaking({
     };
   }, []);
 
-  return { remainingShakes, totalShakes };
+  return {
+    remainingShakes,
+    totalShakes,
+    progress: getShakeProgress(remainingShakes, totalShakes),
+  };
 }
