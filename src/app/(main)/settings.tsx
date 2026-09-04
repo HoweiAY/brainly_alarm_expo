@@ -41,6 +41,8 @@ export default function SettingsScreen() {
   };
 
   const snoozeLabel = `${settings.snoozeMinutes} min`;
+  const showTileNumbers =
+    screenReaderEnabled === true || settings.showTileNumbers;
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
@@ -131,11 +133,15 @@ export default function SettingsScreen() {
             disabled={!loaded || screenReaderEnabled === true}
           >
             <SettingsSwitch
-              value={screenReaderEnabled === true || settings.showTileNumbers}
+              value={showTileNumbers}
               disabled={!loaded || screenReaderEnabled === true}
               onValueChange={(next) => void update({ showTileNumbers: next })}
-              accessibilityLabel={`Show tile numbers ${settings.showTileNumbers ? "enabled" : "disabled"}`}
-              accessibilityHint="Toggles numbers on Memory task tiles"
+              accessibilityLabel={`Show tile numbers ${showTileNumbers ? "enabled" : "disabled"}`}
+              accessibilityHint={
+                screenReaderEnabled === true
+                  ? "Always enabled while a screen reader is active"
+                  : "Toggles numbers on Memory task tiles"
+              }
             />
           </SettingsRow>
         </SettingsSection>
