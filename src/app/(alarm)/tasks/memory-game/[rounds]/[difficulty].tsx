@@ -1,5 +1,6 @@
 import { TaskHeader } from "@/components/TaskHeader";
 import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
+import { useSettingsStore } from "@/store/settingsStore";
 import { type TileState } from "@/tasks/memoryGame";
 import { parseTaskParams } from "@/tasks/params";
 import { useMemoryGame } from "@/tasks/useMemoryGame";
@@ -17,6 +18,7 @@ const TILE_COLORS: Record<TileState, string> = {
 
 export default function MemoryGameScreen() {
   const dismiss = useAlarmDismissal();
+  const showTileNumbers = useSettingsStore((s) => s.settings.showTileNumbers);
   const { rounds: roundsParam, difficulty: difficultyParam } =
     useLocalSearchParams<{
       rounds?: string;
@@ -96,7 +98,17 @@ export default function MemoryGameScreen() {
                     onPress={() => {
                       void handleTilePress(index);
                     }}
-                  />
+                  >
+                    {showTileNumbers ? (
+                      <Text
+                        style={styles.tileNumber}
+                        importantForAccessibility="no"
+                        accessibilityElementsHidden
+                      >
+                        {index + 1}
+                      </Text>
+                    ) : null}
+                  </Pressable>
                 );
               })}
             </View>
@@ -157,6 +169,12 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tileNumber: {
+    ...typography.bodyEmphasis,
+    color: colors.text,
   },
   start: {
     marginTop: spacing.xl,
