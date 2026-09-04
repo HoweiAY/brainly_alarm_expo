@@ -36,8 +36,9 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
       } catch (e) {
         console.error("settingsStore.init failed", e);
         set({
-          loaded: true,
+          loaded: false,
           initError: e instanceof Error ? e.message : String(e),
+          _initPromise: null,
         });
       }
     })();
