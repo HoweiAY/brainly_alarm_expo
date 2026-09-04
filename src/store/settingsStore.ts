@@ -16,6 +16,8 @@ interface SettingsStoreState {
   updateSettings: (patch: Partial<UserSettings>) => Promise<void>;
 }
 
+let updateQueue = Promise.resolve();
+
 export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
   settings: { ...DEFAULT_USER_SETTINGS },
   loaded: false,
@@ -48,16 +50,20 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
 
   ensureLoaded: () => (get().loaded ? Promise.resolve() : get().init()),
 
-  updateSettings: async (patch) => {
-    const previous = get().settings;
-    const next = { ...previous, ...patch };
-    set({ settings: next });
-    try {
-      await persistUserSettings(next);
-    } catch (e) {
-      set({ settings: previous });
-      throw e;
-    }
+  updateSettings: (patch) => {
+    const update = updateQueue.then(async () => {
+      const previous = get().settings;
+      const next = { ...previous, ...patch };
+      set({ settings: next });
+      try {
+        await persistUserSettings(next);
+      } catch (e) {
+        set({ settings: previous });
+        throw e;
+      }
+    });
+    updateQueue = update.catch(() => {});
+    return update;
   },
 }));
 
