@@ -15,6 +15,14 @@ export function generateInitialShakeCount(): number {
   );
 }
 
+export function getShakeProgress(
+  remainingShakes: number,
+  totalShakes: number,
+): number {
+  if (totalShakes <= 0) return 0;
+  return Math.max(0, Math.min(1, remainingShakes / totalShakes));
+}
+
 export function computeMagnitude(x: number, y: number, z: number): number {
   return Math.sqrt(x * x + y * y + z * z);
 }

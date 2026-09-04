@@ -1,6 +1,5 @@
 import { TaskHeader } from "@/components/TaskHeader";
 import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
-import { INITIAL_SHAKE_MAX } from "@/tasks/phoneShaking";
 import { usePhoneShaking } from "@/tasks/usePhoneShaking";
 import { colors, radii, spacing, typography } from "@/theme";
 import { Lucide } from "@react-native-vector-icons/lucide";
@@ -9,15 +8,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PhoneShakingScreen() {
   const dismiss = useAlarmDismissal();
-  const { remainingShakes } = usePhoneShaking({
+  const { remainingShakes, totalShakes, progress } = usePhoneShaking({
     onComplete: () => {
       void dismiss();
     },
   });
 
   const counterText = `${remainingShakes} shake(s) to go!`;
-  const total = INITIAL_SHAKE_MAX;
-  const progress = Math.max(0, Math.min(1, remainingShakes / total));
 
   return (
     <SafeAreaView style={styles.container}>
@@ -44,8 +41,12 @@ export default function PhoneShakingScreen() {
           accessible
           style={styles.progressTrack}
           accessibilityRole="progressbar"
-          accessibilityLabel={`Progress: ${remainingShakes} of ${total} shakes remaining`}
-          accessibilityValue={{ now: remainingShakes, min: 0, max: total }}
+          accessibilityLabel={`Progress: ${remainingShakes} of ${totalShakes} shakes remaining`}
+          accessibilityValue={{
+            now: remainingShakes,
+            min: 0,
+            max: totalShakes,
+          }}
         >
           <View
             style={[styles.progressFill, { width: `${progress * 100}%` }]}
