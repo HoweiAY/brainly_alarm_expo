@@ -3,13 +3,14 @@ import {
   reconcileSchedules,
   snapshotToQueryParams,
 } from "@/alarms/scheduling";
-import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
-import { useAlarmStore } from "@/store/alarmStore";
-import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import {
   dismissOldAlarmIfActive,
   useAlarmNotifications,
 } from "@/hooks/useAlarmNotifications";
+import { useAlarmFiringStore } from "@/store/alarmFiringStore";
+import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
+import { useAlarmStore } from "@/store/alarmStore";
+import { useSettingsStore } from "@/store/settingsStore";
 import * as Linking from "expo-linking";
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -68,6 +69,7 @@ function AlarmStoreInit() {
   useEffect(() => {
     useAlarmStore.getState().loadAlarms();
     useAlarmRegistrationsStore.getState().load();
+    void useSettingsStore.getState().init();
 
     const sub = Linking.addEventListener("url", ({ url }) =>
       handleAlarmUrl(url, router),
