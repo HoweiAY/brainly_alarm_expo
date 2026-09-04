@@ -1,4 +1,5 @@
 import { useTaskAutoDismiss } from "@/hooks/useTaskAutoDismiss";
+import { useSettingsStore } from "@/store/settingsStore";
 import { colors, radii, spacing, typography } from "@/theme";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -11,10 +12,13 @@ interface TaskHeaderProps {
 export function TaskHeader({
   title,
   onAutoDismiss,
-  autoDismissEnabled = true,
+  autoDismissEnabled,
 }: TaskHeaderProps) {
+  const globalAutoDismissEnabled = useSettingsStore(
+    (s) => s.settings.autoDismissEnabled,
+  );
   const { countdownVisible, remainingSeconds, skip } = useTaskAutoDismiss({
-    config: { enabled: autoDismissEnabled },
+    config: { enabled: autoDismissEnabled ?? globalAutoDismissEnabled },
     onTimeout: onAutoDismiss,
   });
   const countdownText = `Auto dismiss in ${remainingSeconds} ${remainingSeconds === 1 ? "second" : "seconds"}`;

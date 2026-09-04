@@ -3,17 +3,18 @@ import {
   reconcileSchedules,
   snapshotToQueryParams,
 } from "@/alarms/scheduling";
-import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
-import { useAlarmStore } from "@/store/alarmStore";
-import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import {
   dismissOldAlarmIfActive,
   useAlarmNotifications,
 } from "@/hooks/useAlarmNotifications";
+import { useAlarmFiringStore } from "@/store/alarmFiringStore";
+import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
+import { useAlarmStore } from "@/store/alarmStore";
+import { useSettingsStore } from "@/store/settingsStore";
 import * as Linking from "expo-linking";
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type StoreWithLoaded = {
   getState: () => { loaded: boolean };
@@ -137,6 +138,23 @@ function AlarmStoreInit() {
 }
 
 export default function RootLayout() {
+  const [settingsReady, setSettingsReady] = useState(
+    useSettingsStore.getState().loaded,
+  );
+
+  useEffect(() => {
+    let active = true;
+    void useSettingsStore
+      .getState()
+      .ensureLoaded()
+      .then(() => {
+        if (active) setSettingsReady(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <>
       <StatusBar style="light" />
@@ -147,7 +165,7 @@ export default function RootLayout() {
           options={{ presentation: "fullScreenModal", headerShown: false }}
         />
       </Stack>
-      <AlarmStoreInit />
+      {settingsReady ? <AlarmStoreInit /> : null}
     </>
   );
 }

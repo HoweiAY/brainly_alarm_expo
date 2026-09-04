@@ -1,20 +1,22 @@
-import dayjs from "dayjs";
 import { alarmToSnapshot } from "@/data/conversions";
-import { useAlarmStore } from "@/store/alarmStore";
-import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
-import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import type { Alarm, AlarmSnapshot, Difficulty, TaskType } from "@/data/types";
-import { getAlarmScheduler } from "./AlarmScheduler";
 import {
   DEFAULT_ALARM_NOTIFICATION_BODY,
   DEFAULT_ALARM_NOTIFICATION_TITLE,
 } from "@/notifications/AlarmNotifications";
+import { useAlarmFiringStore } from "@/store/alarmFiringStore";
+import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
+import { useAlarmStore } from "@/store/alarmStore";
+import { useSettingsStore } from "@/store/settingsStore";
+import dayjs from "dayjs";
+import { getAlarmScheduler } from "./AlarmScheduler";
 import { soundUriFromSnapshot } from "./sound";
 import {
   expandWeekdays,
   identifierFor,
   nextWeeklyTriggerTime,
   snoozeIdentifierFor,
+  snoozeTriggerTime,
 } from "./weeklyTrigger";
 
 export {
@@ -22,9 +24,8 @@ export {
   identifierFor,
   nextWeeklyTriggerTime,
   snoozeIdentifierFor,
+  snoozeTriggerTime,
 };
-
-const SNOOZE_MINUTES = 5;
 
 export async function setAlarm(alarm: Alarm): Promise<void> {
   const native = getAlarmScheduler();
@@ -98,13 +99,22 @@ export async function resetAlarm(snapshot: AlarmSnapshot): Promise<void> {
   }
 }
 
-export async function snoozeAlarm(snapshot: AlarmSnapshot): Promise<void> {
+export async function snoozeAlarm(
+  snapshot: AlarmSnapshot,
+  minutes?: number,
+): Promise<void> {
   const native = getAlarmScheduler();
   const registry = useAlarmRegistrationsStore.getState();
   await native.stopAlarmSound();
   const identifier = snoozeIdentifierFor(snapshot.alarmId);
   await native.cancel(identifier);
-  const triggerAt = dayjs().add(SNOOZE_MINUTES, "minute").valueOf();
+  if (minutes === undefined) {
+    await useSettingsStore.getState().ensureLoaded();
+  }
+  const triggerAt = snoozeTriggerTime(
+    dayjs(),
+    minutes ?? useSettingsStore.getState().settings.snoozeMinutes,
+  );
   const payload: AlarmSnapshot = { ...snapshot, isSnoozed: true };
   await native.scheduleOneShot({
     identifier,

@@ -6,6 +6,7 @@ import m0001 from "./0001_equal_jetstream.sql";
 import m0002 from "./0002_bent_zemo.sql";
 import m0003 from "./0003_misty_moon.sql";
 import m0004 from "./0004_striped_exiles.sql";
+import m0005 from "./0005_sudden_agent_brand.sql";
 
 export default {
   journal,
@@ -15,5 +16,6 @@ export default {
     m0002,
     m0003,
     m0004,
+    m0005,
   },
 };
