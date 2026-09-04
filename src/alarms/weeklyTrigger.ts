@@ -1,6 +1,7 @@
-import dayjs from "dayjs";
 import { weekdayToIndex } from "@/data/constants";
 import type { Alarm } from "@/data/types";
+import { clampSnoozeMinutes } from "@/settings/userSettings";
+import dayjs, { type Dayjs } from "dayjs";
 
 export function expandWeekdays(alarm: Alarm): number[] {
   return alarm.days.length
@@ -14,6 +15,10 @@ export function identifierFor(alarmId: string, weekdayIndex: number): string {
 
 export function snoozeIdentifierFor(alarmId: string): string {
   return `${alarmId}:snooze`;
+}
+
+export function snoozeTriggerTime(now: Dayjs, minutes: number): number {
+  return now.add(clampSnoozeMinutes(minutes), "minute").valueOf();
 }
 
 // weekdayIndex uses Mon=0..Sun=6 (src/data/constants weekdayToIndex).
