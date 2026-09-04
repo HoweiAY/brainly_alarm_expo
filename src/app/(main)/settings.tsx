@@ -131,16 +131,6 @@ export default function SettingsScreen() {
               accessibilityHint="Toggles numbers on Memory task tiles"
             />
           </SettingsRow>
-          <SettingsRow
-            label="Colorblind mode"
-            description="Use a colorblind-friendly palette"
-            helperText={COMING_SOON}
-            disabled
-            onPress={() => {}}
-            accessibilityLabel="Colorblind mode, coming soon"
-          >
-            <Lucide name="chevron-right" size={18} color={colors.textMuted} />
-          </SettingsRow>
         </SettingsSection>
       </ScrollView>
 
