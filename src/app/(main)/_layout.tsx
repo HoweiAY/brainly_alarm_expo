@@ -12,6 +12,10 @@ export default function MainLayout() {
         name="create-alarm/[alarmId]"
         options={{ animation: "slide_from_right", headerShown: false }}
       />
+      <Stack.Screen
+        name="settings"
+        options={{ animation: "slide_from_right", headerShown: false }}
+      />
     </Stack>
   );
 }
