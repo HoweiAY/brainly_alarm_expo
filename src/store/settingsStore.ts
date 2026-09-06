@@ -52,6 +52,10 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
 
   updateSettings: (patch) => {
     const update = updateQueue.then(async () => {
+      await get().ensureLoaded();
+      if (!get().loaded) {
+        throw new Error("Settings must load before they can be updated");
+      }
       const previous = get().settings;
       const next = { ...previous, ...patch };
       set({ settings: next });
