@@ -148,7 +148,9 @@ export default function RootLayout() {
       .getState()
       .ensureLoaded()
       .then(() => {
-        if (active) setSettingsReady(true);
+        if (active && useSettingsStore.getState().loaded) {
+          setSettingsReady(true);
+        }
       });
     return () => {
       active = false;
