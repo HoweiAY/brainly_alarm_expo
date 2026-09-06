@@ -11,10 +11,14 @@ import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
 import { useAlarmStore } from "@/store/alarmStore";
 import { useSettingsStore } from "@/store/settingsStore";
+import { colors, radii, spacing, typography } from "@/theme";
+import { Lucide } from "@react-native-vector-icons/lucide";
 import * as Linking from "expo-linking";
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type StoreWithLoaded = {
   getState: () => { loaded: boolean };
@@ -137,24 +141,51 @@ function AlarmStoreInit() {
   return null;
 }
 
-export default function RootLayout() {
-  const [settingsReady, setSettingsReady] = useState(
-    useSettingsStore.getState().loaded,
+function SettingsLoadError({
+  error,
+  onRetry,
+}: {
+  error: string;
+  onRetry: () => void;
+}) {
+  return (
+    <SafeAreaView style={styles.errorContainer} edges={["top", "bottom"]}>
+      <View style={styles.errorContent}>
+        <Lucide name="alert-triangle" size={48} color={colors.danger} />
+        <Text style={styles.errorTitle}>Couldn&apos;t load settings</Text>
+        <Text style={styles.errorMessage}>
+          Your saved preferences couldn&apos;t be read. Alarms won&apos;t start
+          until settings load.
+        </Text>
+        {error ? <Text style={styles.errorDetail}>{error}</Text> : null}
+        <Pressable
+          style={({ pressed }) => [
+            styles.retryButton,
+            pressed && styles.retryButtonPressed,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Retry loading settings"
+          accessibilityHint="Attempts to read saved settings again"
+          onPress={onRetry}
+        >
+          <Lucide name="rotate-cw" size={20} color={colors.primaryFg} />
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </Pressable>
+      </View>
+    </SafeAreaView>
   );
+}
+
+export default function RootLayout() {
+  const loaded = useSettingsStore((s) => s.loaded);
+  const initError = useSettingsStore((s) => s.initError);
 
   useEffect(() => {
-    let active = true;
-    void useSettingsStore
-      .getState()
-      .ensureLoaded()
-      .then(() => {
-        if (active && useSettingsStore.getState().loaded) {
-          setSettingsReady(true);
-        }
-      });
-    return () => {
-      active = false;
-    };
+    void useSettingsStore.getState().ensureLoaded();
+  }, []);
+
+  const retry = useCallback(() => {
+    void useSettingsStore.getState().init();
   }, []);
 
   return (
@@ -167,7 +198,58 @@ export default function RootLayout() {
           options={{ presentation: "fullScreenModal", headerShown: false }}
         />
       </Stack>
-      {settingsReady ? <AlarmStoreInit /> : null}
+      {loaded ? (
+        <AlarmStoreInit />
+      ) : initError ? (
+        <SettingsLoadError error={initError} onRetry={retry} />
+      ) : null}
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  errorContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  errorContent: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    padding: spacing.xxl,
+  },
+  errorTitle: {
+    ...typography.h2,
+    color: colors.text,
+    marginTop: spacing.md,
+  },
+  errorMessage: {
+    ...typography.body,
+    color: colors.textMuted,
+    textAlign: "center",
+  },
+  errorDetail: {
+    ...typography.caption,
+    color: colors.textSubtle,
+    textAlign: "center",
+    marginTop: spacing.xs,
+  },
+  retryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginTop: spacing.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radii.full,
+    backgroundColor: colors.primary,
+  },
+  retryButtonPressed: {
+    backgroundColor: colors.primaryPressed,
+  },
+  retryButtonText: {
+    ...typography.bodyEmphasis,
+    color: colors.primaryFg,
+  },
+});
