@@ -27,6 +27,7 @@ This repository is the **Expo-first re-implementation** of that original app. Th
 - **Exact, wake-up alarms** — precise scheduling that wakes the device, with automatic re-arming after device reboot (Android, via a custom native module).
 - **Alarm notifications & deep links** — a high-priority notification fires with the alarm; tapping it opens the full-screen ringing screen directly.
 - **Local persistence** — all alarms are stored on-device in SQLite with versioned migrations.
+- **User settings** — a dedicated Settings screen lets you tune app-wide preferences: auto-dismiss tasks after they time out, the snooze duration (in minutes), and whether the Memory task tiles display numbers. Settings are persisted on-device via a dedicated Zustand store.
 
 ## Screenshots
 
@@ -171,19 +172,22 @@ brainly_alarm_expo/
 ├── src/
 │   ├── app/                  # Expo Router routes (file-based)
 │   │   ├── _layout.tsx       #   Root stack, store init, deep-link handling
-│   │   ├── (main)/           #   Main group: home (alarm list) + create/edit alarm
+│   │   ├── (main)/           #   Main group: home (alarm list), create/edit alarm,
+│   │   │                     #     and settings
 │   │   └── (alarm)/          #   Alarm group (full-screen modal): ringing screen
 │   │       └── tasks/        #     Memory game, math equation, shake screens
 │   ├── alarms/               # Alarm scheduling domain logic (native module facade,
 │   │                         #   weekly triggers, snooze, conflicts, sound)
 │   ├── components/           # Reusable UI (AlarmCard, CreateAlarmForm,
-│   │                         #   TimeWheelPicker, WeekdayTextButton, ...)
+│   │                         #   TimeWheelPicker, WeekdayTextButton, settings rows, ...)
 │   ├── data/                 # Persistence: Drizzle schema, db + migrations runner,
 │   │                         #   conversions, constants, types
 │   ├── hooks/                # Shared hooks (useAlarmDismissal, useAlarmNotifications, ...)
 │   ├── notifications/        # Alarm notification channel & content
+│   ├── settings/             # User-settings helpers (snooze parsing/clamping,
+│   │                         #   normalization to UserSettings defaults)
 │   ├── store/                # Zustand stores (alarmStore, alarmFiringStore,
-│   │                         #   alarmRegistrationsStore)
+│   │                         #   alarmRegistrationsStore, settingsStore)
 │   ├── tasks/                # Pure, testable dismissal-task logic + React hooks
 │   ├── theme/                # Colors, spacing, radii, typography
 │   └── utils/                # Time helpers

@@ -32,3 +32,9 @@ export interface AlarmSnapshot {
   notificationTitle: string;
   notificationBody: string;
 }
+
+export interface UserSettings {
+  autoDismissEnabled: boolean;
+  snoozeMinutes: number;
+  showTileNumbers: boolean;
+}

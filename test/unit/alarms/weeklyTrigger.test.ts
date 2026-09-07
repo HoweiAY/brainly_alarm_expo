@@ -1,11 +1,13 @@
-import { describe, expect, it } from "@jest/globals";
-import type { Alarm } from "@/data/types";
 import {
   expandWeekdays,
   identifierFor,
   nextWeeklyTriggerTime,
   snoozeIdentifierFor,
+  snoozeTriggerTime,
 } from "@/alarms/weeklyTrigger";
+import type { Alarm } from "@/data/types";
+import { describe, expect, it } from "@jest/globals";
+import dayjs from "dayjs";
 
 function baseAlarm(over: Partial<Alarm> = {}): Alarm {
   return {
@@ -101,5 +103,20 @@ describe("nextWeeklyTriggerTime", () => {
     const t = nextWeeklyTriggerTime(2, 10, 0, nowBeforeMinute);
     expect(new Date(t).getDate()).toBe(3);
     expect(new Date(t).getHours()).toBe(10);
+  });
+});
+
+describe("snoozeTriggerTime", () => {
+  const now = dayjs("2026-09-04T08:00:15.000Z");
+
+  it("adds the requested number of minutes", () => {
+    expect(snoozeTriggerTime(now, 5)).toBe(now.add(5, "minute").valueOf());
+    expect(snoozeTriggerTime(now, 1)).toBe(now.add(1, "minute").valueOf());
+    expect(snoozeTriggerTime(now, 60)).toBe(now.add(60, "minute").valueOf());
+  });
+
+  it("clamps out-of-range durations to the allowed bounds", () => {
+    expect(snoozeTriggerTime(now, 0)).toBe(now.add(1, "minute").valueOf());
+    expect(snoozeTriggerTime(now, 500)).toBe(now.add(60, "minute").valueOf());
   });
 });

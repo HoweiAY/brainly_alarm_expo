@@ -1,7 +1,7 @@
-import { AlarmCard } from "@/components/AlarmCard";
+import { findConflictingAlarm } from "@/alarms/conflicts";
 import { cancelAlarm, setAlarm } from "@/alarms/scheduling";
 import { toggleAlarmEnabled } from "@/alarms/toggleAlarmEnabled";
-import { findConflictingAlarm } from "@/alarms/conflicts";
+import { AlarmCard } from "@/components/AlarmCard";
 import type { Alarm } from "@/data/types";
 import { announce } from "@/hooks/useAccessibility";
 import { useAlarmStore } from "@/store/alarmStore";
@@ -159,6 +159,11 @@ export default function Home() {
   const enterEdit = () => {
     setOptionsExpanded(false);
     setEditEnabled(true);
+  };
+
+  const openSettings = () => {
+    setOptionsExpanded(false);
+    router.push("/settings");
   };
 
   const toggleSelection = (alarm: Alarm) => {
@@ -321,7 +326,7 @@ export default function Home() {
                 accessibilityHint={
                   optionsExpanded
                     ? "Closes the options menu"
-                    : "Shows menu with turn all on/off and edit options"
+                    : "Shows menu with turn all on/off, edit, and settings options"
                 }
                 accessibilityState={{ expanded: optionsExpanded }}
                 onPress={() => setOptionsExpanded((v) => !v)}
@@ -452,6 +457,19 @@ export default function Home() {
           >
             <Text style={styles.dropdownItemText}>Edit</Text>
           </Pressable>
+          <View style={styles.dropdownDivider} />
+          <Pressable
+            style={({ pressed }) => [
+              styles.dropdownItem,
+              pressed && styles.dropdownItemPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Settings"
+            accessibilityHint="Opens app settings"
+            onPress={openSettings}
+          >
+            <Text style={styles.dropdownItemText}>Settings</Text>
+          </Pressable>
         </View>
       </Modal>
     </SafeAreaView>
@@ -538,6 +556,12 @@ const styles = StyleSheet.create({
   },
   dropdownItemDisabled: {
     opacity: 0.4,
+  },
+  dropdownDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+    marginVertical: spacing.xs,
+    marginHorizontal: spacing.sm,
   },
   dropdownItemText: {
     ...typography.body,

@@ -6,9 +6,10 @@ import {
 import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { useAlarmStore } from "@/store/alarmStore";
+import { useSettingsStore } from "@/store/settingsStore";
 import { colors, radii, spacing, typography } from "@/theme";
-import { useLocalSearchParams, useRouter } from "expo-router";
 import dayjs from "dayjs";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { BackHandler, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -24,6 +25,8 @@ export default function AlarmDisplay() {
   const currentAlarm = useAlarmStore((s) =>
     snapshot ? s.alarms.find((a) => a.id === snapshot.alarmId) : undefined,
   );
+  const snoozeMinutes = useSettingsStore((s) => s.settings.snoozeMinutes);
+  const snoozeDurationText = `${snoozeMinutes} minute${snoozeMinutes === 1 ? "" : "s"}`;
 
   const effectiveSnapshot = useMemo(
     () =>
@@ -164,10 +167,10 @@ export default function AlarmDisplay() {
             ]}
             accessibilityRole="button"
             accessibilityLabel="Snooze"
-            accessibilityHint="Snoozes the alarm for 5 minutes"
+            accessibilityHint={`Snoozes the alarm for ${snoozeDurationText}`}
             onPress={handleSnooze}
           >
-            <Text style={styles.buttonText}>Snooze</Text>
+            <Text style={styles.buttonText}>Snooze ({snoozeMinutes} min)</Text>
           </Pressable>
         ) : null}
       </View>

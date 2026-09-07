@@ -95,6 +95,7 @@ A tile is `clickable` only when `playerTurn == true && tileState == DEFAULT`. On
   - `titleText`.
   - `gridSize` rows × `gridSize` columns of `Surface` tiles, 64.dp square, 2.dp padding, 10% rounded corners, 1.dp black border.
   - A "Start" `Button` shown only when `!gameStarted`.
+- **RN-port addition:** when the accessibility setting `showTileNumbers` (Settings → Accessibility → "Show tile numbers") is enabled, each tile renders its 1-based index as centered text. The number is hidden from screen readers because the tile's `accessibilityLabel` already announces `Tile N`.
 
 ### 1.6 Edge Cases / Notes
 
@@ -262,5 +263,5 @@ The RN port applies an auto-dismiss timeout to Memory, Math, and Phone Shaking. 
 - After 240 seconds, the task header displays `Auto dismiss in N seconds` at the top right and counts down from 60 seconds.
 - A **Skip** button is shown beside the countdown. Skip is repeatable: each press hides the countdown for 60 seconds, then starts a fresh 60-second countdown.
 - Reaching 0 uses the same shared completion handler as successful task completion, stopping the alarm sound, dismissing the native firing state, clearing active alarm state, and returning to Home.
-- The mechanism is enabled by default. Its enabled flag and timing configuration remain injectable so a future global or per-alarm preference can disable or customize it without changing task-screen behavior.
+- The mechanism is enabled by default. The enabled flag is a global user preference (`autoDismissEnabled` in `UserSettings`, toggled from the Settings screen under **Alarm → Auto dismiss tasks**). `TaskHeader` reads it from `useSettingsStore` and passes it to `useTaskAutoDismiss`; an explicit `autoDismissEnabled` prop on `TaskHeader` still overrides the global value for per-screen use. Timing configuration remains injectable but is not yet user-facing.
 - Countdown state is derived from absolute `dayjs` deadlines rather than decrement-only timers. If JavaScript is suspended while the app is backgrounded, an overdue task dismisses as soon as the app becomes active again; exact dismissal while suspended is not guaranteed.

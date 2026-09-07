@@ -1,4 +1,4 @@
-import type { Difficulty, TaskType, Weekday } from "./types";
+import type { Difficulty, TaskType, UserSettings, Weekday } from "./types";
 
 export const weekdays: Weekday[] = [
   "Mon",
@@ -58,4 +58,14 @@ export const indexToDifficulty: Record<number, Difficulty> = {
   0: "Easy",
   1: "Normal",
   2: "Hard",
+};
+
+export const DEFAULT_SNOOZE_MINUTES = 5;
+export const SNOOZE_MINUTES_MIN = 1;
+export const SNOOZE_MINUTES_MAX = 60;
+
+export const DEFAULT_USER_SETTINGS: Readonly<UserSettings> = {
+  autoDismissEnabled: true,
+  snoozeMinutes: DEFAULT_SNOOZE_MINUTES,
+  showTileNumbers: false,
 };

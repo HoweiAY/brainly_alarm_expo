@@ -260,6 +260,7 @@ app/
 ├─ (main)/                            # route group (name not in URL) — mirrors "MainScreen" NavHost graph
 │  ├─ _layout.tsx                     # <Stack> for the main flow (slide/fade transitions)
 │  ├─ index.tsx                       # Home
+│  ├─ settings.tsx                    # Settings (General / Alarm / Accessibility) — RN-port addition
 │  └─ create-alarm/
 │     ├─ index.tsx                    # CreateAlarm — new alarm (no alarmId)
 │     └─ [alarmId].tsx                # CreateAlarm — edit existing (dynamic route)
@@ -282,3 +283,14 @@ app/
 - Task completion calls `stopAlarmSound()` + the native dismiss callback, then `router.replace('/(main)')` (not `router.back()`) to discard the alarm stack entirely — mirroring `AlarmViewModel.onAlarmDismissed()` which starts a fresh `MainActivity` with `FLAG_ACTIVITY_CLEAR_TOP`.
 
 **Create-alarm optional-id pattern:** split into `create-alarm/index.tsx` (create) and `create-alarm/[alarmId].tsx` (edit). `AlarmCard`'s `onClick` navigates with `router.push('/create-alarm/' + alarm.id)`; the `+` button uses `router.push('/create-alarm')`.
+
+**Settings screen (RN-port addition, no Kotlin counterpart):** `(main)/settings.tsx` is pushed with `slide_from_right` from the Home "more options" dropdown (`router.push('/settings')`) and returns with `router.back()`. It renders three cards built from `src/components/settings/` (`SettingsSection`, `SettingsRow`, `SettingsSwitch`, `SettingsValue`, `SnoozeDurationModal`) and binds to `useSettingsStore` (`src/store/settingsStore.ts`), which persists a single `UserSettings` JSON row in the `settings` SQLite table:
+
+| Section       | Row                | Behaviour                                                                                                   |
+| ------------- | ------------------ | ----------------------------------------------------------------------------------------------------------- |
+| General       | Language           | Placeholder — disabled, "Coming soon". Requires an i18n layer.                                              |
+| General       | Appearance         | Placeholder — disabled switch, "Coming soon". Requires a theme provider around the static `colors` object.  |
+| Alarm         | Auto dismiss tasks | Toggles `autoDismissEnabled`; consumed by `TaskHeader` → `useTaskAutoDismiss` (see `docs/05` §6).           |
+| Alarm         | Snooze duration    | Opens `SnoozeDurationModal` (number-pad input, 1–60, Confirm disabled while invalid); sets `snoozeMinutes`. |
+| Accessibility | Show tile numbers  | Toggles `showTileNumbers`; the Memory task renders `index + 1` on each tile when enabled.                   |
+| Accessibility | Colorblind mode    | Placeholder — disabled, "Coming soon". Would remap `TILE_COLORS` / `success` / `danger` to a safe palette.  |
