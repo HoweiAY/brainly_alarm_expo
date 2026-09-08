@@ -47,7 +47,8 @@
       ],
       "expo-sqlite",
       "expo-notifications",
-      "./native/app.plugin.js"
+      "./native/app.plugin.js",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,
