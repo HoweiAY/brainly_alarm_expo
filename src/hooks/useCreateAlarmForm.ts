@@ -10,6 +10,7 @@ import { pickAlarmSoundFromDevice } from "@/alarms/pickAlarmSound";
 import { setAlarm } from "@/alarms/scheduling";
 import { weekdays } from "@/data/constants";
 import type { Alarm, Difficulty, TaskType, Weekday } from "@/data/types";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { useAlarmStore } from "@/store/alarmStore";
 import { formatTime } from "@/utils/time";
 import { useRouter } from "expo-router";
@@ -72,25 +73,32 @@ export interface UseCreateAlarmFormResult extends CreateAlarmUiState {
   reset: (alarm?: Alarm | null) => void;
 }
 
-const DEFAULTS: Omit<CreateAlarmUiState, "alarmId"> = {
-  weekdaysSelected: [],
-  hourSelected: 8,
-  minuteSelected: 0,
-  taskSelected: "Memory",
-  roundsSelected: 1,
-  difficultySelected: "Easy",
-  ...defaultSoundSelection(),
-  snoozeEnabled: true,
-  taskSelectorExpanded: false,
-  enabled: true,
-  saving: false,
-};
+function createDefaults(
+  defaultSoundLabel: string,
+): Omit<CreateAlarmUiState, "alarmId"> {
+  return {
+    weekdaysSelected: [],
+    hourSelected: 8,
+    minuteSelected: 0,
+    taskSelected: "Memory",
+    roundsSelected: 1,
+    difficultySelected: "Easy",
+    ...defaultSoundSelection(defaultSoundLabel),
+    snoozeEnabled: true,
+    taskSelectorExpanded: false,
+    enabled: true,
+    saving: false,
+  };
+}
 
 function isTaskConfigurable(task: TaskType): boolean {
   return task !== "Shake phone" && task !== "None";
 }
 
-function fromAlarm(alarm: Alarm): Omit<CreateAlarmUiState, "alarmId"> {
+function fromAlarm(
+  alarm: Alarm,
+  defaultSoundLabel: string,
+): Omit<CreateAlarmUiState, "alarmId"> {
   return {
     weekdaysSelected: [...alarm.days],
     hourSelected: alarm.hour,
@@ -98,7 +106,7 @@ function fromAlarm(alarm: Alarm): Omit<CreateAlarmUiState, "alarmId"> {
     taskSelected: alarm.task,
     roundsSelected: alarm.rounds,
     difficultySelected: alarm.difficulty,
-    alarmSoundSelected: soundLabelFor(alarm.sound),
+    alarmSoundSelected: soundLabelFor(alarm.sound, defaultSoundLabel),
     alarmSoundUri: alarm.sound,
     snoozeEnabled: alarm.snooze,
     taskSelectorExpanded: false,
@@ -111,6 +119,8 @@ export function useCreateAlarmForm(
   initial?: Alarm | null,
 ): UseCreateAlarmFormResult {
   const router = useRouter();
+  const { t } = useAppTranslation();
+  const defaultSoundLabel = t("common.defaultSound");
   const stagedFileUriRef = useRef<string | null>(null);
   const disposedRef = useRef(false);
   const saveGenerationRef = useRef(0);
@@ -129,7 +139,9 @@ export function useCreateAlarmForm(
   }, []);
   const [state, setState] = useState<CreateAlarmUiState>(() => ({
     alarmId: initial?.id ?? null,
-    ...(initial ? fromAlarm(initial) : DEFAULTS),
+    ...(initial
+      ? fromAlarm(initial, defaultSoundLabel)
+      : createDefaults(defaultSoundLabel)),
   }));
 
   const taskConfigurable = useMemo(
@@ -137,21 +149,26 @@ export function useCreateAlarmForm(
     [state.taskSelected],
   );
 
-  const reset = useCallback((alarm?: Alarm | null) => {
-    if (persistingRef.current) {
-      return;
-    }
-    if (stagedFileUriRef.current) {
-      deleteCustomSoundFile(stagedFileUriRef.current);
-      stagedFileUriRef.current = null;
-    }
-    saveGenerationRef.current += 1;
-    pickGenerationRef.current += 1;
-    setState({
-      alarmId: alarm?.id ?? null,
-      ...(alarm ? fromAlarm(alarm) : DEFAULTS),
-    });
-  }, []);
+  const reset = useCallback(
+    (alarm?: Alarm | null) => {
+      if (persistingRef.current) {
+        return;
+      }
+      if (stagedFileUriRef.current) {
+        deleteCustomSoundFile(stagedFileUriRef.current);
+        stagedFileUriRef.current = null;
+      }
+      saveGenerationRef.current += 1;
+      pickGenerationRef.current += 1;
+      setState({
+        alarmId: alarm?.id ?? null,
+        ...(alarm
+          ? fromAlarm(alarm, defaultSoundLabel)
+          : createDefaults(defaultSoundLabel)),
+      });
+    },
+    [defaultSoundLabel],
+  );
 
   const toggleWeekday = useCallback((weekday: Weekday) => {
     if (persistingRef.current) {
@@ -261,15 +278,12 @@ export function useCreateAlarmForm(
       } catch (e) {
         console.error("pickAlarmSoundFromDevice failed", e);
         if (!disposedRef.current) {
-          Alert.alert(
-            "Error",
-            "Could not select the audio file. Please try again.",
-          );
+          Alert.alert(t("common.error"), t("editor.selectAudioError"));
         }
       }
     };
     void pick();
-  }, []);
+  }, [t]);
 
   const setToDefault = useCallback(() => {
     if (persistingRef.current) {
@@ -281,8 +295,11 @@ export function useCreateAlarmForm(
     }
     saveGenerationRef.current += 1;
     pickGenerationRef.current += 1;
-    setState((prev) => ({ ...prev, ...defaultSoundSelection() }));
-  }, []);
+    setState((prev) => ({
+      ...prev,
+      ...defaultSoundSelection(defaultSoundLabel),
+    }));
+  }, [defaultSoundLabel]);
 
   const buildDraft = useCallback((): Omit<Alarm, "id"> => {
     return {
@@ -311,8 +328,10 @@ export function useCreateAlarmForm(
     );
     if (conflict) {
       Alert.alert(
-        "Alarm already set",
-        `An alarm with the same time (${formatTime(draft.hour, draft.minute)}) has already been set.`,
+        t("home.alarmAlreadySet"),
+        t("home.conflictMessage", {
+          time: formatTime(draft.hour, draft.minute),
+        }),
       );
       return;
     }
@@ -354,7 +373,7 @@ export function useCreateAlarmForm(
       } catch (e) {
         console.error("persistAlarm failed", e);
         if (!disposedRef.current) {
-          Alert.alert("Error", "Could not save the alarm. Please try again.");
+          Alert.alert(t("common.error"), t("editor.saveError"));
         }
         if (pendingSoundUri) {
           if (!disposedRef.current && saveGenerationRef.current === saveGen) {
@@ -371,7 +390,7 @@ export function useCreateAlarmForm(
       }
     };
     void persist();
-  }, [buildDraft, router, state.alarmId]);
+  }, [buildDraft, router, state.alarmId, t]);
 
   const handleCancel = useCallback(() => {
     if (persistingRef.current) {

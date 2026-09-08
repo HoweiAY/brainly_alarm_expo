@@ -226,6 +226,8 @@ export const en = {
     hour: "Hour",
     minute: "Minute",
     period: "Period",
+    am: "AM",
+    pm: "PM",
     increase: "Increase",
     decrease: "Decrease",
     weekdayState: "{{weekday}} {{state}}",

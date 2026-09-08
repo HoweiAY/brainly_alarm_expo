@@ -223,6 +223,8 @@ export const zhHant = {
     hour: "小時",
     minute: "分鐘",
     period: "時段",
+    am: "上午",
+    pm: "下午",
     increase: "增加",
     decrease: "減少",
     weekdayState: "星期{{weekday}}，{{state}}",

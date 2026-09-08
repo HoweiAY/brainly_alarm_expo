@@ -1,4 +1,3 @@
-import { describe, expect, it, jest } from "@jest/globals";
 import {
   buildSoundSelection,
   DEFAULT_SOUND_LABEL,
@@ -7,6 +6,7 @@ import {
   sanitizeAudioFileName,
   soundLabelFor,
 } from "@/alarms/audioSelection";
+import { describe, expect, it, jest } from "@jest/globals";
 
 jest.mock("expo-file-system", () => ({
   File: class {
@@ -40,6 +40,13 @@ describe("defaultSoundSelection", () => {
       alarmSoundUri: null,
     });
   });
+
+  it("uses a translated default display label without changing the null URI", () => {
+    expect(defaultSoundSelection("預設")).toEqual({
+      alarmSoundSelected: "預設",
+      alarmSoundUri: null,
+    });
+  });
 });
 
 describe("soundLabelFor", () => {
@@ -49,6 +56,11 @@ describe("soundLabelFor", () => {
 
   it("returns Default for an empty string", () => {
     expect(soundLabelFor("")).toBe(DEFAULT_SOUND_LABEL);
+  });
+
+  it("uses a translated label only for the default sound", () => {
+    expect(soundLabelFor(null, "預設")).toBe("預設");
+    expect(soundLabelFor("file:///data/alarm.mp3", "預設")).toBe("alarm.mp3");
   });
 
   it("extracts the basename from a file URI", () => {
