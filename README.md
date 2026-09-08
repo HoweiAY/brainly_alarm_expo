@@ -117,6 +117,23 @@ npm run build:native ios
 
 The script runs `expo prebuild` if the native project directories are missing, then compiles just the module: `./gradlew :expo.modules.alarmscheduler:assembleRelease` on Android, `pod install` on iOS. The module is auto-linked via `expo.autolinking.nativeModulesDir` in `package.json`, and its config plugin (`native/app.plugin.js`) is registered in `app.json`.
 
+### Android build troubleshooting
+
+**`./gradlew clean` fails with a CMake error about a missing `@react-native-vector-icons/lucide` codegen directory.** With the new architecture enabled, the React Native gradle plugin generates an `Android-autolinking.cmake` that references each autolinked library's codegen output. `clean` deletes those codegen directories (via each library's own clean task) _before_ the app's `externalNativeBuildClean*` tasks re-run CMake configuration, which then fails on the now-missing paths. The [`plugins/withCxxCleanFix.js`](plugins/withCxxCleanFix.js) config plugin (registered in `app.json`) patches the generated `android/app/build.gradle` to delete the `.cxx` cache before any `externalNativeBuildClean*` task runs, making the CMake clean a no-op. This is applied automatically by `expo prebuild`.
+
+If `clean` still fails with a Windows file-lock error on lint-cache jars (a Gradle daemon holding them open), stop the daemons first:
+
+```bash
+./gradlew --stop
+./gradlew clean
+```
+
+**`./gradlew :app:assembleRelease` fails with the same CMake error on a fresh checkout.** The lucide library's codegen output is generated on demand by its own Gradle tasks, not the app's. A normal `assembleRelease` triggers it via `preBuild`, but if the build is interrupted or the directory was deleted manually, run the library's codegen tasks directly:
+
+```bash
+./gradlew :react-native-vector-icons_lucide:generateCodegenSchemaFromJavaScript :react-native-vector-icons_lucide:generateCodegenArtifactsFromSchema
+```
+
 ### Database migrations
 
 The schema is defined in [`src/data/schema.ts`](src/data/schema.ts) and managed with drizzle-kit. After editing the schema:
@@ -197,6 +214,10 @@ brainly_alarm_expo/
 │   │                         #   AlarmSoundService, BootReceiver
 │   ├── ios/                  #   Swift: AlarmSchedulerModule
 │   └── app.plugin.js         #   Expo config plugin
+│
+├── plugins/                  # Project Expo config plugins
+│   └── withCxxCleanFix.js     #   Patches android/app/build.gradle to fix
+│                             #   `gradlew clean` on the new architecture
 │
 ├── drizzle/                  # Generated SQL migrations + metadata
 ├── test/                     # Jest unit tests

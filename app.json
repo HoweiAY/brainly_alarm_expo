@@ -48,6 +48,7 @@
       "expo-sqlite",
       "expo-notifications",
       "./native/app.plugin.js",
+      "./plugins/withCxxCleanFix.js",
       "expo-localization"
     ],
     "experiments": {
