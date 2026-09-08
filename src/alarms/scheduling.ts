@@ -1,9 +1,6 @@
 import { alarmToSnapshot } from "@/data/conversions";
 import type { Alarm, AlarmSnapshot, Difficulty, TaskType } from "@/data/types";
-import {
-  DEFAULT_ALARM_NOTIFICATION_BODY,
-  DEFAULT_ALARM_NOTIFICATION_TITLE,
-} from "@/notifications/AlarmNotifications";
+import { getAlarmNotificationCopy } from "@/notifications/AlarmNotifications";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
 import { useAlarmStore } from "@/store/alarmStore";
@@ -204,6 +201,7 @@ export function parseAlarmSnapshot(
     difficultyRaw && (DIFFICULTIES as string[]).includes(difficultyRaw)
       ? (difficultyRaw as Difficulty)
       : "Easy";
+  const notification = getAlarmNotificationCopy();
   return {
     alarmId,
     weekday: toNumber(get("weekday")),
@@ -216,16 +214,15 @@ export function parseAlarmSnapshot(
     snooze: toBool(get("snooze")),
     enabled: toBool(get("enabled")),
     isSnoozed: toBool(get("isSnoozed")),
-    notificationTitle:
-      get("notificationTitle") ?? DEFAULT_ALARM_NOTIFICATION_TITLE,
-    notificationBody:
-      get("notificationBody") ?? DEFAULT_ALARM_NOTIFICATION_BODY,
+    notificationTitle: get("notificationTitle") ?? notification.title,
+    notificationBody: get("notificationBody") ?? notification.body,
   };
 }
 
 export function snapshotToQueryParams(
   snapshot: AlarmSnapshot,
 ): Record<string, string> {
+  const notification = getAlarmNotificationCopy();
   return {
     alarmId: snapshot.alarmId,
     weekday: String(snapshot.weekday),
@@ -238,9 +235,7 @@ export function snapshotToQueryParams(
     snooze: String(snapshot.snooze),
     enabled: String(snapshot.enabled),
     isSnoozed: String(snapshot.isSnoozed),
-    notificationTitle:
-      snapshot.notificationTitle ?? DEFAULT_ALARM_NOTIFICATION_TITLE,
-    notificationBody:
-      snapshot.notificationBody ?? DEFAULT_ALARM_NOTIFICATION_BODY,
+    notificationTitle: snapshot.notificationTitle ?? notification.title,
+    notificationBody: snapshot.notificationBody ?? notification.body,
   };
 }

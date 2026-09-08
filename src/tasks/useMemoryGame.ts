@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
 import { announce } from "@/hooks/useAccessibility";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
+import { useEffect, useRef, useState } from "react";
 import {
   DIFFICULTY_CONFIG,
   type Difficulty,
@@ -30,6 +31,7 @@ export function useMemoryGame({
   difficulty,
   onComplete,
 }: UseMemoryGameOptions): UseMemoryGameResult {
+  const { t } = useAppTranslation();
   const config = DIFFICULTY_CONFIG[difficulty];
 
   const [gridItems, setGridItems] = useState<TileState[]>(() =>
@@ -72,7 +74,7 @@ export function useMemoryGame({
     setGameStarted(true);
     setPlayerTurn(false);
     setCurrentRound(roundRef.current);
-    setTitleText("Remember the order!");
+    setTitleText(t("tasks.memory.remember"));
     resetGrid();
 
     const order = generateOrder(config);
@@ -85,7 +87,7 @@ export function useMemoryGame({
     for (const idx of order) {
       await delay(500);
       if (cancelledRef.current) return;
-      announce(`Tile ${idx + 1}`);
+      announce(t("tasks.memory.tileAnnouncement", { number: idx + 1 }));
       setTile(idx, "SHOWING");
       await delay(500);
       if (cancelledRef.current) return;
@@ -94,7 +96,7 @@ export function useMemoryGame({
 
     if (cancelledRef.current) return;
     setPlayerTurn(true);
-    setTitleText("Click the tiles in order!");
+    setTitleText(t("tasks.memory.selectInOrder"));
     busyRef.current = false;
   };
 
@@ -110,7 +112,7 @@ export function useMemoryGame({
       if (result.roundComplete) {
         busyRef.current = true;
         setPlayerTurn(false);
-        setTitleText("Correct");
+        setTitleText(t("common.states.correct"));
         await delay(1000);
         if (cancelledRef.current) return;
         if (roundRef.current === rounds) {
@@ -125,7 +127,7 @@ export function useMemoryGame({
       busyRef.current = true;
       setPlayerTurn(false);
       setTile(idx, "INCORRECT");
-      setTitleText("Incorrect");
+      setTitleText(t("common.states.incorrect"));
       await delay(1000);
       if (cancelledRef.current) return;
       await start();

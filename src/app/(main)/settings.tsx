@@ -11,6 +11,7 @@ import type { UserSettings } from "@/data/types";
 import { useScreenReaderEnabled } from "@/hooks/useAccessibility";
 import { i18n, type AppLanguage } from "@/i18n";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
+import { syncAlarmNotificationChannel } from "@/notifications/AlarmNotifications";
 import { useSettingsStore } from "@/store/settingsStore";
 import { colors, radii, spacing, typography } from "@/theme";
 import { Lucide } from "@react-native-vector-icons/lucide";
@@ -56,6 +57,7 @@ export default function SettingsScreen() {
       await i18n.changeLanguage(language);
       await useSettingsStore.getState().updateSettings({ language });
       setLanguageModalVisible(false);
+      await syncAlarmNotificationChannel();
       await reconcileSchedules();
     } catch (e) {
       console.error("updateLanguage failed", e);

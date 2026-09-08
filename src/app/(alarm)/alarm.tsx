@@ -4,6 +4,8 @@ import {
   snoozeAlarm,
 } from "@/alarms/scheduling";
 import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
+import { translateTask } from "@/i18n/helpers";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { useAlarmStore } from "@/store/alarmStore";
 import { useSettingsStore } from "@/store/settingsStore";
@@ -17,6 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function AlarmDisplay() {
   const router = useRouter();
   const dismiss = useAlarmDismissal();
+  const { t } = useAppTranslation();
   const params = useLocalSearchParams();
   const snapshot = parseAlarmSnapshot(
     params as Record<string, string | string[] | undefined>,
@@ -26,7 +29,9 @@ export default function AlarmDisplay() {
     snapshot ? s.alarms.find((a) => a.id === snapshot.alarmId) : undefined,
   );
   const snoozeMinutes = useSettingsStore((s) => s.settings.snoozeMinutes);
-  const snoozeDurationText = `${snoozeMinutes} minute${snoozeMinutes === 1 ? "" : "s"}`;
+  const snoozeDurationText = t("common.units.minute", {
+    count: snoozeMinutes,
+  });
 
   const effectiveSnapshot = useMemo(
     () =>
@@ -71,15 +76,15 @@ export default function AlarmDisplay() {
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
           <Text style={styles.missing} accessibilityRole="header">
-            No active alarm.
+            {t("alarm.noActive")}
           </Text>
           <Pressable
             style={styles.button}
             accessibilityRole="button"
-            accessibilityHint="Returns to home screen"
+            accessibilityHint={t("alarm.returnHomeHint")}
             onPress={() => void dismiss()}
           >
-            <Text style={styles.buttonText}>Dismiss</Text>
+            <Text style={styles.buttonText}>{t("common.actions.dismiss")}</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -114,19 +119,24 @@ export default function AlarmDisplay() {
     router.dismissTo("/(main)");
   };
 
+  const translatedTask = translateTask(t, effectiveSnapshot.task);
+  const alarmLabel = t(
+    effectiveSnapshot.isSnoozed ? "alarm.snoozedLabel" : "alarm.label",
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text
           style={styles.time}
-          accessibilityLabel={`Current time: ${currentTime}`}
+          accessibilityLabel={t("alarm.currentTime", { time: currentTime })}
         >
           {currentTime}
         </Text>
-        <Text style={styles.label}>
-          {effectiveSnapshot.isSnoozed ? "Snoozed alarm" : "Alarm"}
+        <Text style={styles.label}>{alarmLabel}</Text>
+        <Text style={styles.task}>
+          {t("alarm.task", { task: translatedTask })}
         </Text>
-        <Text style={styles.task}>Task: {effectiveSnapshot.task}</Text>
       </View>
       <View style={styles.actions}>
         {effectiveSnapshot.task === "None" ? (
@@ -137,11 +147,11 @@ export default function AlarmDisplay() {
               pressed && styles.buttonPressed,
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Turn off"
-            accessibilityHint="Stops the alarm immediately"
+            accessibilityLabel={t("alarm.turnOffLabel")}
+            accessibilityHint={t("alarm.turnOffHint")}
             onPress={handleOff}
           >
-            <Text style={styles.primaryButtonText}>Turn Off</Text>
+            <Text style={styles.primaryButtonText}>{t("alarm.turnOff")}</Text>
           </Pressable>
         ) : (
           <Pressable
@@ -151,11 +161,11 @@ export default function AlarmDisplay() {
               pressed && styles.buttonPressed,
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Begin task"
-            accessibilityHint={`Starts the ${effectiveSnapshot.task} dismissal task`}
+            accessibilityLabel={t("alarm.beginLabel")}
+            accessibilityHint={t("alarm.beginHint", { task: translatedTask })}
             onPress={handleBegin}
           >
-            <Text style={styles.primaryButtonText}>Begin</Text>
+            <Text style={styles.primaryButtonText}>{t("alarm.begin")}</Text>
           </Pressable>
         )}
         {effectiveSnapshot.snooze ? (
@@ -166,11 +176,15 @@ export default function AlarmDisplay() {
               pressed && styles.buttonPressed,
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Snooze"
-            accessibilityHint={`Snoozes the alarm for ${snoozeDurationText}`}
+            accessibilityLabel={t("alarm.snoozeLabel")}
+            accessibilityHint={t("alarm.snoozeHint", {
+              duration: snoozeDurationText,
+            })}
             onPress={handleSnooze}
           >
-            <Text style={styles.buttonText}>Snooze ({snoozeMinutes} min)</Text>
+            <Text style={styles.buttonText}>
+              {t("alarm.snooze", { count: snoozeMinutes })}
+            </Text>
           </Pressable>
         ) : null}
       </View>

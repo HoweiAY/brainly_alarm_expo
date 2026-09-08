@@ -4,6 +4,7 @@ import {
   getPersistedUserSettings,
   persistUserSettings,
 } from "@/data/userSettings";
+import { i18n } from "@/i18n";
 import { getDeviceLanguage } from "@/i18n/device";
 import { create } from "zustand";
 
@@ -40,6 +41,7 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
         if (!persisted) {
           await persistUserSettings(settings);
         }
+        await i18n.changeLanguage(settings.language);
         set({
           settings,
           loaded: true,

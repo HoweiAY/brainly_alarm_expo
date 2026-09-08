@@ -17,7 +17,9 @@ class BootReceiver : BroadcastReceiver() {
     Log.i("BootReceiver", "Boot completed; re-arming enabled alarms")
     runCatching {
       val store = AlarmStore(context)
-      val alarms = store.use { it.getEnabledAlarms() }
+      val (alarms, notification) = store.use {
+        it.getEnabledAlarms() to alarmNotificationCopy(it.getLanguage())
+      }
       val now = System.currentTimeMillis()
       for (alarm in alarms) {
         val weekdays = if (alarm.days.isEmpty()) (0..6).toList() else alarm.days
@@ -37,8 +39,8 @@ class BootReceiver : BroadcastReceiver() {
             snooze = alarm.snooze,
             enabled = alarm.enabled,
             isSnoozed = false,
-            notificationTitle = "Time to wake up!",
-            notificationBody = "Click to disable the alarm.",
+            notificationTitle = notification.title,
+            notificationBody = notification.body,
           )
           val triggerAt = nextWeeklyTrigger(weekday, alarm.hour, alarm.minute, now)
           scheduleAlarmAt(context, snapshot, triggerAt)

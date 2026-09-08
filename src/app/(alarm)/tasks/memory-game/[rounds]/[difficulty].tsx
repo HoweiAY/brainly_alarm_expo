@@ -1,6 +1,8 @@
 import { TaskHeader } from "@/components/TaskHeader";
 import { useScreenReaderEnabled } from "@/hooks/useAccessibility";
 import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
+import { translateTask } from "@/i18n/helpers";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { useSettingsStore } from "@/store/settingsStore";
 import { type TileState } from "@/tasks/memoryGame";
 import { parseTaskParams } from "@/tasks/params";
@@ -19,6 +21,7 @@ const TILE_COLORS: Record<TileState, string> = {
 
 export default function MemoryGameScreen() {
   const dismiss = useAlarmDismissal();
+  const { t } = useAppTranslation();
   const screenReaderEnabled = useScreenReaderEnabled();
   const showTileNumbersSetting = useSettingsStore(
     (s) => s.settings.showTileNumbers,
@@ -52,14 +55,20 @@ export default function MemoryGameScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TaskHeader title="Memory" onAutoDismiss={dismiss} />
+      <TaskHeader title={translateTask(t, "Memory")} onAutoDismiss={dismiss} />
       <View style={styles.column}>
         {gameStarted ? (
           <Text
             style={styles.round}
-            accessibilityLabel={`Round ${currentRound} of ${rounds}`}
+            accessibilityLabel={t("tasks.roundLabel", {
+              current: currentRound,
+              total: rounds,
+            })}
           >
-            Round: {currentRound}/{rounds}
+            {t("tasks.memory.round", {
+              current: currentRound,
+              total: rounds,
+            })}
           </Text>
         ) : null}
         <Text
@@ -77,11 +86,11 @@ export default function MemoryGameScreen() {
                 const state = gridItems[index];
                 const tileStateLabel =
                   state === "SHOWING"
-                    ? "highlighted"
+                    ? t("common.states.highlighted")
                     : state === "CORRECT"
-                      ? "correct"
+                      ? t("common.states.correct")
                       : state === "INCORRECT"
-                        ? "incorrect"
+                        ? t("common.states.incorrect")
                         : "";
                 return (
                   <Pressable
@@ -92,14 +101,17 @@ export default function MemoryGameScreen() {
                     ]}
                     disabled={!playerTurn}
                     accessibilityRole="button"
-                    accessibilityLabel={[`Tile ${index + 1}`, tileStateLabel]
+                    accessibilityLabel={[
+                      t("tasks.memory.tile", { number: index + 1 }),
+                      tileStateLabel,
+                    ]
                       .filter(Boolean)
                       .join(", ")}
-                    accessibilityHint={
+                    accessibilityHint={t(
                       playerTurn
-                        ? "Tap to select this tile"
-                        : "Wait for your turn"
-                    }
+                        ? "tasks.memory.tileHint"
+                        : "tasks.memory.waitHint",
+                    )}
                     accessibilityState={{ disabled: !playerTurn }}
                     onPress={() => {
                       void handleTilePress(index);
@@ -127,11 +139,11 @@ export default function MemoryGameScreen() {
               pressed && styles.startPressed,
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Start memory game"
-            accessibilityHint="Reveals the tile sequence"
+            accessibilityLabel={t("tasks.memory.startLabel")}
+            accessibilityHint={t("tasks.memory.startHint")}
             onPress={() => void start()}
           >
-            <Text style={styles.startText}>Start</Text>
+            <Text style={styles.startText}>{t("common.actions.start")}</Text>
           </Pressable>
         ) : null}
       </View>

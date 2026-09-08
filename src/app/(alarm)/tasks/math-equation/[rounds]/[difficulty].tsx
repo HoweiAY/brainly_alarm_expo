@@ -1,6 +1,8 @@
 import { TaskHeader } from "@/components/TaskHeader";
 import { announce } from "@/hooks/useAccessibility";
 import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
+import { translateTask } from "@/i18n/helpers";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { parseTaskParams } from "@/tasks/params";
 import { useMathEquation } from "@/tasks/useMathEquation";
 import { colors, radii, spacing, typography } from "@/theme";
@@ -11,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MathEquationScreen() {
   const dismiss = useAlarmDismissal();
+  const { t } = useAppTranslation();
   const { rounds: roundsParam, difficulty: difficultyParam } =
     useLocalSearchParams<{
       rounds?: string;
@@ -31,27 +34,34 @@ export default function MathEquationScreen() {
   const prevCorrectRef = useRef<boolean | null>(null);
   useEffect(() => {
     if (isCorrect === false && prevCorrectRef.current !== false) {
-      announce("Incorrect answer, try again");
+      announce(t("tasks.math.incorrectAnnouncement"));
     }
     prevCorrectRef.current = isCorrect;
-  }, [isCorrect]);
+  }, [isCorrect, t]);
+
+  const resultLabel = t(
+    isCorrect ? "common.states.correct" : "common.states.incorrect",
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <TaskHeader title="Math" onAutoDismiss={dismiss} />
+      <TaskHeader title={translateTask(t, "Math")} onAutoDismiss={dismiss} />
       <View style={styles.column}>
         <Text
           style={styles.round}
-          accessibilityLabel={`Round ${currentRound} of ${rounds}`}
+          accessibilityLabel={t("tasks.roundLabel", {
+            current: currentRound,
+            total: rounds,
+          })}
         >
           {currentRound}/{rounds}
         </Text>
         <Text style={styles.instruction} accessibilityRole="header">
-          What is the result of the expression?
+          {t("tasks.math.instruction")}
         </Text>
         <Text
           style={styles.expression}
-          accessibilityLabel={`Equation: ${equation}`}
+          accessibilityLabel={t("tasks.math.equationLabel", { equation })}
         >
           {equation}
         </Text>
@@ -68,11 +78,11 @@ export default function MathEquationScreen() {
           editable={isCorrect === null}
           keyboardType="numeric"
           numberOfLines={1}
-          placeholder="Answer"
+          placeholder={t("tasks.math.answer")}
           placeholderTextColor={colors.textSubtle}
           selectionColor={colors.primary}
-          accessibilityLabel="Answer"
-          accessibilityHint="Type the result and press Submit"
+          accessibilityLabel={t("tasks.math.answer")}
+          accessibilityHint={t("tasks.math.answerHint")}
         />
         {isCorrect === null ? (
           <Pressable
@@ -82,10 +92,10 @@ export default function MathEquationScreen() {
             ]}
             onPress={submit}
             accessibilityRole="button"
-            accessibilityLabel="Submit answer"
-            accessibilityHint="Evaluates your answer"
+            accessibilityLabel={t("tasks.math.submitLabel")}
+            accessibilityHint={t("tasks.math.submitHint")}
           >
-            <Text style={styles.submitText}>Submit</Text>
+            <Text style={styles.submitText}>{t("common.actions.submit")}</Text>
           </Pressable>
         ) : (
           <Text
@@ -94,7 +104,7 @@ export default function MathEquationScreen() {
               { color: isCorrect ? colors.success : colors.danger },
             ]}
             accessibilityRole="text"
-            accessibilityLabel={isCorrect ? "Correct" : "Incorrect"}
+            accessibilityLabel={resultLabel}
           >
             {isCorrect ? "✓" : "✗"}
           </Text>

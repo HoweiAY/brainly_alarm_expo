@@ -1,5 +1,6 @@
 import { TaskHeader } from "@/components/TaskHeader";
 import { useAlarmDismissal } from "@/hooks/useAlarmDismissal";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { usePhoneShaking } from "@/tasks/usePhoneShaking";
 import { colors, radii, spacing, typography } from "@/theme";
 import { Lucide } from "@react-native-vector-icons/lucide";
@@ -8,20 +9,21 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PhoneShakingScreen() {
   const dismiss = useAlarmDismissal();
+  const { t } = useAppTranslation();
   const { remainingShakes, totalShakes, progress } = usePhoneShaking({
     onComplete: () => {
       void dismiss();
     },
   });
 
-  const counterText = `${remainingShakes} shake(s) to go!`;
+  const counterText = t("tasks.shake.remaining", { count: remainingShakes });
 
   return (
     <SafeAreaView style={styles.container}>
-      <TaskHeader title="Shake" onAutoDismiss={dismiss} />
+      <TaskHeader title={t("common.tasks.Shake")} onAutoDismiss={dismiss} />
       <View style={styles.column}>
         <Text style={styles.title} accessibilityRole="header">
-          Shake your phone to stop the alarm!
+          {t("tasks.shake.instruction")}
         </Text>
         <Text
           style={styles.counter}
@@ -41,7 +43,10 @@ export default function PhoneShakingScreen() {
           accessible
           style={styles.progressTrack}
           accessibilityRole="progressbar"
-          accessibilityLabel={`Progress: ${remainingShakes} of ${totalShakes} shakes remaining`}
+          accessibilityLabel={t("tasks.shake.progress", {
+            remaining: remainingShakes,
+            total: totalShakes,
+          })}
           accessibilityValue={{
             now: remainingShakes,
             min: 0,
