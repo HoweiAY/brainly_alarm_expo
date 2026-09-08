@@ -7,6 +7,7 @@ import {
   dismissOldAlarmIfActive,
   useAlarmNotifications,
 } from "@/hooks/useAlarmNotifications";
+import { i18n } from "@/i18n";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
 import { useAlarmStore } from "@/store/alarmStore";
@@ -179,10 +180,15 @@ function SettingsLoadError({
 export default function RootLayout() {
   const loaded = useSettingsStore((s) => s.loaded);
   const initError = useSettingsStore((s) => s.initError);
+  const language = useSettingsStore((s) => s.settings.language);
 
   useEffect(() => {
     void useSettingsStore.getState().ensureLoaded();
   }, []);
+
+  useEffect(() => {
+    void i18n.changeLanguage(language);
+  }, [language]);
 
   const retry = useCallback(() => {
     void useSettingsStore.getState().init();

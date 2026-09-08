@@ -4,6 +4,7 @@ import {
   getPersistedUserSettings,
   persistUserSettings,
 } from "@/data/userSettings";
+import { getDeviceLanguage } from "@/i18n/device";
 import { create } from "zustand";
 
 interface SettingsStoreState {
@@ -17,9 +18,14 @@ interface SettingsStoreState {
 }
 
 let updateQueue = Promise.resolve();
+const initialLanguage = getDeviceLanguage();
+const initialSettings: UserSettings = {
+  ...DEFAULT_USER_SETTINGS,
+  language: initialLanguage,
+};
 
 export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
-  settings: { ...DEFAULT_USER_SETTINGS },
+  settings: initialSettings,
   loaded: false,
   initError: null,
   _initPromise: null,
@@ -29,9 +35,13 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     if (existing) return existing;
     const promise = (async () => {
       try {
-        const persisted = await getPersistedUserSettings();
+        const persisted = await getPersistedUserSettings(initialLanguage);
+        const settings = persisted ?? initialSettings;
+        if (!persisted) {
+          await persistUserSettings(settings);
+        }
         set({
-          settings: persisted ?? { ...DEFAULT_USER_SETTINGS },
+          settings,
           loaded: true,
           initError: null,
         });

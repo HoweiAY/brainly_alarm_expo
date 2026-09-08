@@ -1,6 +1,7 @@
+import { isAppLanguage, type AppLanguage } from "@/i18n/languages";
+import { normalizeUserSettings } from "@/settings/userSettings";
 import dayjs from "dayjs";
 import { eq } from "drizzle-orm";
-import { normalizeUserSettings } from "@/settings/userSettings";
 import { db, dbReady } from "./db";
 import { settingsTable } from "./schema";
 import type { UserSettings } from "./types";
@@ -26,7 +27,9 @@ export async function persistUserSettings(
     });
 }
 
-export async function getPersistedUserSettings(): Promise<UserSettings | null> {
+export async function getPersistedUserSettings(
+  fallbackLanguage: AppLanguage,
+): Promise<UserSettings | null> {
   await dbReady;
   const rows = await db
     .select({ payload: settingsTable.payload })
@@ -34,5 +37,11 @@ export async function getPersistedUserSettings(): Promise<UserSettings | null> {
     .where(eq(settingsTable.id, SETTINGS_ROW_ID))
     .limit(1);
   const payload = rows[0]?.payload;
-  return payload ? normalizeUserSettings(payload) : null;
+  if (!payload) return null;
+  const settings = normalizeUserSettings(payload, fallbackLanguage);
+  const source = payload as unknown as Record<string, unknown>;
+  if (!isAppLanguage(source.language)) {
+    await persistUserSettings(settings);
+  }
+  return settings;
 }

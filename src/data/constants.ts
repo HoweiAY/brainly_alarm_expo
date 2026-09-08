@@ -1,3 +1,4 @@
+import { DEFAULT_LANGUAGE } from "@/i18n/languages";
 import type { Difficulty, TaskType, UserSettings, Weekday } from "./types";
 
 export const weekdays: Weekday[] = [
@@ -68,4 +69,5 @@ export const DEFAULT_USER_SETTINGS: Readonly<UserSettings> = {
   autoDismissEnabled: true,
   snoozeMinutes: DEFAULT_SNOOZE_MINUTES,
   showTileNumbers: false,
+  language: DEFAULT_LANGUAGE,
 };

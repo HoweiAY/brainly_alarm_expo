@@ -1,3 +1,5 @@
+import type { AppLanguage } from "@/i18n/languages";
+
 export type Weekday = "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
 
 export type TaskType = "Memory" | "Math" | "Shake phone" | "None";
@@ -37,4 +39,5 @@ export interface UserSettings {
   autoDismissEnabled: boolean;
   snoozeMinutes: number;
   showTileNumbers: boolean;
+  language: AppLanguage;
 }
