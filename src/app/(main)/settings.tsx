@@ -1,3 +1,5 @@
+import { reconcileSchedules } from "@/alarms/scheduling";
+import { LanguageSelectionModal } from "@/components/settings/LanguageSelectionModal";
 import {
   SettingsRow,
   SettingsSwitch,
@@ -7,6 +9,8 @@ import { SettingsSection } from "@/components/settings/SettingsSection";
 import { SnoozeDurationModal } from "@/components/settings/SnoozeDurationModal";
 import type { UserSettings } from "@/data/types";
 import { useScreenReaderEnabled } from "@/hooks/useAccessibility";
+import { i18n, type AppLanguage } from "@/i18n";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { useSettingsStore } from "@/store/settingsStore";
 import { colors, radii, spacing, typography } from "@/theme";
 import { Lucide } from "@react-native-vector-icons/lucide";
@@ -22,13 +26,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const COMING_SOON = "Coming soon";
-
 export default function SettingsScreen() {
   const router = useRouter();
+  const { t } = useAppTranslation();
   const settings = useSettingsStore((s) => s.settings);
   const loaded = useSettingsStore((s) => s.loaded);
   const screenReaderEnabled = useScreenReaderEnabled();
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const [languageUpdating, setLanguageUpdating] = useState(false);
   const [snoozeModalVisible, setSnoozeModalVisible] = useState(false);
 
   const update = async (patch: Partial<UserSettings>) => {
@@ -36,11 +41,39 @@ export default function SettingsScreen() {
       await useSettingsStore.getState().updateSettings(patch);
     } catch (e) {
       console.error("updateSettings failed", e);
-      Alert.alert("Error", "Could not save the setting. Please try again.");
+      Alert.alert(t("common.error"), t("settings.saveError"));
     }
   };
 
-  const snoozeLabel = `${settings.snoozeMinutes} min`;
+  const selectLanguage = async (language: AppLanguage) => {
+    if (language === settings.language) {
+      setLanguageModalVisible(false);
+      return;
+    }
+    const previousLanguage = settings.language;
+    setLanguageUpdating(true);
+    try {
+      await i18n.changeLanguage(language);
+      await useSettingsStore.getState().updateSettings({ language });
+      setLanguageModalVisible(false);
+      await reconcileSchedules();
+    } catch (e) {
+      console.error("updateLanguage failed", e);
+      await i18n.changeLanguage(previousLanguage);
+      Alert.alert(t("common.error"), t("settings.saveError"));
+    } finally {
+      setLanguageUpdating(false);
+    }
+  };
+
+  const languageLabel = t(
+    settings.language === "en"
+      ? "common.languages.en"
+      : "common.languages.zhHant",
+  );
+  const snoozeLabel = t("settings.snoozeValue", {
+    count: settings.snoozeMinutes,
+  });
   const showTileNumbers =
     screenReaderEnabled === true || settings.showTileNumbers;
 
@@ -53,14 +86,14 @@ export default function SettingsScreen() {
             pressed && styles.iconButtonPressed,
           ]}
           accessibilityRole="button"
-          accessibilityLabel="Back"
-          accessibilityHint="Returns to home screen"
+          accessibilityLabel={t("common.actions.back")}
+          accessibilityHint={t("settings.backHint")}
           onPress={() => router.back()}
         >
           <Lucide name="chevron-left" size={22} color={colors.text} />
         </Pressable>
         <Text style={styles.title} accessibilityRole="header">
-          Settings
+          {t("settings.title")}
         </Text>
         <View style={styles.iconPlaceholder} />
       </View>
@@ -70,33 +103,36 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.bodyContent}
         keyboardShouldPersistTaps="handled"
       >
-        <SettingsSection title="General">
+        <SettingsSection title={t("settings.general")}>
           <SettingsRow
-            label="Language"
-            helperText={COMING_SOON}
-            disabled
-            accessibilityLabel="Language, English, coming soon"
+            label={t("settings.language")}
+            disabled={!loaded || languageUpdating}
+            onPress={() => setLanguageModalVisible(true)}
+            accessibilityLabel={t("settings.languageLabel", {
+              language: languageLabel,
+            })}
+            accessibilityHint={t("settings.languageHint")}
           >
-            <SettingsValue value="English" />
+            <SettingsValue value={languageLabel} showChevron />
           </SettingsRow>
           <SettingsRow
-            label="Appearance"
-            description="Switch between dark and light mode"
-            helperText={COMING_SOON}
+            label={t("settings.appearance")}
+            description={t("settings.appearanceDescription")}
+            helperText={t("settings.comingSoon")}
             disabled
           >
             <SettingsSwitch
               value
               disabled
-              accessibilityLabel="Dark mode, coming soon"
+              accessibilityLabel={t("settings.darkModeAccessibility")}
             />
           </SettingsRow>
         </SettingsSection>
 
-        <SettingsSection title="Alarm">
+        <SettingsSection title={t("settings.alarm")}>
           <SettingsRow
-            label="Auto dismiss tasks"
-            description="Automatically dismiss the alarm after a task times out"
+            label={t("settings.autoDismiss")}
+            description={t("settings.autoDismissDescription")}
             disabled={!loaded}
           >
             <SettingsSwitch
@@ -105,29 +141,37 @@ export default function SettingsScreen() {
               onValueChange={(next) =>
                 void update({ autoDismissEnabled: next })
               }
-              accessibilityLabel={`Auto dismiss tasks ${settings.autoDismissEnabled ? "enabled" : "disabled"}`}
-              accessibilityHint="Toggles the auto-dismiss countdown on alarm tasks"
+              accessibilityLabel={t("settings.autoDismissAccessibility", {
+                state: t(
+                  settings.autoDismissEnabled
+                    ? "common.states.enabled"
+                    : "common.states.disabled",
+                ),
+              })}
+              accessibilityHint={t("settings.autoDismissHint")}
             />
           </SettingsRow>
           <SettingsRow
-            label="Snooze duration"
-            description="How long an alarm stays snoozed"
+            label={t("settings.snoozeDuration")}
+            description={t("settings.snoozeDescription")}
             disabled={!loaded}
             onPress={() => setSnoozeModalVisible(true)}
-            accessibilityLabel={`Snooze duration, ${snoozeLabel}`}
-            accessibilityHint="Opens a dialog to change the snooze duration"
+            accessibilityLabel={t("settings.snoozeAccessibility", {
+              duration: snoozeLabel,
+            })}
+            accessibilityHint={t("settings.snoozeHint")}
           >
             <SettingsValue value={snoozeLabel} showChevron />
           </SettingsRow>
         </SettingsSection>
 
-        <SettingsSection title="Accessibility">
+        <SettingsSection title={t("settings.accessibility")}>
           <SettingsRow
-            label="Show tile numbers"
-            description="Number the tiles in the Memory task"
+            label={t("settings.showTileNumbers")}
+            description={t("settings.showTileNumbersDescription")}
             helperText={
               screenReaderEnabled === true
-                ? "Always enabled while a screen reader is active"
+                ? t("settings.screenReaderForced")
                 : undefined
             }
             disabled={!loaded || screenReaderEnabled === true}
@@ -136,17 +180,30 @@ export default function SettingsScreen() {
               value={showTileNumbers}
               disabled={!loaded || screenReaderEnabled === true}
               onValueChange={(next) => void update({ showTileNumbers: next })}
-              accessibilityLabel={`Show tile numbers ${showTileNumbers ? "enabled" : "disabled"}`}
+              accessibilityLabel={t("settings.showTileNumbersAccessibility", {
+                state: t(
+                  showTileNumbers
+                    ? "common.states.enabled"
+                    : "common.states.disabled",
+                ),
+              })}
               accessibilityHint={
                 screenReaderEnabled === true
-                  ? "Always enabled while a screen reader is active"
-                  : "Toggles numbers on Memory task tiles"
+                  ? t("settings.screenReaderForced")
+                  : t("settings.showTileNumbersHint")
               }
             />
           </SettingsRow>
         </SettingsSection>
       </ScrollView>
 
+      <LanguageSelectionModal
+        visible={languageModalVisible}
+        selected={settings.language}
+        disabled={languageUpdating}
+        onCancel={() => setLanguageModalVisible(false)}
+        onSelect={(language) => void selectLanguage(language)}
+      />
       <SnoozeDurationModal
         visible={snoozeModalVisible}
         initialMinutes={settings.snoozeMinutes}

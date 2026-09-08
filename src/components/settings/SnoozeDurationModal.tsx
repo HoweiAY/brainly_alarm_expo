@@ -1,4 +1,5 @@
 import { SNOOZE_MINUTES_MAX, SNOOZE_MINUTES_MIN } from "@/data/constants";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { parseSnoozeMinutes } from "@/settings/userSettings";
 import { colors, radii, spacing, typography } from "@/theme";
 import { useState } from "react";
@@ -26,6 +27,8 @@ export function SnoozeDurationModal({
   onConfirm,
   onCancel,
 }: SnoozeDurationModalProps) {
+  const { t } = useAppTranslation();
+
   return (
     <Modal
       visible={visible}
@@ -36,7 +39,7 @@ export function SnoozeDurationModal({
       <Pressable
         style={styles.backdrop}
         accessibilityRole="button"
-        accessibilityLabel="Dismiss dialog"
+        accessibilityLabel={t("settings.dismissDialog")}
         onPress={onCancel}
       />
       <KeyboardAvoidingView
@@ -63,6 +66,7 @@ function SnoozeDurationDialog({
   onConfirm,
   onCancel,
 }: SnoozeDurationDialogProps) {
+  const { t } = useAppTranslation();
   const [text, setText] = useState(String(initialMinutes));
   const valid = parseSnoozeMinutes(text) !== null;
   const showError = text.trim().length > 0 && !valid;
@@ -76,11 +80,9 @@ function SnoozeDurationDialog({
   return (
     <View style={styles.dialog} accessibilityViewIsModal>
       <Text style={styles.title} accessibilityRole="header">
-        Snooze duration
+        {t("settings.snoozeDuration")}
       </Text>
-      <Text style={styles.subtitle}>
-        Choose how long the alarm stays snoozed.
-      </Text>
+      <Text style={styles.subtitle}>{t("settings.snoozeDialogSubtitle")}</Text>
       <View style={[styles.inputRow, showError && styles.inputRowError]}>
         <TextInput
           style={styles.input}
@@ -92,18 +94,27 @@ function SnoozeDurationDialog({
           selectTextOnFocus
           returnKeyType="done"
           onSubmitEditing={submit}
-          accessibilityLabel="Snooze duration in minutes"
-          accessibilityHint={`Enter a number from ${SNOOZE_MINUTES_MIN} to ${SNOOZE_MINUTES_MAX}`}
+          accessibilityLabel={t("settings.snoozeInputLabel")}
+          accessibilityHint={t("settings.snoozeInputHint", {
+            min: SNOOZE_MINUTES_MIN,
+            max: SNOOZE_MINUTES_MAX,
+          })}
         />
-        <Text style={styles.unit}>min</Text>
+        <Text style={styles.unit}>{t("settings.minuteAbbreviation")}</Text>
       </View>
       <Text
         style={[styles.hint, showError && styles.hintError]}
         accessibilityLiveRegion="polite"
       >
         {showError
-          ? `Enter a whole number between ${SNOOZE_MINUTES_MIN} and ${SNOOZE_MINUTES_MAX}.`
-          : `${SNOOZE_MINUTES_MIN}–${SNOOZE_MINUTES_MAX} minutes`}
+          ? t("settings.snoozeRangeError", {
+              min: SNOOZE_MINUTES_MIN,
+              max: SNOOZE_MINUTES_MAX,
+            })
+          : t("settings.snoozeRange", {
+              min: SNOOZE_MINUTES_MIN,
+              max: SNOOZE_MINUTES_MAX,
+            })}
       </Text>
       <View style={styles.actions}>
         <Pressable
@@ -113,11 +124,13 @@ function SnoozeDurationDialog({
             pressed && styles.buttonPressed,
           ]}
           accessibilityRole="button"
-          accessibilityLabel="Cancel"
-          accessibilityHint="Closes without changing the snooze duration"
+          accessibilityLabel={t("common.actions.cancel")}
+          accessibilityHint={t("settings.cancelSnoozeHint")}
           onPress={onCancel}
         >
-          <Text style={styles.buttonTextSecondary}>Cancel</Text>
+          <Text style={styles.buttonTextSecondary}>
+            {t("common.actions.cancel")}
+          </Text>
         </Pressable>
         <Pressable
           style={({ pressed }) => [
@@ -127,13 +140,15 @@ function SnoozeDurationDialog({
             pressed && valid && styles.buttonPressed,
           ]}
           accessibilityRole="button"
-          accessibilityLabel="Confirm"
-          accessibilityHint="Saves the snooze duration"
+          accessibilityLabel={t("common.actions.confirm")}
+          accessibilityHint={t("settings.confirmSnoozeHint")}
           accessibilityState={{ disabled: !valid }}
           disabled={!valid}
           onPress={submit}
         >
-          <Text style={styles.buttonTextPrimary}>Confirm</Text>
+          <Text style={styles.buttonTextPrimary}>
+            {t("common.actions.confirm")}
+          </Text>
         </Pressable>
       </View>
     </View>

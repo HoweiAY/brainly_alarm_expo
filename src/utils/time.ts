@@ -1,6 +1,8 @@
-import type { Dayjs } from "dayjs";
 import { weekdays } from "@/data/constants";
 import type { Alarm, Weekday } from "@/data/types";
+import { translateWeekday } from "@/i18n/helpers";
+import type { Dayjs } from "dayjs";
+import type { TFunction } from "i18next";
 
 const WEEKDAY_DOW: Record<Weekday, number> = {
   Sun: 0,
@@ -16,12 +18,12 @@ export function formatTime(hour: number, minute: number): string {
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
-export function getDaysString(days: Weekday[]): string {
+export function getDaysString(days: Weekday[], t: TFunction): string {
   const present = weekdays.filter((w) => days.includes(w));
   if (present.length === 0 || present.length === weekdays.length) {
-    return "Every day";
+    return t("common.everyDay");
   }
-  return present.join(", ");
+  return present.map((weekday) => translateWeekday(t, weekday)).join(", ");
 }
 
 export interface AlarmDelta {
@@ -72,7 +74,14 @@ export function computeNextAlarm(
   return msToDelta(bestMs);
 }
 
-export function formatCountdown(delta: AlarmDelta | null): string {
-  if (delta === null) return "No alarms set";
-  return `Next alarm in ${delta.days} day(s) ${delta.hours} hour(s) ${delta.minutes} minute(s)`;
+export function formatCountdown(
+  delta: AlarmDelta | null,
+  t: TFunction,
+): string {
+  if (delta === null) return t("home.noAlarmsSet");
+  return t("home.nextAlarmIn", {
+    days: t("common.units.day", { count: delta.days }),
+    hours: t("common.units.hour", { count: delta.hours }),
+    minutes: t("common.units.minute", { count: delta.minutes }),
+  });
 }

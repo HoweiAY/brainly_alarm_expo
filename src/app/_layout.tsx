@@ -8,6 +8,7 @@ import {
   useAlarmNotifications,
 } from "@/hooks/useAlarmNotifications";
 import { i18n } from "@/i18n";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
 import { useAlarmStore } from "@/store/alarmStore";
@@ -149,15 +150,14 @@ function SettingsLoadError({
   error: string;
   onRetry: () => void;
 }) {
+  const { t } = useAppTranslation();
+
   return (
     <SafeAreaView style={styles.errorContainer} edges={["top", "bottom"]}>
       <View style={styles.errorContent}>
         <Lucide name="alert-triangle" size={48} color={colors.danger} />
-        <Text style={styles.errorTitle}>Couldn&apos;t load settings</Text>
-        <Text style={styles.errorMessage}>
-          Your saved preferences couldn&apos;t be read. Alarms won&apos;t start
-          until settings load.
-        </Text>
+        <Text style={styles.errorTitle}>{t("root.settingsLoadTitle")}</Text>
+        <Text style={styles.errorMessage}>{t("root.settingsLoadMessage")}</Text>
         {error ? <Text style={styles.errorDetail}>{error}</Text> : null}
         <Pressable
           style={({ pressed }) => [
@@ -165,12 +165,14 @@ function SettingsLoadError({
             pressed && styles.retryButtonPressed,
           ]}
           accessibilityRole="button"
-          accessibilityLabel="Retry loading settings"
-          accessibilityHint="Attempts to read saved settings again"
+          accessibilityLabel={t("root.retryLabel")}
+          accessibilityHint={t("root.retryHint")}
           onPress={onRetry}
         >
           <Lucide name="rotate-cw" size={20} color={colors.primaryFg} />
-          <Text style={styles.retryButtonText}>Retry</Text>
+          <Text style={styles.retryButtonText}>
+            {t("common.actions.retry")}
+          </Text>
         </Pressable>
       </View>
     </SafeAreaView>
