@@ -1,9 +1,12 @@
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
+import { useTheme } from "@/theme";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { BackHandler } from "react-native";
 
 export default function AlarmLayout() {
+  const { colors } = useTheme();
+
   useEffect(() => {
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
       const active = useAlarmFiringStore.getState().activeSnapshot;
@@ -17,7 +20,7 @@ export default function AlarmLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: "#0A0A0A" },
+        contentStyle: { backgroundColor: colors.background },
       }}
     >
       <Stack.Screen name="alarm" />

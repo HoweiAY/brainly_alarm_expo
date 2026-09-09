@@ -7,21 +7,21 @@ import { useSettingsStore } from "@/store/settingsStore";
 import { type TileState } from "@/tasks/memoryGame";
 import { parseTaskParams } from "@/tasks/params";
 import { useMemoryGame } from "@/tasks/useMemoryGame";
-import { colors, radii, spacing, typography } from "@/theme";
+import { createThemedStyles, radii, spacing, typography } from "@/theme";
 import { useLocalSearchParams } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-const TILE_COLORS: Record<TileState, string> = {
-  DEFAULT: colors.surface,
-  SHOWING: colors.primary,
-  CORRECT: colors.success,
-  INCORRECT: colors.danger,
-};
 
 export default function MemoryGameScreen() {
   const dismiss = useAlarmDismissal();
   const { t } = useAppTranslation();
+  const { colors, styles } = useStyles();
+  const tileColors: Record<TileState, string> = {
+    DEFAULT: colors.surface,
+    SHOWING: colors.primary,
+    CORRECT: colors.success,
+    INCORRECT: colors.danger,
+  };
   const screenReaderEnabled = useScreenReaderEnabled();
   const showTileNumbersSetting = useSettingsStore(
     (s) => s.settings.showTileNumbers,
@@ -97,7 +97,7 @@ export default function MemoryGameScreen() {
                     key={index}
                     style={[
                       styles.tile,
-                      { backgroundColor: TILE_COLORS[state] },
+                      { backgroundColor: tileColors[state] },
                     ]}
                     disabled={!playerTurn}
                     accessibilityRole="button"
@@ -119,7 +119,10 @@ export default function MemoryGameScreen() {
                   >
                     {showTileNumbers ? (
                       <Text
-                        style={styles.tileNumber}
+                        style={[
+                          styles.tileNumber,
+                          state !== "DEFAULT" && styles.tileNumberActive,
+                        ]}
                         importantForAccessibility="no"
                         accessibilityElementsHidden
                       >
@@ -151,7 +154,7 @@ export default function MemoryGameScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -194,6 +197,9 @@ const styles = StyleSheet.create({
     ...typography.bodyEmphasis,
     color: colors.text,
   },
+  tileNumberActive: {
+    color: colors.primaryFg,
+  },
   start: {
     marginTop: spacing.xl,
     paddingVertical: spacing.md,
@@ -208,4 +214,4 @@ const styles = StyleSheet.create({
     ...typography.bodyEmphasis,
     color: colors.primaryFg,
   },
-});
+}));

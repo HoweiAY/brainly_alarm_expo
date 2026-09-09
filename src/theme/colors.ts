@@ -43,5 +43,3 @@ export const lightColors: Colors = {
   backdrop: "rgba(0,0,0,0.35)",
   shadow: "rgba(0,0,0,0.18)",
 };
-
-export const colors = darkColors;

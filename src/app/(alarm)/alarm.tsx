@@ -9,17 +9,18 @@ import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { useAlarmStore } from "@/store/alarmStore";
 import { useSettingsStore } from "@/store/settingsStore";
-import { colors, radii, spacing, typography } from "@/theme";
+import { createThemedStyles, radii, spacing, typography } from "@/theme";
 import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { BackHandler, Pressable, StyleSheet, Text, View } from "react-native";
+import { BackHandler, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AlarmDisplay() {
   const router = useRouter();
   const dismiss = useAlarmDismissal();
   const { t } = useAppTranslation();
+  const { styles } = useStyles();
   const params = useLocalSearchParams();
   const snapshot = parseAlarmSnapshot(
     params as Record<string, string | string[] | undefined>,
@@ -192,7 +193,7 @@ export default function AlarmDisplay() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -255,4 +256,4 @@ const styles = StyleSheet.create({
     ...typography.bodyEmphasis,
     color: colors.primaryFg,
   },
-});
+}));

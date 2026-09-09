@@ -2,12 +2,12 @@ import type { AppColorScheme } from "@/data/types";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useMemo } from "react";
 import { StyleSheet } from "react-native";
-import { colors, darkColors, lightColors, type Colors } from "./colors";
+import { darkColors, lightColors, type Colors } from "./colors";
 import { radii } from "./radii";
 import { spacing } from "./spacing";
 import { typography } from "./typography";
 
-export { colors, darkColors, lightColors, radii, spacing, typography };
+export { darkColors, lightColors, radii, spacing, typography };
 export type { Colors };
 
 export interface Theme {
