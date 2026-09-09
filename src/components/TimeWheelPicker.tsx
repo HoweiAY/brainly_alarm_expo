@@ -164,7 +164,7 @@ export function TimeWheelPicker({
         accessibilityLabel={t("editor.minute")}
       />
       <Wheel
-        data={[t("editor.am"), t("editor.pm")]}
+        data={[...PERIODS]}
         index={period === "AM" ? 0 : 1}
         width={56}
         onIndexChange={handlePeriod}
