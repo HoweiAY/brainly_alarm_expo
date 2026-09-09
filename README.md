@@ -117,7 +117,7 @@ npm run build:native android
 npm run build:native ios
 ```
 
-The script runs `expo prebuild` if the native project directories are missing, then compiles just the module: `./gradlew :expo.modules.alarmscheduler:assembleRelease` on Android, `pod install` on iOS. The module is auto-linked via `expo.autolinking.nativeModulesDir` in `package.json`, and its config plugin (`native/app.plugin.js`) is registered in `app.json`.
+The script runs `expo prebuild` if the native project directories are missing, then compiles just the module: `./gradlew :alarm-scheduler:assembleRelease` on Android, `pod install` on iOS. The module is auto-linked via `expo.autolinking.nativeModulesDir` in `package.json`, and its config plugin (`native/app.plugin.js`) is registered in `app.json`.
 
 ### Android build troubleshooting
 
