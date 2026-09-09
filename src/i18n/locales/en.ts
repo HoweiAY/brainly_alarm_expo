@@ -151,8 +151,10 @@ export const en = {
     languageHint: "Opens a dialog to change the app language",
     appearance: "Appearance",
     appearanceDescription: "Switch between dark and light mode",
-    comingSoon: "Coming soon",
-    darkModeAccessibility: "Dark mode, coming soon",
+    darkMode: "Dark",
+    lightMode: "Light",
+    appearanceAccessibility: "Appearance, {{mode}} mode",
+    appearanceHint: "Switches between dark and light mode",
     alarm: "Alarm",
     autoDismiss: "Auto dismiss tasks",
     autoDismissDescription:

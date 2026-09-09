@@ -1,7 +1,7 @@
 import { SNOOZE_MINUTES_MAX, SNOOZE_MINUTES_MIN } from "@/data/constants";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { parseSnoozeMinutes } from "@/settings/userSettings";
-import { colors, radii, spacing, typography } from "@/theme";
+import { createThemedStyles, radii, spacing, typography } from "@/theme";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -28,6 +28,7 @@ export function SnoozeDurationModal({
   onCancel,
 }: SnoozeDurationModalProps) {
   const { t } = useAppTranslation();
+  const { styles } = useStyles();
 
   return (
     <Modal
@@ -67,6 +68,7 @@ function SnoozeDurationDialog({
   onCancel,
 }: SnoozeDurationDialogProps) {
   const { t } = useAppTranslation();
+  const { styles } = useStyles();
   const [text, setText] = useState(String(initialMinutes));
   const valid = parseSnoozeMinutes(text) !== null;
   const showError = text.trim().length > 0 && !valid;
@@ -155,7 +157,7 @@ function SnoozeDurationDialog({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   backdrop: {
     position: "absolute",
     top: 0,
@@ -180,9 +182,9 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     gap: spacing.md,
     elevation: 4,
-    shadowColor: "#000",
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 1,
     shadowRadius: 8,
   },
   title: {
@@ -259,4 +261,4 @@ const styles = StyleSheet.create({
     ...typography.bodyEmphasis,
     color: colors.text,
   },
-});
+}));

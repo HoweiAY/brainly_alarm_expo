@@ -4,15 +4,9 @@ import { useAlarmById } from "@/hooks/useAlarmById";
 import { useCreateAlarmForm } from "@/hooks/useCreateAlarmForm";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { useAlarmStore } from "@/store/alarmStore";
-import { colors, typography } from "@/theme";
+import { createThemedStyles, typography } from "@/theme";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function EditAlarm({ alarm }: { alarm: Alarm }) {
@@ -26,6 +20,7 @@ export default function EditAlarmScreen() {
   const { alarm, loading, error } = useAlarmById(alarmId);
   const router = useRouter();
   const { t } = useAppTranslation();
+  const { colors, styles } = useStyles();
 
   const retry = () => {
     useAlarmStore.getState().loadAlarms();
@@ -75,7 +70,7 @@ export default function EditAlarmScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -99,4 +94,4 @@ const styles = StyleSheet.create({
     ...typography.bodyEmphasis,
     color: colors.primary,
   },
-});
+}));

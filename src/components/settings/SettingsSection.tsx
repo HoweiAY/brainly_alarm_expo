@@ -1,4 +1,4 @@
-import { colors, radii, spacing, typography } from "@/theme";
+import { createThemedStyles, radii, spacing, typography } from "@/theme";
 import type { ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -8,6 +8,8 @@ interface SettingsSectionProps {
 }
 
 export function SettingsSection({ title, children }: SettingsSectionProps) {
+  const { styles } = useStyles();
+
   return (
     <View style={styles.card}>
       <Text style={styles.sectionLabel} accessibilityRole="header">
@@ -18,7 +20,7 @@ export function SettingsSection({ title, children }: SettingsSectionProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   card: {
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
@@ -37,4 +39,4 @@ const styles = StyleSheet.create({
   rows: {
     gap: spacing.sm,
   },
-});
+}));

@@ -6,7 +6,7 @@ import type { Alarm } from "@/data/types";
 import { announce } from "@/hooks/useAccessibility";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { useAlarmStore } from "@/store/alarmStore";
-import { colors, radii, spacing, typography } from "@/theme";
+import { createThemedStyles, radii, spacing, typography } from "@/theme";
 import { computeNextAlarm, formatCountdown, formatTime } from "@/utils/time";
 import { Lucide } from "@react-native-vector-icons/lucide";
 import dayjs, { type Dayjs } from "dayjs";
@@ -28,6 +28,7 @@ const TICK_MS = 1000;
 export default function Home() {
   const router = useRouter();
   const { t } = useAppTranslation();
+  const { colors, styles } = useStyles();
   const alarms = useAlarmStore((s) => s.alarms);
   const [editEnabled, setEditEnabled] = useState(false);
   const [optionsExpanded, setOptionsExpanded] = useState(false);
@@ -488,7 +489,7 @@ export default function Home() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -550,9 +551,9 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     elevation: 4,
-    shadowColor: "#000",
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 1,
     shadowRadius: 8,
     minWidth: 180,
     paddingVertical: spacing.xs,
@@ -677,4 +678,4 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: spacing.sm,
   },
-});
+}));
