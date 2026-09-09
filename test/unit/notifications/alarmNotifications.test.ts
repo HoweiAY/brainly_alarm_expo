@@ -183,4 +183,18 @@ describe("localized weekly reconciliation", () => {
       }),
     );
   });
+
+  it("propagates weekly scheduling failures", async () => {
+    const failure = new Error("schedule failed");
+    mockNative = {
+      scheduleWeekly: jest.fn(async () => {
+        throw failure;
+      }),
+      cancel: jest.fn(async () => {}),
+    };
+    mockAlarmStoreState = { alarms: [alarm] };
+    mockAlarmRegistrationsStoreState = { getAll: jest.fn(() => []) };
+
+    await expect(reconcileSchedules()).rejects.toBe(failure);
+  });
 });

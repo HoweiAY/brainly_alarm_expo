@@ -56,12 +56,21 @@ export default function SettingsScreen() {
     try {
       await i18n.changeLanguage(language);
       await useSettingsStore.getState().updateSettings({ language });
-      setLanguageModalVisible(false);
       await syncAlarmNotificationChannel();
       await reconcileSchedules();
+      setLanguageModalVisible(false);
     } catch (e) {
       console.error("updateLanguage failed", e);
-      await i18n.changeLanguage(previousLanguage);
+      try {
+        await i18n.changeLanguage(previousLanguage);
+        await useSettingsStore
+          .getState()
+          .updateSettings({ language: previousLanguage });
+        await syncAlarmNotificationChannel();
+        await reconcileSchedules();
+      } catch (rollbackError) {
+        console.error("rollbackLanguageUpdate failed", rollbackError);
+      }
       Alert.alert(t("common.error"), t("settings.saveError"));
     } finally {
       setLanguageUpdating(false);

@@ -167,6 +167,7 @@ export async function reconcileSchedules(): Promise<void> {
     }
   } catch (e) {
     console.warn("reconcileSchedules failed", e);
+    throw e;
   }
 }
 
