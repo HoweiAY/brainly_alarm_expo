@@ -1,4 +1,5 @@
 import { useScreenReaderEnabled } from "@/hooks/useAccessibility";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { colors, radii, spacing, typography } from "@/theme";
 import { useMemo, useState } from "react";
 import { PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
@@ -24,6 +25,7 @@ export function FormSlider({
   onChange,
   disabled = false,
 }: FormSliderProps) {
+  const { t } = useAppTranslation();
   const screenReaderEnabled = useScreenReaderEnabled();
   const [trackWidth, setTrackWidth] = useState(0);
 
@@ -72,7 +74,7 @@ export function FormSlider({
             ]}
             accessibilityRole="radio"
             accessibilityState={{ selected: option === value, disabled }}
-            accessibilityLabel={`${option} ${option === 1 ? "round" : "rounds"}`}
+            accessibilityLabel={t("common.units.round", { count: option })}
             disabled={disabled}
             onPress={() => {
               if (option !== value) onChange(option);

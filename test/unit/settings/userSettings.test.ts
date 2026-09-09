@@ -1,10 +1,10 @@
-import { describe, expect, it } from "@jest/globals";
 import { DEFAULT_USER_SETTINGS } from "@/data/constants";
 import {
   clampSnoozeMinutes,
   normalizeUserSettings,
   parseSnoozeMinutes,
 } from "@/settings/userSettings";
+import { describe, expect, it } from "@jest/globals";
 
 describe("parseSnoozeMinutes", () => {
   it("accepts integers within 1-60", () => {
@@ -65,6 +65,7 @@ describe("normalizeUserSettings", () => {
       autoDismissEnabled: false,
       snoozeMinutes: 15,
       showTileNumbers: true,
+      language: "en",
     });
   });
 
@@ -77,6 +78,15 @@ describe("normalizeUserSettings", () => {
     expect(normalizeUserSettings({ unknown: true })).toEqual(
       DEFAULT_USER_SETTINGS,
     );
+  });
+
+  it("preserves supported languages and uses the supplied fallback", () => {
+    expect(normalizeUserSettings({ language: "zh-Hant" }).language).toBe(
+      "zh-Hant",
+    );
+    expect(
+      normalizeUserSettings({ language: "zh-Hans" }, "zh-Hant").language,
+    ).toBe("zh-Hant");
   });
 
   it("coerces non-boolean flags and falls back when unparseable", () => {

@@ -1,3 +1,9 @@
+import { taskDifficulties, taskTypes, weekdays } from "@/data/constants";
+import type { Difficulty, TaskType } from "@/data/types";
+import type { UseCreateAlarmFormResult } from "@/hooks/useCreateAlarmForm";
+import { translateDifficulty, translateTask } from "@/i18n/helpers";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
+import { colors, radii, spacing, typography } from "@/theme";
 import { Lucide } from "@react-native-vector-icons/lucide";
 import {
   ActivityIndicator,
@@ -13,10 +19,6 @@ import { FormSlider } from "./FormSlider";
 import { RadioButton } from "./RadioButton";
 import { TimeWheelPicker } from "./TimeWheelPicker";
 import { WeekdayTextButton } from "./WeekdayTextButton";
-import { taskDifficulties, taskTypes, weekdays } from "@/data/constants";
-import type { Difficulty, TaskType } from "@/data/types";
-import type { UseCreateAlarmFormResult } from "@/hooks/useCreateAlarmForm";
-import { colors, radii, spacing, typography } from "@/theme";
 
 interface CreateAlarmFormProps {
   title: string;
@@ -24,6 +26,14 @@ interface CreateAlarmFormProps {
 }
 
 export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
+  const { t } = useAppTranslation();
+  const selectedTaskLabel = translateTask(t, form.taskSelected);
+  const defaultSoundSelected =
+    form.alarmSoundUri == null || form.alarmSoundUri === "";
+  const soundLabel = defaultSoundSelected
+    ? t("common.defaultSound")
+    : form.alarmSoundSelected;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -33,8 +43,8 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
             pressed && styles.iconButtonPressed,
           ]}
           accessibilityRole="button"
-          accessibilityLabel="Back"
-          accessibilityHint="Returns to home screen"
+          accessibilityLabel={t("common.actions.back")}
+          accessibilityHint={t("editor.backHint")}
           accessibilityState={{ disabled: form.saving }}
           disabled={form.saving}
           onPress={form.handleCancel}
@@ -51,7 +61,7 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.card}>
-          <Text style={styles.sectionLabel}>Time</Text>
+          <Text style={styles.sectionLabel}>{t("editor.time")}</Text>
           <TimeWheelPicker
             hour24={form.hourSelected}
             minute={form.minuteSelected}
@@ -65,7 +75,7 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
 
         <View style={styles.card}>
           <View style={styles.rowBetween}>
-            <Text style={styles.sectionLabel}>Days</Text>
+            <Text style={styles.sectionLabel}>{t("editor.days")}</Text>
             <Pressable
               style={({ pressed }) => [
                 styles.selectButton,
@@ -74,15 +84,17 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
               accessibilityRole="button"
               accessibilityLabel={
                 form.weekdaysSelected.length === 7
-                  ? "All days selected"
-                  : "Select all days"
+                  ? t("editor.allDaysSelected")
+                  : t("editor.selectAllDays")
               }
-              accessibilityHint="Selects all seven days of the week"
+              accessibilityHint={t("editor.selectAllDaysHint")}
               accessibilityState={{ disabled: form.saving }}
               disabled={form.saving}
               onPress={form.selectAllDays}
             >
-              <Text style={styles.selectButtonText}>Every day</Text>
+              <Text style={styles.selectButtonText}>
+                {t("common.everyDay")}
+              </Text>
             </Pressable>
           </View>
           <View style={styles.weekdaysRow}>
@@ -97,7 +109,9 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
             ))}
           </View>
           <Text style={styles.helperText}>
-            {form.weekdaysSelected.length === 0 ? "Every day" : "Selected days"}
+            {form.weekdaysSelected.length === 0
+              ? t("common.everyDay")
+              : t("editor.selectedDays")}
           </Text>
         </View>
 
@@ -108,8 +122,10 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
               pressed && !form.saving && styles.dropdownHeaderPressed,
             ]}
             accessibilityRole="button"
-            accessibilityLabel={`Task type: ${form.taskSelected}`}
-            accessibilityHint="Opens task type selection"
+            accessibilityLabel={t("editor.taskTypeLabel", {
+              task: selectedTaskLabel,
+            })}
+            accessibilityHint={t("editor.taskTypeHint")}
             accessibilityState={{
               disabled: form.saving,
               expanded: form.taskSelectorExpanded,
@@ -117,9 +133,9 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
             disabled={form.saving}
             onPress={() => form.expandTaskSelector(!form.taskSelectorExpanded)}
           >
-            <Text style={styles.sectionLabel}>Task</Text>
+            <Text style={styles.sectionLabel}>{t("editor.task")}</Text>
             <View style={styles.dropdownValue}>
-              <Text style={styles.dropdownValueText}>{form.taskSelected}</Text>
+              <Text style={styles.dropdownValueText}>{selectedTaskLabel}</Text>
               <Lucide
                 name={form.taskSelectorExpanded ? "chevron-up" : "chevron-down"}
                 size={18}
@@ -137,7 +153,9 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
                     pressed && !form.saving && styles.dropdownItemPressed,
                   ]}
                   accessibilityRole="button"
-                  accessibilityLabel={`${task} task`}
+                  accessibilityLabel={t("editor.taskOptionLabel", {
+                    task: translateTask(t, task),
+                  })}
                   accessibilityState={{
                     selected: task === form.taskSelected,
                     disabled: form.saving,
@@ -152,7 +170,7 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
                         styles.dropdownItemTextActive,
                     ]}
                   >
-                    {task}
+                    {translateTask(t, task)}
                   </Text>
                   {task === form.taskSelected ? (
                     <Lucide name="check" size={18} color={colors.primary} />
@@ -167,10 +185,12 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
           style={[styles.card, !form.taskConfigurable && styles.cardDisabled]}
         >
           <View style={styles.rowBetween}>
-            <Text style={styles.sectionLabel}>Rounds</Text>
+            <Text style={styles.sectionLabel}>{t("editor.rounds")}</Text>
             <Text
               style={styles.valueText}
-              accessibilityLabel={`${form.roundsSelected} rounds selected`}
+              accessibilityLabel={t("editor.roundsSelected", {
+                count: form.roundsSelected,
+              })}
             >
               {form.roundsSelected}
             </Text>
@@ -188,12 +208,12 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
         <View
           style={[styles.card, !form.taskConfigurable && styles.cardDisabled]}
         >
-          <Text style={styles.sectionLabel}>Difficulty</Text>
+          <Text style={styles.sectionLabel}>{t("editor.difficulty")}</Text>
           <View style={styles.radiosRow}>
             {taskDifficulties.map((d: Difficulty) => (
               <RadioButton
                 key={d}
-                label={d}
+                label={translateDifficulty(t, d)}
                 selected={form.difficultySelected === d}
                 disabled={!form.taskConfigurable || form.saving}
                 onSelect={() => form.setDifficulty(d)}
@@ -204,7 +224,7 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
 
         <View style={styles.card}>
           <View style={styles.rowBetween}>
-            <Text style={styles.sectionLabel}>Sound</Text>
+            <Text style={styles.sectionLabel}>{t("editor.sound")}</Text>
             <View style={styles.actionsRow}>
               <Pressable
                 style={({ pressed }) => [
@@ -212,52 +232,55 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
                   pressed && !form.saving && styles.selectButtonPressed,
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Select sound"
-                accessibilityHint="Opens file picker to choose alarm sound"
+                accessibilityLabel={t("editor.selectSound")}
+                accessibilityHint={t("editor.selectSoundHint")}
                 accessibilityState={{ disabled: form.saving }}
                 disabled={form.saving}
                 onPress={form.pickSound}
               >
-                <Text style={styles.selectButtonText}>Select</Text>
+                <Text style={styles.selectButtonText}>
+                  {t("common.actions.select")}
+                </Text>
               </Pressable>
               <Pressable
                 style={({ pressed }) => [
                   styles.selectButton,
-                  form.alarmSoundUri == null && styles.selectButtonDisabled,
+                  defaultSoundSelected && styles.selectButtonDisabled,
                   pressed && !form.saving && styles.selectButtonPressed,
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Set to default sound"
-                accessibilityHint="Resets sound to default alarm tone"
+                accessibilityLabel={t("editor.setDefaultLabel")}
+                accessibilityHint={t("editor.setDefaultHint")}
                 accessibilityState={{
-                  disabled: form.alarmSoundUri == null || form.saving,
+                  disabled: defaultSoundSelected || form.saving,
                 }}
-                disabled={form.alarmSoundUri == null || form.saving}
+                disabled={defaultSoundSelected || form.saving}
                 onPress={form.setToDefault}
               >
                 <Text
                   style={[
                     styles.selectButtonText,
-                    form.alarmSoundUri == null &&
-                      styles.selectButtonTextDisabled,
+                    defaultSoundSelected && styles.selectButtonTextDisabled,
                   ]}
                 >
-                  Set to default
+                  {t("editor.setDefault")}
                 </Text>
               </Pressable>
             </View>
           </View>
           <Text
             style={styles.helperText}
-            accessibilityLabel={`Current sound: ${form.alarmSoundSelected}`}
+            accessibilityLabel={t("editor.currentSound", {
+              sound: soundLabel,
+            })}
           >
-            {form.alarmSoundSelected}
+            {soundLabel}
           </Text>
         </View>
 
         <View style={styles.card}>
           <View style={styles.rowBetween}>
-            <Text style={styles.sectionLabel}>Snooze</Text>
+            <Text style={styles.sectionLabel}>{t("editor.snooze")}</Text>
             <Switch
               value={form.snoozeEnabled}
               onValueChange={form.toggleSnooze}
@@ -271,7 +294,13 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
                   : undefined
               }
               ios_backgroundColor={colors.border}
-              accessibilityLabel={`Snooze ${form.snoozeEnabled ? "enabled" : "disabled"}`}
+              accessibilityLabel={t("editor.snoozeState", {
+                state: t(
+                  form.snoozeEnabled
+                    ? "common.states.enabled"
+                    : "common.states.disabled",
+                ),
+              })}
             />
           </View>
         </View>
@@ -286,12 +315,15 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
             form.saving && styles.footerButtonDisabled,
           ]}
           accessibilityRole="button"
-          accessibilityHint="Discards changes and returns to home"
+          accessibilityLabel={t("common.actions.cancel")}
+          accessibilityHint={t("editor.cancelHint")}
           accessibilityState={{ disabled: form.saving }}
           disabled={form.saving}
           onPress={form.handleCancel}
         >
-          <Text style={styles.footerButtonTextSecondary}>Cancel</Text>
+          <Text style={styles.footerButtonTextSecondary}>
+            {t("common.actions.cancel")}
+          </Text>
         </Pressable>
         <Pressable
           style={({ pressed }) => [
@@ -301,7 +333,8 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
             form.saving && styles.footerButtonDisabled,
           ]}
           accessibilityRole="button"
-          accessibilityHint="Saves and schedules the alarm"
+          accessibilityLabel={t("common.actions.confirm")}
+          accessibilityHint={t("editor.confirmHint")}
           accessibilityState={{ disabled: form.saving }}
           disabled={form.saving}
           onPress={form.handleConfirm}
@@ -309,7 +342,9 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
           {form.saving ? (
             <ActivityIndicator color={colors.primaryFg} />
           ) : (
-            <Text style={styles.footerButtonTextPrimary}>Confirm</Text>
+            <Text style={styles.footerButtonTextPrimary}>
+              {t("common.actions.confirm")}
+            </Text>
           )}
         </Pressable>
       </View>

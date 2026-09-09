@@ -4,6 +4,7 @@ import { toggleAlarmEnabled } from "@/alarms/toggleAlarmEnabled";
 import { AlarmCard } from "@/components/AlarmCard";
 import type { Alarm } from "@/data/types";
 import { announce } from "@/hooks/useAccessibility";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { useAlarmStore } from "@/store/alarmStore";
 import { colors, radii, spacing, typography } from "@/theme";
 import { computeNextAlarm, formatCountdown, formatTime } from "@/utils/time";
@@ -26,6 +27,7 @@ const TICK_MS = 1000;
 
 export default function Home() {
   const router = useRouter();
+  const { t } = useAppTranslation();
   const alarms = useAlarmStore((s) => s.alarms);
   const [editEnabled, setEditEnabled] = useState(false);
   const [optionsExpanded, setOptionsExpanded] = useState(false);
@@ -46,24 +48,24 @@ export default function Home() {
   }, []);
 
   const countdown = useMemo(
-    () => formatCountdown(computeNextAlarm(alarms, now)),
-    [alarms, now],
+    () => formatCountdown(computeNextAlarm(alarms, now), t),
+    [alarms, now, t],
   );
 
   useEffect(() => {
     if (!loaded || announcedRef.current) return;
     announcedRef.current = true;
-    announce(`Welcome to Brainly Alarm! ${countdown}`);
-  }, [loaded, countdown]);
+    announce(`${t("home.greeting")} ${countdown}`);
+  }, [loaded, countdown, t]);
 
   const dismissSnoozed = () => {
     Alert.alert(
-      "Dismiss snoozed alarms?",
-      `${snoozedCount} snoozed alarm${snoozedCount > 1 ? "s" : ""} will be dismissed.`,
+      t("home.dismissSnoozedTitle"),
+      t("home.dismissSnoozedMessage", { count: snoozedCount }),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.actions.cancel"), style: "cancel" },
         {
-          text: "Dismiss all",
+          text: t("home.dismissAll"),
           style: "destructive",
           onPress: () => {
             void (async () => {
@@ -71,10 +73,7 @@ export default function Home() {
                 await useAlarmStore.getState().dismissAllSnoozedAlarms();
               } catch (e) {
                 console.error("dismissSnoozed failed", e);
-                Alert.alert(
-                  "Error",
-                  "Could not dismiss snoozed alarms. Please try again.",
-                );
+                Alert.alert(t("common.error"), t("home.dismissSnoozedError"));
               }
             })();
           },
@@ -89,8 +88,10 @@ export default function Home() {
       const conflict = findConflictingAlarm(alarms, alarm, alarm.id);
       if (conflict) {
         Alert.alert(
-          "Alarm already set",
-          `An alarm with the same time (${formatTime(alarm.hour, alarm.minute)}) has already been set.`,
+          t("home.alarmAlreadySet"),
+          t("home.conflictMessage", {
+            time: formatTime(alarm.hour, alarm.minute),
+          }),
         );
         return false;
       }
@@ -101,7 +102,7 @@ export default function Home() {
       cancelAlarm,
     });
     if (!ok) {
-      Alert.alert("Error", "Could not update the alarm. Please try again.");
+      Alert.alert(t("common.error"), t("home.updateError"));
     }
     return ok;
   };
@@ -121,8 +122,8 @@ export default function Home() {
       const failed = results.filter((r) => r.status === "rejected").length;
       if (failed > 0) {
         Alert.alert(
-          "Error",
-          `Could not update ${failed} alarm${failed > 1 ? "s" : ""}. Please try again.`,
+          t("common.error"),
+          t("home.updateManyError", { count: failed }),
         );
       }
       return;
@@ -144,14 +145,14 @@ export default function Home() {
     const failed = results.filter((r) => r.status === "rejected").length;
     if (failed > 0) {
       Alert.alert(
-        "Error",
-        `Could not update ${failed} alarm${failed > 1 ? "s" : ""}. Please try again.`,
+        t("common.error"),
+        t("home.updateManyError", { count: failed }),
       );
     }
     if (skipped > 0) {
       Alert.alert(
-        "Alarm already set",
-        `${skipped} alarm${skipped > 1 ? "s" : ""} not enabled — same time as an existing alarm.`,
+        t("home.alarmAlreadySet"),
+        t("home.skippedConflict", { count: skipped }),
       );
     }
   };
@@ -212,10 +213,7 @@ export default function Home() {
     setEditEnabled(false);
     const failed = results.filter((r) => r.status === "rejected").length;
     if (failed > 0) {
-      Alert.alert(
-        "Error",
-        `Could not delete ${failed} alarm${failed > 1 ? "s" : ""}. Please try again.`,
-      );
+      Alert.alert(t("common.error"), t("home.deleteError", { count: failed }));
     }
   };
 
@@ -223,12 +221,12 @@ export default function Home() {
     const count = selectedIds.size;
     if (count === 0) return;
     Alert.alert(
-      "Delete alarms?",
-      `Delete ${count} alarm${count > 1 ? "s" : ""}? This cannot be undone.`,
+      t("home.deleteTitle"),
+      t("home.deleteMessage", { count }),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.actions.cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("common.actions.delete"),
           style: "destructive",
           onPress: () => void performDelete(),
         },
@@ -240,7 +238,7 @@ export default function Home() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.greeting}>Welcome to Brainly Alarm!</Text>
+        <Text style={styles.greeting}>{t("home.greeting")}</Text>
         <Text style={styles.countdown} accessibilityLabel={countdown}>
           {countdown}
         </Text>
@@ -253,13 +251,15 @@ export default function Home() {
             pressed && styles.snoozedBadgePressed,
           ]}
           accessibilityRole="button"
-          accessibilityLabel={`${snoozedCount} snoozed alarm${snoozedCount > 1 ? "s" : ""}`}
-          accessibilityHint="Opens confirmation to dismiss all snoozed alarms"
+          accessibilityLabel={t("home.snoozedAlarm", {
+            count: snoozedCount,
+          })}
+          accessibilityHint={t("home.snoozedHint")}
           onPress={dismissSnoozed}
         >
           <Lucide name="bell" size={16} color={colors.accent} />
           <Text style={styles.snoozedBadgeText}>
-            {snoozedCount} snoozed alarm{snoozedCount > 1 ? "s" : ""}
+            {t("home.snoozedAlarm", { count: snoozedCount })}
           </Text>
           <Lucide name="x" size={16} color={colors.accent} />
         </Pressable>
@@ -273,30 +273,34 @@ export default function Home() {
             <>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Cancel edit"
-                accessibilityHint="Exits edit mode"
+                accessibilityLabel={t("home.cancelEdit")}
+                accessibilityHint={t("home.cancelEditHint")}
                 onPress={cancelEdit}
               >
-                <Text style={styles.actionRowText}>Cancel</Text>
+                <Text style={styles.actionRowText}>
+                  {t("common.actions.cancel")}
+                </Text>
               </Pressable>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={
+                accessibilityLabel={t(
                   selectedIds.size === alarms.length && alarms.length > 0
-                    ? "Unselect all"
-                    : "Select all"
-                }
-                accessibilityHint={
+                    ? "home.unselectAll"
+                    : "home.selectAll",
+                )}
+                accessibilityHint={t(
                   selectedIds.size === alarms.length && alarms.length > 0
-                    ? "Deselects all alarms"
-                    : "Selects all alarms"
-                }
+                    ? "home.unselectAllHint"
+                    : "home.selectAllHint",
+                )}
                 onPress={selectAll}
               >
                 <Text style={styles.actionRowText}>
-                  {selectedIds.size === alarms.length && alarms.length > 0
-                    ? "Unselect all"
-                    : "Select all"}
+                  {t(
+                    selectedIds.size === alarms.length && alarms.length > 0
+                      ? "home.unselectAll"
+                      : "home.selectAll",
+                  )}
                 </Text>
               </Pressable>
             </>
@@ -308,8 +312,8 @@ export default function Home() {
                   pressed && styles.iconButtonPressed,
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Add alarm"
-                accessibilityHint="Opens alarm creation form"
+                accessibilityLabel={t("home.addAlarm")}
+                accessibilityHint={t("home.addAlarmHint")}
                 onPress={() => router.push("/create-alarm")}
               >
                 <Lucide name="plus" size={18} color={colors.primary} />
@@ -320,14 +324,14 @@ export default function Home() {
                   pressed && styles.iconButtonPressed,
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel={
-                  optionsExpanded ? "Close menu" : "More options"
-                }
-                accessibilityHint={
+                accessibilityLabel={t(
+                  optionsExpanded ? "home.closeMenu" : "home.moreOptions",
+                )}
+                accessibilityHint={t(
                   optionsExpanded
-                    ? "Closes the options menu"
-                    : "Shows menu with turn all on/off, edit, and settings options"
-                }
+                    ? "home.closeMenuHint"
+                    : "home.moreOptionsHint",
+                )}
                 accessibilityState={{ expanded: optionsExpanded }}
                 onPress={() => setOptionsExpanded((v) => !v)}
               >
@@ -341,7 +345,7 @@ export default function Home() {
           )}
         </View>
         <FlatList
-          accessibilityLabel={`Alarm list, ${alarms.length} alarm${alarms.length === 1 ? "" : "s"}`}
+          accessibilityLabel={t("home.alarmList", { count: alarms.length })}
           data={alarms}
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
@@ -362,12 +366,12 @@ export default function Home() {
                   size={48}
                   color={colors.textSubtle}
                 />
-                <Text style={styles.emptyTitle}>No alarms yet</Text>
+                <Text style={styles.emptyTitle}>{t("home.noAlarmsTitle")}</Text>
                 <Text
                   style={styles.emptySubtitle}
-                  accessibilityLabel="No alarms configured. Create alarm button below."
+                  accessibilityLabel={t("home.noAlarmsAccessibility")}
                 >
-                  Add your first alarm to get started.
+                  {t("home.noAlarmsSubtitle")}
                 </Text>
                 <Pressable
                   style={({ pressed }) => [
@@ -375,11 +379,13 @@ export default function Home() {
                     pressed && styles.emptyButtonPressed,
                   ]}
                   accessibilityRole="button"
-                  accessibilityLabel="Add alarm"
+                  accessibilityLabel={t("home.addAlarm")}
                   onPress={() => router.push("/create-alarm")}
                 >
                   <Lucide name="plus" size={20} color={colors.primaryFg} />
-                  <Text style={styles.emptyButtonText}>Create alarm</Text>
+                  <Text style={styles.emptyButtonText}>
+                    {t("home.createAlarm")}
+                  </Text>
                 </Pressable>
               </View>
             )
@@ -398,17 +404,19 @@ export default function Home() {
               pressed && styles.bottomBarButtonPressed,
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Delete selected alarms"
+            accessibilityLabel={t("home.deleteSelected")}
             accessibilityHint={
               selectedIds.size === 0
-                ? "Select alarms to delete them"
-                : `Opens confirmation, ${selectedIds.size} selected`
+                ? t("home.selectToDelete")
+                : t("home.deleteSelectionHint", { count: selectedIds.size })
             }
             disabled={selectedIds.size === 0}
             onPress={deleteSelected}
           >
             <Lucide name="trash" size={20} color={colors.danger} />
-            <Text style={styles.bottomBarText}>Delete</Text>
+            <Text style={styles.bottomBarText}>
+              {t("common.actions.delete")}
+            </Text>
           </Pressable>
         </View>
       ) : null}
@@ -422,7 +430,7 @@ export default function Home() {
         <Pressable
           style={styles.backdrop}
           accessibilityRole="button"
-          accessibilityLabel="Dismiss menu"
+          accessibilityLabel={t("home.dismissMenu")}
           onPress={() => setOptionsExpanded(false)}
         />
         <View style={styles.dropdown}>
@@ -436,15 +444,19 @@ export default function Home() {
             accessibilityState={{ disabled: alarms.length === 0 }}
             accessibilityLabel={
               alarms.length === 0
-                ? "Turn all alarms"
-                : `Turn all alarms ${
-                    alarms.every((a) => a.enabled) ? "off" : "on"
-                  }`
+                ? t("home.turnAllAccessibility")
+                : t("home.turnAllState", {
+                    state: t(
+                      alarms.every((a) => a.enabled)
+                        ? "common.states.disabled"
+                        : "common.states.enabled",
+                    ),
+                  })
             }
             disabled={alarms.length === 0}
             onPress={turnAllOnOff}
           >
-            <Text style={styles.dropdownItemText}>Turn all on/off</Text>
+            <Text style={styles.dropdownItemText}>{t("home.turnAll")}</Text>
           </Pressable>
           <Pressable
             style={({ pressed }) => [
@@ -452,10 +464,10 @@ export default function Home() {
               pressed && styles.dropdownItemPressed,
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Edit alarms"
+            accessibilityLabel={t("home.editAlarms")}
             onPress={enterEdit}
           >
-            <Text style={styles.dropdownItemText}>Edit</Text>
+            <Text style={styles.dropdownItemText}>{t("home.edit")}</Text>
           </Pressable>
           <View style={styles.dropdownDivider} />
           <Pressable
@@ -464,11 +476,11 @@ export default function Home() {
               pressed && styles.dropdownItemPressed,
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Settings"
-            accessibilityHint="Opens app settings"
+            accessibilityLabel={t("home.settings")}
+            accessibilityHint={t("home.settingsHint")}
             onPress={openSettings}
           >
-            <Text style={styles.dropdownItemText}>Settings</Text>
+            <Text style={styles.dropdownItemText}>{t("home.settings")}</Text>
           </Pressable>
         </View>
       </Modal>

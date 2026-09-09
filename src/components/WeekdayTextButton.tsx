@@ -1,6 +1,8 @@
-import { Pressable, StyleSheet, Text } from "react-native";
-import { colors, radii, spacing, typography } from "@/theme";
 import type { Weekday } from "@/data/types";
+import { translateWeekday } from "@/i18n/helpers";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
+import { colors, radii, spacing, typography } from "@/theme";
+import { Pressable, StyleSheet, Text } from "react-native";
 
 interface WeekdayTextButtonProps {
   weekday: Weekday;
@@ -15,6 +17,9 @@ export function WeekdayTextButton({
   onToggle,
   disabled = false,
 }: WeekdayTextButtonProps) {
+  const { t } = useAppTranslation();
+  const weekdayLabel = translateWeekday(t, weekday);
+
   return (
     <Pressable
       style={({ pressed }) => [
@@ -25,12 +30,17 @@ export function WeekdayTextButton({
       ]}
       accessibilityRole="button"
       accessibilityState={{ selected, disabled }}
-      accessibilityLabel={`${weekday} ${selected ? "selected" : "not selected"}`}
+      accessibilityLabel={t("editor.weekdayState", {
+        weekday: weekdayLabel,
+        state: t(
+          selected ? "common.states.selected" : "common.states.notSelected",
+        ),
+      })}
       disabled={disabled}
       onPress={() => onToggle(weekday)}
     >
       <Text style={[styles.label, selected && styles.labelSelected]}>
-        {weekday}
+        {weekdayLabel}
       </Text>
     </Pressable>
   );

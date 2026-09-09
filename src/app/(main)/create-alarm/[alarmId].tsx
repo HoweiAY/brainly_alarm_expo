@@ -1,8 +1,9 @@
 import { CreateAlarmForm } from "@/components/CreateAlarmForm";
+import type { Alarm } from "@/data/types";
 import { useAlarmById } from "@/hooks/useAlarmById";
 import { useCreateAlarmForm } from "@/hooks/useCreateAlarmForm";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { useAlarmStore } from "@/store/alarmStore";
-import type { Alarm } from "@/data/types";
 import { colors, typography } from "@/theme";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -15,14 +16,16 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function EditAlarm({ alarm }: { alarm: Alarm }) {
+  const { t } = useAppTranslation();
   const form = useCreateAlarmForm(alarm);
-  return <CreateAlarmForm title="Edit alarm" form={form} />;
+  return <CreateAlarmForm title={t("editor.editTitle")} form={form} />;
 }
 
 export default function EditAlarmScreen() {
   const { alarmId } = useLocalSearchParams<{ alarmId: string }>();
   const { alarm, loading, error } = useAlarmById(alarmId);
   const router = useRouter();
+  const { t } = useAppTranslation();
 
   const retry = () => {
     useAlarmStore.getState().loadAlarms();
@@ -35,36 +38,36 @@ export default function EditAlarmScreen() {
           style={styles.loadingContainer}
           accessible
           accessibilityRole="progressbar"
-          accessibilityLabel="Loading alarm"
+          accessibilityLabel={t("editor.loadingLabel")}
         >
           <ActivityIndicator color={colors.primary} />
-          <Text style={styles.loadingText}>Loading alarm…</Text>
+          <Text style={styles.loadingText}>{t("editor.loading")}</Text>
         </View>
       ) : error ? (
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Couldn’t load alarms.</Text>
+          <Text style={styles.loadingText}>{t("editor.loadError")}</Text>
           <Text style={styles.errorDetail}>{error}</Text>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Retry loading alarms"
-            accessibilityHint="Attempts to reload alarms from storage"
+            accessibilityLabel={t("editor.retryLabel")}
+            accessibilityHint={t("editor.retryHint")}
             onPress={retry}
           >
-            <Text style={styles.createLink}>Try again</Text>
+            <Text style={styles.createLink}>{t("editor.tryAgain")}</Text>
           </Pressable>
         </View>
       ) : alarm ? (
         <EditAlarm key={alarm.id} alarm={alarm} />
       ) : (
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Alarm not found.</Text>
+          <Text style={styles.loadingText}>{t("editor.notFound")}</Text>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Alarm not found. Create a new alarm"
-            accessibilityHint="Navigates to alarm creation form"
+            accessibilityLabel={t("editor.notFoundLabel")}
+            accessibilityHint={t("editor.notFoundHint")}
             onPress={() => router.replace("/create-alarm")}
           >
-            <Text style={styles.createLink}>Create a new alarm</Text>
+            <Text style={styles.createLink}>{t("editor.createNew")}</Text>
           </Pressable>
         </View>
       )}

@@ -27,7 +27,8 @@ This repository is the **Expo-first re-implementation** of that original app. Th
 - **Exact, wake-up alarms** — precise scheduling that wakes the device, with automatic re-arming after device reboot (Android, via a custom native module).
 - **Alarm notifications & deep links** — a high-priority notification fires with the alarm; tapping it opens the full-screen ringing screen directly.
 - **Local persistence** — all alarms are stored on-device in SQLite with versioned migrations.
-- **User settings** — a dedicated Settings screen lets you tune app-wide preferences: auto-dismiss tasks after they time out, the snooze duration (in minutes), and whether the Memory task tiles display numbers. Settings are persisted on-device via a dedicated Zustand store.
+- **User settings** — a dedicated Settings screen lets you tune app-wide preferences: auto-dismiss tasks after they time out, the snooze duration (in minutes), whether the Memory task tiles display numbers, and the app display language. Settings are persisted on-device via a dedicated Zustand store.
+- **Localization (i18n)** — the entire UI, alarm editor, dismissal-task screens, and alarm notifications are localized via `i18next` + `react-i18next`. The app ships with **English** and **Traditional Chinese** (`zh-Hant`) and resolves the default language from the device locale (with `expo-localization`), falling back to English. Users can override the language from Settings, and the choice is persisted alongside the other user settings.
 
 ## Screenshots
 
@@ -48,20 +49,21 @@ This repository is the **Expo-first re-implementation** of that original app. Th
 
 ## Tech Stack
 
-| Layer            | Technology                                                                                                                                                     |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Language         | TypeScript                                                                                                                                                     |
-| Framework        | [Expo](https://expo.dev) SDK ~57 (managed workflow + dev client), React Native 0.86, React 19                                                                  |
-| Navigation       | [Expo Router](https://docs.expo.dev/router/introduction/) (file-based routing, route groups, full-screen modal alarm flow)                                     |
-| State management | [Zustand](https://github.com/pmndrs/zustand) (+ Immer) — shared `alarmStore`, firing/registration stores                                                       |
-| Persistence      | [expo-sqlite](https://docs.expo.dev/versions/latest/sdk/sqlite/) + [Drizzle ORM](https://orm.drizzle.team) (`drizzle-orm/expo-sqlite`), drizzle-kit migrations |
-| Alarm scheduling | Custom Expo native module (`alarm-scheduler`) — Kotlin on Android (`AlarmManager`, wake-up broadcasts, boot receiver), Swift on iOS                            |
-| Notifications    | `expo-notifications` + deep links (`brainlyalarmexpo://alarm`)                                                                                                 |
-| Sensors          | `expo-sensors` (Accelerometer) for the shake task                                                                                                              |
-| Math evaluation  | [`expr-eval`](https://github.com/silentmatt/expr-eval) (safe expression parsing — no `eval`)                                                                   |
-| UI               | `@expo/ui`, Lucide icons (`@react-native-vector-icons/lucide`), Geist font family                                                                              |
-| Testing          | Jest (unit tests for pure scheduling/task logic)                                                                                                               |
-| Tooling          | ESLint (`eslint-config-expo`), Prettier, Husky + lint-staged, TypeScript                                                                                       |
+| Layer            | Technology                                                                                                                                                                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Language         | TypeScript                                                                                                                                                                                  |
+| Framework        | [Expo](https://expo.dev) SDK ~57 (managed workflow + dev client), React Native 0.86, React 19                                                                                               |
+| Navigation       | [Expo Router](https://docs.expo.dev/router/introduction/) (file-based routing, route groups, full-screen modal alarm flow)                                                                  |
+| State management | [Zustand](https://github.com/pmndrs/zustand) (+ Immer) — shared `alarmStore`, firing/registration stores                                                                                    |
+| Persistence      | [expo-sqlite](https://docs.expo.dev/versions/latest/sdk/sqlite/) + [Drizzle ORM](https://orm.drizzle.team) (`drizzle-orm/expo-sqlite`), drizzle-kit migrations                              |
+| Localization     | [`i18next`](https://www.i18next.com/) + [`react-i18next`](https://react.i18next.com/) + [`expo-localization`](https://docs.expo.dev/versions/latest/sdk/localization/) (English & 繁體中文) |
+| Alarm scheduling | Custom Expo native module (`alarm-scheduler`) — Kotlin on Android (`AlarmManager`, wake-up broadcasts, boot receiver), Swift on iOS                                                         |
+| Notifications    | `expo-notifications` + deep links (`brainlyalarmexpo://alarm`)                                                                                                                              |
+| Sensors          | `expo-sensors` (Accelerometer) for the shake task                                                                                                                                           |
+| Math evaluation  | [`expr-eval`](https://github.com/silentmatt/expr-eval) (safe expression parsing — no `eval`)                                                                                                |
+| UI               | `@expo/ui`, Lucide icons (`@react-native-vector-icons/lucide`), Geist font family                                                                                                           |
+| Testing          | Jest (unit tests for pure scheduling/task logic)                                                                                                                                            |
+| Tooling          | ESLint (`eslint-config-expo`), Prettier, Husky + lint-staged, TypeScript                                                                                                                    |
 
 > **Note on iOS:** iOS does not allow third-party apps to schedule exact wake-up alarms, so alarm behavior is degraded there compared to Android. This is a platform limitation, not a bug.
 
@@ -115,7 +117,24 @@ npm run build:native android
 npm run build:native ios
 ```
 
-The script runs `expo prebuild` if the native project directories are missing, then compiles just the module: `./gradlew :expo.modules.alarmscheduler:assembleRelease` on Android, `pod install` on iOS. The module is auto-linked via `expo.autolinking.nativeModulesDir` in `package.json`, and its config plugin (`native/app.plugin.js`) is registered in `app.json`.
+The script runs `expo prebuild` if the native project directories are missing, then compiles just the module: `./gradlew :alarm-scheduler:assembleRelease` on Android, `pod install` on iOS. The module is auto-linked via `expo.autolinking.nativeModulesDir` in `package.json`, and its config plugin (`native/app.plugin.js`) is registered in `app.json`.
+
+### Android build troubleshooting
+
+**`./gradlew clean` fails with a CMake error about a missing `@react-native-vector-icons/lucide` codegen directory.** With the new architecture enabled, the React Native gradle plugin generates an `Android-autolinking.cmake` that references each autolinked library's codegen output. `clean` deletes those codegen directories (via each library's own clean task) _before_ the app's `externalNativeBuildClean*` tasks re-run CMake configuration, which then fails on the now-missing paths. The [`plugins/withCxxCleanFix.js`](plugins/withCxxCleanFix.js) config plugin (registered in `app.json`) patches the generated `android/app/build.gradle` to delete the `.cxx` cache before any `externalNativeBuildClean*` task runs, making the CMake clean a no-op. This is applied automatically by `expo prebuild`.
+
+If `clean` still fails with a Windows file-lock error on lint-cache jars (a Gradle daemon holding them open), stop the daemons first:
+
+```bash
+./gradlew --stop
+./gradlew clean
+```
+
+**`./gradlew :app:assembleRelease` fails with the same CMake error on a fresh checkout.** The lucide library's codegen output is generated on demand by its own Gradle tasks, not the app's. A normal `assembleRelease` triggers it via `preBuild`, but if the build is interrupted or the directory was deleted manually, run the library's codegen tasks directly:
+
+```bash
+./gradlew :react-native-vector-icons_lucide:generateCodegenSchemaFromJavaScript :react-native-vector-icons_lucide:generateCodegenArtifactsFromSchema
+```
 
 ### Database migrations
 
@@ -183,6 +202,8 @@ brainly_alarm_expo/
 │   ├── data/                 # Persistence: Drizzle schema, db + migrations runner,
 │   │                         #   conversions, constants, types
 │   ├── hooks/                # Shared hooks (useAlarmDismissal, useAlarmNotifications, ...)
+│   ├── i18n/                 # Localization: i18next instance, device-language resolver,
+│   │                         #   supported-language catalog, locale resources (en, zh-Hant)
 │   ├── notifications/        # Alarm notification channel & content
 │   ├── settings/             # User-settings helpers (snooze parsing/clamping,
 │   │                         #   normalization to UserSettings defaults)
@@ -197,6 +218,10 @@ brainly_alarm_expo/
 │   │                         #   AlarmSoundService, BootReceiver
 │   ├── ios/                  #   Swift: AlarmSchedulerModule
 │   └── app.plugin.js         #   Expo config plugin
+│
+├── plugins/                  # Project Expo config plugins
+│   └── withCxxCleanFix.js     #   Patches android/app/build.gradle to fix
+│                             #   `gradlew clean` on the new architecture
 │
 ├── drizzle/                  # Generated SQL migrations + metadata
 ├── test/                     # Jest unit tests

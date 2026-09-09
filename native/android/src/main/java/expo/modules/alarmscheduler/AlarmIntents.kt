@@ -111,8 +111,10 @@ fun readSnapshot(intent: Intent): AlarmSnapshotData {
     snooze = intent.getBooleanExtra(AlarmIntents.EXTRA_SNOOZE, false),
     enabled = intent.getBooleanExtra(AlarmIntents.EXTRA_ENABLED, false),
     isSnoozed = intent.getBooleanExtra(AlarmIntents.EXTRA_IS_SNOOZED, false),
-    notificationTitle = intent.getStringExtra(AlarmIntents.EXTRA_NOTIFICATION_TITLE) ?: "Time to wake up!",
-    notificationBody = intent.getStringExtra(AlarmIntents.EXTRA_NOTIFICATION_BODY) ?: "Click to disable the alarm.",
+    notificationTitle = intent.getStringExtra(AlarmIntents.EXTRA_NOTIFICATION_TITLE)
+      ?: ENGLISH_ALARM_NOTIFICATION_COPY.title,
+    notificationBody = intent.getStringExtra(AlarmIntents.EXTRA_NOTIFICATION_BODY)
+      ?: ENGLISH_ALARM_NOTIFICATION_COPY.body,
   )
 }
 

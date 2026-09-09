@@ -4,7 +4,7 @@ const path = require("path");
 
 const ROOT = process.cwd();
 const NATIVE_DIR = path.join(ROOT, "native");
-const MODULE_GROUP = "expo.modules.alarmscheduler";
+const MODULE_PROJECT = "alarm-scheduler";
 
 function run(cmd, opts = {}) {
   console.log(`  > ${cmd}`);
@@ -46,8 +46,8 @@ function buildAndroid() {
     process.exit(1);
   }
 
-  console.log(`\n[build:android] Compiling ${MODULE_GROUP}...`);
-  run(`${gradlew} :${MODULE_GROUP}:assembleRelease`, { cwd: androidDir });
+  console.log(`\n[build:android] Compiling ${MODULE_PROJECT}...`);
+  run(`${gradlew} :${MODULE_PROJECT}:assembleRelease`, { cwd: androidDir });
 }
 
 function buildIos() {

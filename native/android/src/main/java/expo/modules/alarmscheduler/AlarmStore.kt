@@ -4,6 +4,7 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import org.json.JSONArray
+import org.json.JSONObject
 
 data class StoredAlarm(
   val id: String,
@@ -45,6 +46,29 @@ class AlarmStore(context: Context) : AutoCloseable {
       }
       out
     }
+  }
+
+  fun getLanguage(): String? {
+    val database = db ?: return null
+    if (!hasTable(database, "settings")) return null
+    return runCatching {
+      database.query(
+        "settings",
+        arrayOf("payload"),
+        "id = ?",
+        arrayOf("current"),
+        null,
+        null,
+        null,
+        "1",
+      ).use { cursor ->
+        if (!cursor.moveToFirst()) return@use null
+        val payload = cursor.getString(cursor.getColumnIndexOrThrow("payload"))
+        JSONObject(payload).optString("language").takeIf {
+          it == "en" || it == "zh-Hant"
+        }
+      }
+    }.getOrNull()
   }
 
   override fun close() {

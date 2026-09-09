@@ -1,4 +1,5 @@
 import { useTaskAutoDismiss } from "@/hooks/useTaskAutoDismiss";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { useSettingsStore } from "@/store/settingsStore";
 import { colors, radii, spacing, typography } from "@/theme";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -14,6 +15,7 @@ export function TaskHeader({
   onAutoDismiss,
   autoDismissEnabled,
 }: TaskHeaderProps) {
+  const { t } = useAppTranslation();
   const globalAutoDismissEnabled = useSettingsStore(
     (s) => s.settings.autoDismissEnabled,
   );
@@ -21,7 +23,9 @@ export function TaskHeader({
     config: { enabled: autoDismissEnabled ?? globalAutoDismissEnabled },
     onTimeout: onAutoDismiss,
   });
-  const countdownText = `Auto dismiss in ${remainingSeconds} ${remainingSeconds === 1 ? "second" : "seconds"}`;
+  const countdownText = t("tasks.header.autoDismiss", {
+    duration: t("common.units.second", { count: remainingSeconds }),
+  });
 
   return (
     <View style={styles.header}>
@@ -41,12 +45,12 @@ export function TaskHeader({
               pressed && styles.skipPressed,
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Skip auto dismiss"
-            accessibilityHint="Delays the auto-dismiss countdown by one minute"
+            accessibilityLabel={t("tasks.header.skipLabel")}
+            accessibilityHint={t("tasks.header.skipHint")}
             hitSlop={spacing.sm}
             onPress={skip}
           >
-            <Text style={styles.skipText}>Skip</Text>
+            <Text style={styles.skipText}>{t("common.actions.skip")}</Text>
           </Pressable>
         </View>
       ) : null}

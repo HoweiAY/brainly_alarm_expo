@@ -1,3 +1,6 @@
+import { to12Hour, to24Hour } from "@/hooks/useCreateAlarmForm";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
+import { colors, spacing, typography } from "@/theme";
 import { useEffect, useRef } from "react";
 import {
   Pressable,
@@ -7,8 +10,6 @@ import {
   View,
   type ViewStyle,
 } from "react-native";
-import { colors, spacing, typography } from "@/theme";
-import { to12Hour, to24Hour } from "@/hooks/useCreateAlarmForm";
 
 interface TimeWheelPickerProps {
   hour24: number;
@@ -35,6 +36,7 @@ interface WheelProps {
   onIndexChange: (index: number) => void;
   disabled?: boolean;
   accessibilityLabel: string;
+  accessibilityValueText?: string;
 }
 
 function Wheel({
@@ -44,7 +46,9 @@ function Wheel({
   onIndexChange,
   disabled = false,
   accessibilityLabel,
+  accessibilityValueText,
 }: WheelProps) {
+  const { t } = useAppTranslation();
   const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -75,11 +79,11 @@ function Wheel({
       accessible
       accessibilityRole="adjustable"
       accessibilityLabel={accessibilityLabel}
-      accessibilityValue={{ text: data[index] }}
+      accessibilityValue={{ text: accessibilityValueText ?? data[index] }}
       accessibilityState={{ disabled }}
       accessibilityActions={[
-        { name: "increment", label: "Increase" },
-        { name: "decrement", label: "Decrease" },
+        { name: "increment", label: t("editor.increase") },
+        { name: "decrement", label: t("editor.decrease") },
       ]}
       onAccessibilityAction={(event) => {
         if (disabled) return;
@@ -127,6 +131,7 @@ export function TimeWheelPicker({
   onChange,
   disabled = false,
 }: TimeWheelPickerProps) {
+  const { t } = useAppTranslation();
   const { hour12, period } = to12Hour(hour24);
 
   const handleHour = (i: number) => {
@@ -147,7 +152,7 @@ export function TimeWheelPicker({
         width={72}
         onIndexChange={handleHour}
         disabled={disabled}
-        accessibilityLabel="Hour"
+        accessibilityLabel={t("editor.hour")}
       />
       <Text style={styles.colon}>:</Text>
       <Wheel
@@ -156,7 +161,7 @@ export function TimeWheelPicker({
         width={72}
         onIndexChange={handleMinute}
         disabled={disabled}
-        accessibilityLabel="Minute"
+        accessibilityLabel={t("editor.minute")}
       />
       <Wheel
         data={[...PERIODS]}
@@ -164,7 +169,8 @@ export function TimeWheelPicker({
         width={56}
         onIndexChange={handlePeriod}
         disabled={disabled}
-        accessibilityLabel="Period"
+        accessibilityLabel={t("editor.period")}
+        accessibilityValueText={t(period === "AM" ? "editor.am" : "editor.pm")}
       />
     </View>
   );

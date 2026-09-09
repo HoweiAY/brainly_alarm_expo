@@ -47,18 +47,15 @@ class AlarmSoundService : Service() {
 
   private var mediaPlayer: MediaPlayer? = null
 
-  override fun onCreate() {
-    super.onCreate()
-    ensureChannel()
-  }
-
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     val soundUri = intent?.getStringExtra(EXTRA_SOUND_URI)
     val hasSnapshot = intent?.getBooleanExtra(EXTRA_HAS_SNAPSHOT, false) ?: false
-    val snapshot = if (hasSnapshot && intent != null) readSnapshot(intent) else null
+    val snapshot = intent?.takeIf { hasSnapshot }?.let(::readSnapshot)
     currentSnapshot = snapshot
 
-    val notification = buildNotification(snapshot)
+    val notificationCopy = getNotificationCopy()
+    ensureChannel(notificationCopy)
+    val notification = buildNotification(snapshot, notificationCopy)
     val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
       ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
     } else {
@@ -84,35 +81,40 @@ class AlarmSoundService : Service() {
 
   override fun onBind(intent: Intent?): IBinder? = null
 
-  private fun ensureChannel() {
+  private fun getNotificationCopy(): AlarmNotificationCopy = runCatching {
+    AlarmStore(this).use { alarmNotificationCopy(it.getLanguage()) }
+  }.getOrDefault(ENGLISH_ALARM_NOTIFICATION_COPY)
+
+  private fun ensureChannel(copy: AlarmNotificationCopy) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       val manager = getSystemService(NotificationManager::class.java)
       val existing = manager.getNotificationChannel(ALARM_CHANNEL_ID)
       if (existing != null && existing.sound != null) {
         manager.deleteNotificationChannel(ALARM_CHANNEL_ID)
       }
-      if (manager.getNotificationChannel(ALARM_CHANNEL_ID) == null) {
-        val channel = NotificationChannel(
-          ALARM_CHANNEL_ID,
-          "Alarms",
-          NotificationManager.IMPORTANCE_HIGH,
-        ).apply {
-          enableVibration(true)
-          setBypassDnd(true)
-          setSound(
-            null,
-            AudioAttributes.Builder()
-              .setUsage(AudioAttributes.USAGE_ALARM)
-              .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-              .build(),
-          )
-        }
-        manager.createNotificationChannel(channel)
+      val channel = NotificationChannel(
+        ALARM_CHANNEL_ID,
+        copy.channelName,
+        NotificationManager.IMPORTANCE_HIGH,
+      ).apply {
+        enableVibration(true)
+        setBypassDnd(true)
+        setSound(
+          null,
+          AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build(),
+        )
       }
+      manager.createNotificationChannel(channel)
     }
   }
 
-  private fun buildNotification(snapshot: AlarmSnapshotData?): Notification {
+  private fun buildNotification(
+    snapshot: AlarmSnapshotData?,
+    copy: AlarmNotificationCopy,
+  ): Notification {
     val deepLink = if (snapshot != null) snapshotToDeepLink(snapshot)
       else Uri.parse("$DEEP_LINK_SCHEME://$DEEP_LINK_HOST")
     val contentIntent = PendingIntent.getActivity(
@@ -123,8 +125,8 @@ class AlarmSoundService : Service() {
       ),
       PendingIntent.FLAG_IMMUTABLE,
     )
-    val title = if (snapshot != null) snapshot.notificationTitle else "Time to wake up!"
-    val body = if (snapshot != null) snapshot.notificationBody else "Click to disable the alarm."
+    val title = snapshot?.notificationTitle?.takeIf { it.isNotBlank() } ?: copy.title
+    val body = snapshot?.notificationBody?.takeIf { it.isNotBlank() } ?: copy.body
     return NotificationCompat.Builder(this, ALARM_CHANNEL_ID)
       .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
       .setContentTitle(title)

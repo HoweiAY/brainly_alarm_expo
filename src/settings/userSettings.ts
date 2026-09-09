@@ -4,6 +4,7 @@ import {
   SNOOZE_MINUTES_MIN,
 } from "@/data/constants";
 import type { UserSettings } from "@/data/types";
+import { isAppLanguage, type AppLanguage } from "@/i18n/languages";
 
 export function parseSnoozeMinutes(input: string): number | null {
   const trimmed = input.trim();
@@ -28,7 +29,10 @@ function toBoolean(value: unknown, fallback: boolean): boolean {
   return fallback;
 }
 
-export function normalizeUserSettings(raw: unknown): UserSettings {
+export function normalizeUserSettings(
+  raw: unknown,
+  fallbackLanguage: AppLanguage = DEFAULT_USER_SETTINGS.language,
+): UserSettings {
   const source =
     raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
   const snoozeRaw = source.snoozeMinutes;
@@ -48,5 +52,8 @@ export function normalizeUserSettings(raw: unknown): UserSettings {
       source.showTileNumbers,
       DEFAULT_USER_SETTINGS.showTileNumbers,
     ),
+    language: isAppLanguage(source.language)
+      ? source.language
+      : fallbackLanguage,
   };
 }

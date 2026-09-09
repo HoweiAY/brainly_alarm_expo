@@ -1,3 +1,4 @@
+import { getAlarmNotificationCopy } from "@/notifications/AlarmNotifications";
 import {
   difficultyToIndex,
   indexToDifficulty,
@@ -6,10 +7,6 @@ import {
   taskTypeToStorage,
   weekdayToIndex,
 } from "./constants";
-import {
-  DEFAULT_ALARM_NOTIFICATION_BODY,
-  DEFAULT_ALARM_NOTIFICATION_TITLE,
-} from "@/notifications/AlarmNotifications";
 import type { alarmsTable } from "./schema";
 import type { Alarm, AlarmSnapshot } from "./types";
 
@@ -75,6 +72,7 @@ export function alarmToSnapshot(
   weekday: number,
   isSnoozed = false,
 ): AlarmSnapshot {
+  const notification = getAlarmNotificationCopy();
   return {
     alarmId: alarm.id,
     weekday,
@@ -87,7 +85,7 @@ export function alarmToSnapshot(
     snooze: alarm.snooze,
     enabled: alarm.enabled,
     isSnoozed,
-    notificationTitle: DEFAULT_ALARM_NOTIFICATION_TITLE,
-    notificationBody: DEFAULT_ALARM_NOTIFICATION_BODY,
+    notificationTitle: notification.title,
+    notificationBody: notification.body,
   };
 }

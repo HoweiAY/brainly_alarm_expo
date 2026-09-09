@@ -1,6 +1,6 @@
+import { useAlarmStore } from "@/store/alarmStore";
 import dayjs from "dayjs";
 import { File } from "expo-file-system";
-import { useAlarmStore } from "@/store/alarmStore";
 
 export const DEFAULT_SOUND_LABEL = "Default";
 
@@ -13,9 +13,11 @@ export function isDefaultSound(soundUri: string | null): boolean {
   return soundUri == null || soundUri === "";
 }
 
-export function defaultSoundSelection(): SoundSelection {
+export function defaultSoundSelection(
+  defaultLabel = DEFAULT_SOUND_LABEL,
+): SoundSelection {
   return {
-    alarmSoundSelected: DEFAULT_SOUND_LABEL,
+    alarmSoundSelected: defaultLabel,
     alarmSoundUri: null,
   };
 }
@@ -30,9 +32,12 @@ function decodeFileName(basename: string): string {
   }
 }
 
-export function soundLabelFor(soundUri: string | null): string {
+export function soundLabelFor(
+  soundUri: string | null,
+  defaultLabel = DEFAULT_SOUND_LABEL,
+): string {
   if (isDefaultSound(soundUri)) {
-    return DEFAULT_SOUND_LABEL;
+    return defaultLabel;
   }
   const uri = soundUri as string;
   const slashIndex = uri.lastIndexOf("/");

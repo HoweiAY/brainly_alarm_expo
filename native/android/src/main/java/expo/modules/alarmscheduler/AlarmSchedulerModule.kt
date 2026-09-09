@@ -50,10 +50,10 @@ class AlarmSnapshotRecord : Record {
   val isSnoozed: Boolean = false
 
   @Field
-  val notificationTitle: String = "Time to wake up!"
+  val notificationTitle: String = ENGLISH_ALARM_NOTIFICATION_COPY.title
 
   @Field
-  val notificationBody: String = "Click to disable the alarm."
+  val notificationBody: String = ENGLISH_ALARM_NOTIFICATION_COPY.body
 
   fun toData(identifier: String, soundUri: String?): AlarmSnapshotData =
     AlarmSnapshotData(

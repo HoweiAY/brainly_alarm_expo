@@ -1,5 +1,7 @@
 import type { Alarm } from "@/data/types";
 import { announce } from "@/hooks/useAccessibility";
+import { translateTask } from "@/i18n/helpers";
+import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { colors, radii, spacing, typography } from "@/theme";
 import { formatTime, getDaysString } from "@/utils/time";
 import { Lucide } from "@react-native-vector-icons/lucide";
@@ -36,12 +38,23 @@ export function AlarmCard({
   onPress,
   onLongPress,
 }: AlarmCardProps) {
+  const { t } = useAppTranslation();
+  const time = formatTime(alarm.hour, alarm.minute);
+  const days = getDaysString(alarm.days, t);
+  const task = translateTask(t, alarm.task);
+
   const handleToggleEnabled = async () => {
     const nextEnabled = !alarm.enabled;
     const updated = await onToggleEnabled(alarm);
     if (updated) {
       announce(
-        `${formatTime(alarm.hour, alarm.minute)} alarm, ${getDaysString(alarm.days)}, ${nextEnabled ? "enabled" : "disabled"}`,
+        t("home.alarmAnnouncement", {
+          time,
+          days,
+          state: t(
+            nextEnabled ? "common.states.enabled" : "common.states.disabled",
+          ),
+        }),
       );
     }
   };
@@ -56,18 +69,20 @@ export function AlarmCard({
         onPress={() => onPress(alarm)}
         onLongPress={() => onLongPress(alarm)}
         accessibilityRole="button"
-        accessibilityLabel={`${formatTime(alarm.hour, alarm.minute)} alarm, ${alarm.task} task, ${getDaysString(alarm.days)}`}
+        accessibilityLabel={t("home.alarmCardLabel", { time, task, days })}
         accessibilityHint={
           editEnabled
-            ? `Tap to ${selected ? "deselect" : "select"} alarm`
-            : "Tap to edit alarm"
+            ? t("home.alarmSelectionHint", {
+                action: t(
+                  selected ? "home.deselectAction" : "home.selectAction",
+                ),
+              })
+            : t("home.alarmEditHint")
         }
         accessibilityState={{ selected: editEnabled ? selected : undefined }}
       >
         <View style={styles.left}>
-          <Text style={styles.time}>
-            {formatTime(alarm.hour, alarm.minute)}
-          </Text>
+          <Text style={styles.time}>{time}</Text>
           <View style={styles.row}>
             <Lucide
               name={taskIcons[alarm.task]}
@@ -75,7 +90,7 @@ export function AlarmCard({
               color={colors.textMuted}
               importantForAccessibility="no"
             />
-            <Text style={styles.days}>{getDaysString(alarm.days)}</Text>
+            <Text style={styles.days}>{days}</Text>
           </View>
         </View>
       </Pressable>
@@ -84,7 +99,7 @@ export function AlarmCard({
           style={[styles.checkbox, selected && styles.checkboxSelected]}
           accessibilityRole="checkbox"
           accessibilityState={{ checked: selected }}
-          accessibilityLabel={`${formatTime(alarm.hour, alarm.minute)} alarm`}
+          accessibilityLabel={t("home.alarmCheckboxLabel", { time })}
           onPress={() => onPress(alarm)}
         >
           {selected ? (
@@ -104,7 +119,15 @@ export function AlarmCard({
               : undefined
           }
           ios_backgroundColor={colors.border}
-          accessibilityLabel={`${formatTime(alarm.hour, alarm.minute)} alarm, ${getDaysString(alarm.days)}, ${alarm.enabled ? "enabled" : "disabled"}`}
+          accessibilityLabel={t("home.alarmToggleLabel", {
+            time,
+            days,
+            state: t(
+              alarm.enabled
+                ? "common.states.enabled"
+                : "common.states.disabled",
+            ),
+          })}
         />
       )}
     </View>
