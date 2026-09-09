@@ -1,5 +1,5 @@
-import { describe, expect, it } from "@jest/globals";
 import { resolveAppLanguage, type LocalePreference } from "@/i18n/languages";
+import { describe, expect, it } from "@jest/globals";
 
 function locale(
   languageTag: string,
@@ -26,10 +26,11 @@ describe("resolveAppLanguage", () => {
     expect(resolveAppLanguage([preference])).toBe("zh-Hant");
   });
 
-  it("does not map Simplified Chinese to Traditional Chinese", () => {
-    expect(resolveAppLanguage([locale("zh-Hans-CN", "zh", "Hans", "CN")])).toBe(
-      "en",
-    );
+  it.each([
+    locale("zh-Hans-CN", "zh", "Hans", "CN"),
+    locale("zh-Hans-TW", "zh", "Hans", "TW"),
+  ])("does not map Simplified Chinese to Traditional Chinese", (preference) => {
+    expect(resolveAppLanguage([preference])).toBe("en");
   });
 
   it("uses the first supported preference in device order", () => {

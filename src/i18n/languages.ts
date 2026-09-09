@@ -30,6 +30,7 @@ export function resolveAppLanguage(
     const tag = locale.languageTag.toLowerCase();
     const script = locale.languageScriptCode?.toLowerCase();
     const region = locale.regionCode?.toUpperCase();
+    if (script === "hans" || tag.includes("-hans")) continue;
     if (
       script === "hant" ||
       tag.includes("-hant") ||
