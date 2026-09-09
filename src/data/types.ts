@@ -6,6 +6,8 @@ export type TaskType = "Memory" | "Math" | "Shake phone" | "None";
 
 export type Difficulty = "Easy" | "Normal" | "Hard";
 
+export type AppColorScheme = "dark" | "light";
+
 export interface Alarm {
   id: string;
   days: Weekday[];
@@ -40,4 +42,5 @@ export interface UserSettings {
   snoozeMinutes: number;
   showTileNumbers: boolean;
   language: AppLanguage;
+  colorScheme: AppColorScheme;
 }

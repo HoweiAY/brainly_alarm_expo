@@ -3,7 +3,7 @@ import {
   SNOOZE_MINUTES_MAX,
   SNOOZE_MINUTES_MIN,
 } from "@/data/constants";
-import type { UserSettings } from "@/data/types";
+import type { AppColorScheme, UserSettings } from "@/data/types";
 import { isAppLanguage, type AppLanguage } from "@/i18n/languages";
 
 export function parseSnoozeMinutes(input: string): number | null {
@@ -27,6 +27,10 @@ function toBoolean(value: unknown, fallback: boolean): boolean {
   if (value === "true" || value === 1) return true;
   if (value === "false" || value === 0) return false;
   return fallback;
+}
+
+export function isAppColorScheme(value: unknown): value is AppColorScheme {
+  return value === "dark" || value === "light";
 }
 
 export function normalizeUserSettings(
@@ -55,5 +59,8 @@ export function normalizeUserSettings(
     language: isAppLanguage(source.language)
       ? source.language
       : fallbackLanguage,
+    colorScheme: isAppColorScheme(source.colorScheme)
+      ? source.colorScheme
+      : DEFAULT_USER_SETTINGS.colorScheme,
   };
 }

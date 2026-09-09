@@ -1,6 +1,7 @@
 import { DEFAULT_USER_SETTINGS } from "@/data/constants";
 import {
   clampSnoozeMinutes,
+  isAppColorScheme,
   normalizeUserSettings,
   parseSnoozeMinutes,
 } from "@/settings/userSettings";
@@ -47,6 +48,15 @@ describe("clampSnoozeMinutes", () => {
   });
 });
 
+describe("isAppColorScheme", () => {
+  it("accepts only app-controlled dark and light values", () => {
+    expect(isAppColorScheme("dark")).toBe(true);
+    expect(isAppColorScheme("light")).toBe(true);
+    expect(isAppColorScheme("system")).toBe(false);
+    expect(isAppColorScheme(null)).toBe(false);
+  });
+});
+
 describe("normalizeUserSettings", () => {
   it("returns defaults for empty or invalid payloads", () => {
     expect(normalizeUserSettings({})).toEqual(DEFAULT_USER_SETTINGS);
@@ -66,6 +76,7 @@ describe("normalizeUserSettings", () => {
       snoozeMinutes: 15,
       showTileNumbers: true,
       language: "en",
+      colorScheme: "dark",
     });
   });
 
@@ -87,6 +98,16 @@ describe("normalizeUserSettings", () => {
     expect(
       normalizeUserSettings({ language: "zh-Hans" }, "zh-Hant").language,
     ).toBe("zh-Hant");
+  });
+
+  it("preserves valid color schemes and defaults invalid values to dark", () => {
+    expect(normalizeUserSettings({ colorScheme: "light" }).colorScheme).toBe(
+      "light",
+    );
+    expect(normalizeUserSettings({ colorScheme: "system" }).colorScheme).toBe(
+      "dark",
+    );
+    expect(normalizeUserSettings({}).colorScheme).toBe("dark");
   });
 
   it("coerces non-boolean flags and falls back when unparseable", () => {
