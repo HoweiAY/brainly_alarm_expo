@@ -5,15 +5,16 @@ import { translateTask } from "@/i18n/helpers";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { parseTaskParams } from "@/tasks/params";
 import { useMathEquation } from "@/tasks/useMathEquation";
-import { colors, radii, spacing, typography } from "@/theme";
+import { createThemedStyles, radii, spacing, typography } from "@/theme";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MathEquationScreen() {
   const dismiss = useAlarmDismissal();
   const { t } = useAppTranslation();
+  const { colors, styles } = useStyles();
   const { rounds: roundsParam, difficulty: difficultyParam } =
     useLocalSearchParams<{
       rounds?: string;
@@ -114,7 +115,7 @@ export default function MathEquationScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -178,4 +179,4 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     paddingVertical: spacing.md,
   },
-});
+}));

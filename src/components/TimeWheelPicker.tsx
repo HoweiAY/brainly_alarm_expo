@@ -1,6 +1,6 @@
 import { to12Hour, to24Hour } from "@/hooks/useCreateAlarmForm";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
-import { colors, spacing, typography } from "@/theme";
+import { createThemedStyles, spacing, typography } from "@/theme";
 import { useEffect, useRef } from "react";
 import {
   Pressable,
@@ -49,6 +49,7 @@ function Wheel({
   accessibilityValueText,
 }: WheelProps) {
   const { t } = useAppTranslation();
+  const { styles } = useStyles();
   const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -132,6 +133,7 @@ export function TimeWheelPicker({
   disabled = false,
 }: TimeWheelPickerProps) {
   const { t } = useAppTranslation();
+  const { styles } = useStyles();
   const { hour12, period } = to12Hour(hour24);
 
   const handleHour = (i: number) => {
@@ -176,7 +178,7 @@ export function TimeWheelPicker({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -219,4 +221,4 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
-});
+}));

@@ -13,23 +13,17 @@ import { i18n, type AppLanguage } from "@/i18n";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { syncAlarmNotificationChannel } from "@/notifications/AlarmNotifications";
 import { useSettingsStore } from "@/store/settingsStore";
-import { colors, radii, spacing, typography } from "@/theme";
+import { createThemedStyles, radii, spacing, typography } from "@/theme";
 import { Lucide } from "@react-native-vector-icons/lucide";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { t } = useAppTranslation();
+  const { colors, styles } = useStyles();
   const settings = useSettingsStore((s) => s.settings);
   const loaded = useSettingsStore((s) => s.loaded);
   const screenReaderEnabled = useScreenReaderEnabled();
@@ -85,6 +79,11 @@ export default function SettingsScreen() {
   const snoozeLabel = t("settings.snoozeValue", {
     count: settings.snoozeMinutes,
   });
+  const appearanceLabel = t(
+    settings.colorScheme === "dark"
+      ? "settings.darkMode"
+      : "settings.lightMode",
+  );
   const showTileNumbers =
     screenReaderEnabled === true || settings.showTileNumbers;
 
@@ -129,14 +128,22 @@ export default function SettingsScreen() {
           <SettingsRow
             label={t("settings.appearance")}
             description={t("settings.appearanceDescription")}
-            helperText={t("settings.comingSoon")}
-            disabled
+            disabled={!loaded}
           >
-            <SettingsSwitch
-              value
-              disabled
-              accessibilityLabel={t("settings.darkModeAccessibility")}
-            />
+            <View style={styles.appearanceControl}>
+              <SettingsValue value={appearanceLabel} />
+              <SettingsSwitch
+                value={settings.colorScheme === "dark"}
+                disabled={!loaded}
+                onValueChange={(darkMode) =>
+                  void update({ colorScheme: darkMode ? "dark" : "light" })
+                }
+                accessibilityLabel={t("settings.appearanceAccessibility", {
+                  mode: appearanceLabel,
+                })}
+                accessibilityHint={t("settings.appearanceHint")}
+              />
+            </View>
           </SettingsRow>
         </SettingsSection>
 
@@ -228,7 +235,7 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -266,4 +273,9 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingBottom: spacing.xxxl,
   },
-});
+  appearanceControl: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+}));

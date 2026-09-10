@@ -70,4 +70,5 @@ export const DEFAULT_USER_SETTINGS: Readonly<UserSettings> = {
   snoozeMinutes: DEFAULT_SNOOZE_MINUTES,
   showTileNumbers: false,
   language: DEFAULT_LANGUAGE,
+  colorScheme: "dark",
 };

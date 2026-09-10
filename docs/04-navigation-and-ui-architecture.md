@@ -286,11 +286,18 @@ app/
 
 **Settings screen (RN-port addition, no Kotlin counterpart):** `(main)/settings.tsx` is pushed with `slide_from_right` from the Home "more options" dropdown (`router.push('/settings')`) and returns with `router.back()`. It renders three cards built from `src/components/settings/` (`SettingsSection`, `SettingsRow`, `SettingsSwitch`, `SettingsValue`, `SnoozeDurationModal`) and binds to `useSettingsStore` (`src/store/settingsStore.ts`), which persists a single `UserSettings` JSON row in the `settings` SQLite table:
 
-| Section       | Row                | Behaviour                                                                                                   |
-| ------------- | ------------------ | ----------------------------------------------------------------------------------------------------------- |
-| General       | Language           | Placeholder — disabled, "Coming soon". Requires an i18n layer.                                              |
-| General       | Appearance         | Placeholder — disabled switch, "Coming soon". Requires a theme provider around the static `colors` object.  |
-| Alarm         | Auto dismiss tasks | Toggles `autoDismissEnabled`; consumed by `TaskHeader` → `useTaskAutoDismiss` (see `docs/05` §6).           |
-| Alarm         | Snooze duration    | Opens `SnoozeDurationModal` (number-pad input, 1–60, Confirm disabled while invalid); sets `snoozeMinutes`. |
-| Accessibility | Show tile numbers  | Toggles `showTileNumbers`; the Memory task renders `index + 1` on each tile when enabled.                   |
-| Accessibility | Colorblind mode    | Placeholder — disabled, "Coming soon". Would remap `TILE_COLORS` / `success` / `danger` to a safe palette.  |
+| Section       | Row                | Behaviour                                                                                                                                                                                                                                    |
+| ------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| General       | Language           | Opens `LanguageSelectionModal` (`src/components/settings/LanguageSelectionModal.tsx`); calls `i18n.changeLanguage`, persists `language`, then re-syncs the notification channel and reconciles schedules. See the i18n layer in `src/i18n/`. |
+| General       | Appearance         | A `SettingsSwitch` toggling `colorScheme` between `"dark"` and `"light"` (default `"dark"`). The current mode label ("Dark"/"Light") is shown beside the switch. Drives the theme system described below.                                    |
+| Alarm         | Auto dismiss tasks | Toggles `autoDismissEnabled`; consumed by `TaskHeader` → `useTaskAutoDismiss` (see `docs/05` §6).                                                                                                                                            |
+| Alarm         | Snooze duration    | Opens `SnoozeDurationModal` (number-pad input, 1–60, Confirm disabled while invalid); sets `snoozeMinutes`.                                                                                                                                  |
+| Accessibility | Show tile numbers  | Toggles `showTileNumbers`; the Memory task renders `index + 1` on each tile when enabled. Forced on when a screen reader is detected.                                                                                                        |
+| Accessibility | Colorblind mode    | Placeholder — disabled, "Coming soon". Would remap `TILE_COLORS` / `success` / `danger` to a safe palette.                                                                                                                                   |
+
+**Theme system (light/dark mode):** Theming is centralized in `src/theme/`. `colors.ts` exports two complete palettes — `darkColors` (the original/default) and `lightColors` — both conforming to the shared `Colors` type (every token in `darkColors` is present in `lightColors`). `index.ts` assembles a `Theme` (`colorScheme`, `colors`, `radii`, `spacing`, `typography`) per scheme and exposes:
+
+- `useTheme()` — selects the active `Theme` by reading `settings.colorScheme` from `useSettingsStore`; components call this and read `theme.colors.*`.
+- `createThemedStyles(factory)` — returns a `useThemedStyles()` hook that builds `StyleSheet.create(factory(theme.colors))` and memoizes on `theme.colors`. Screens/components define their styles as `const useStyles = createThemedStyles((colors) => ({ ... }))` and consume `{ colors, styles }`.
+
+The root `src/app/_layout.tsx` applies the scheme platform-wide in a `useEffect` keyed on `colorScheme`: `Appearance.setColorScheme(colorScheme)` (so RN primitives and `expo-status-bar` follow it) and `SystemUI.setBackgroundColorAsync(colors.background)` (so the OS chrome behind the JS bundle matches). `StatusBar` style is derived as `"light"` for dark mode and `"dark"` for light mode. All screens and components in the `(main)` and `(alarm)` groups read colors via `useTheme()`/`createThemedStyles()` — no hardcoded color literals in screen/component code.

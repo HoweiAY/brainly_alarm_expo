@@ -3,6 +3,7 @@ import {
   reconcileSchedules,
   snapshotToQueryParams,
 } from "@/alarms/scheduling";
+import { DEFAULT_USER_SETTINGS } from "@/data/constants";
 import {
   dismissOldAlarmIfActive,
   useAlarmNotifications,
@@ -13,14 +14,25 @@ import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
 import { useAlarmStore } from "@/store/alarmStore";
 import { useSettingsStore } from "@/store/settingsStore";
-import { colors, radii, spacing, typography } from "@/theme";
+import {
+  createThemedStyles,
+  darkColors,
+  radii,
+  spacing,
+  typography,
+  useTheme,
+} from "@/theme";
 import { Lucide } from "@react-native-vector-icons/lucide";
 import * as Linking from "expo-linking";
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import * as SystemUI from "expo-system-ui";
 import { useCallback, useEffect } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Appearance, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+Appearance.setColorScheme(DEFAULT_USER_SETTINGS.colorScheme);
+void SystemUI.setBackgroundColorAsync(darkColors.background);
 
 type StoreWithLoaded = {
   getState: () => { loaded: boolean };
@@ -151,6 +163,7 @@ function SettingsLoadError({
   onRetry: () => void;
 }) {
   const { t } = useAppTranslation();
+  const { colors, styles } = useRootStyles();
 
   return (
     <SafeAreaView style={styles.errorContainer} edges={["top", "bottom"]}>
@@ -183,6 +196,7 @@ export default function RootLayout() {
   const loaded = useSettingsStore((s) => s.loaded);
   const initError = useSettingsStore((s) => s.initError);
   const language = useSettingsStore((s) => s.settings.language);
+  const { colorScheme, colors } = useTheme();
 
   useEffect(() => {
     void useSettingsStore.getState().ensureLoaded();
@@ -192,14 +206,22 @@ export default function RootLayout() {
     void i18n.changeLanguage(language);
   }, [language]);
 
+  useEffect(() => {
+    Appearance.setColorScheme(colorScheme);
+    void SystemUI.setBackgroundColorAsync(colors.background);
+  }, [colorScheme, colors.background]);
+
   const retry = useCallback(() => {
     void useSettingsStore.getState().init();
   }, []);
 
   return (
     <>
-      <StatusBar style="light" />
-      <Stack initialRouteName="(main)">
+      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+      <Stack
+        initialRouteName="(main)"
+        screenOptions={{ contentStyle: { backgroundColor: colors.background } }}
+      >
         <Stack.Screen name="(main)" options={{ headerShown: false }} />
         <Stack.Screen
           name="(alarm)"
@@ -215,7 +237,7 @@ export default function RootLayout() {
   );
 }
 
-const styles = StyleSheet.create({
+const useRootStyles = createThemedStyles((colors) => ({
   errorContainer: {
     position: "absolute",
     top: 0,
@@ -266,4 +288,4 @@ const styles = StyleSheet.create({
     ...typography.bodyEmphasis,
     color: colors.primaryFg,
   },
-});
+}));

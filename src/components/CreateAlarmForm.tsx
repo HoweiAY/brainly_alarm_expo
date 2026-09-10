@@ -3,7 +3,7 @@ import type { Difficulty, TaskType } from "@/data/types";
 import type { UseCreateAlarmFormResult } from "@/hooks/useCreateAlarmForm";
 import { translateDifficulty, translateTask } from "@/i18n/helpers";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
-import { colors, radii, spacing, typography } from "@/theme";
+import { createThemedStyles, radii, spacing, typography } from "@/theme";
 import { Lucide } from "@react-native-vector-icons/lucide";
 import {
   ActivityIndicator,
@@ -27,6 +27,7 @@ interface CreateAlarmFormProps {
 
 export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
   const { t } = useAppTranslation();
+  const { colors, styles } = useStyles();
   const selectedTaskLabel = translateTask(t, form.taskSelected);
   const defaultSoundSelected =
     form.alarmSoundUri == null || form.alarmSoundUri === "";
@@ -285,7 +286,7 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
               value={form.snoozeEnabled}
               onValueChange={form.toggleSnooze}
               disabled={form.saving}
-              trackColor={{ false: colors.surface, true: colors.primary }}
+              trackColor={{ false: colors.switchTrack, true: colors.primary }}
               thumbColor={
                 Platform.OS === "android"
                   ? form.snoozeEnabled
@@ -352,7 +353,7 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -531,4 +532,4 @@ const styles = StyleSheet.create({
     ...typography.bodyEmphasis,
     color: colors.text,
   },
-});
+}));

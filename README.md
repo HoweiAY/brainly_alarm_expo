@@ -27,7 +27,7 @@ This repository is the **Expo-first re-implementation** of that original app. Th
 - **Exact, wake-up alarms** — precise scheduling that wakes the device, with automatic re-arming after device reboot (Android, via a custom native module).
 - **Alarm notifications & deep links** — a high-priority notification fires with the alarm; tapping it opens the full-screen ringing screen directly.
 - **Local persistence** — all alarms are stored on-device in SQLite with versioned migrations.
-- **User settings** — a dedicated Settings screen lets you tune app-wide preferences: auto-dismiss tasks after they time out, the snooze duration (in minutes), whether the Memory task tiles display numbers, and the app display language. Settings are persisted on-device via a dedicated Zustand store.
+- **User settings** — a dedicated Settings screen lets you tune app-wide preferences: auto-dismiss tasks after they time out, the snooze duration (in minutes), whether the Memory task tiles display numbers, the app display language, and a light/dark appearance toggle. Settings are persisted on-device via a dedicated Zustand store.
 - **Localization (i18n)** — the entire UI, alarm editor, dismissal-task screens, and alarm notifications are localized via `i18next` + `react-i18next`. The app ships with **English** and **Traditional Chinese** (`zh-Hant`) and resolves the default language from the device locale (with `expo-localization`), falling back to English. Users can override the language from Settings, and the choice is persisted alongside the other user settings.
 
 ## Screenshots

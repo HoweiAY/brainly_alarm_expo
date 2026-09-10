@@ -2,7 +2,7 @@ import type { Alarm } from "@/data/types";
 import { announce } from "@/hooks/useAccessibility";
 import { translateTask } from "@/i18n/helpers";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
-import { colors, radii, spacing, typography } from "@/theme";
+import { createThemedStyles, radii, spacing, typography } from "@/theme";
 import { formatTime, getDaysString } from "@/utils/time";
 import { Lucide } from "@react-native-vector-icons/lucide";
 import {
@@ -39,6 +39,7 @@ export function AlarmCard({
   onLongPress,
 }: AlarmCardProps) {
   const { t } = useAppTranslation();
+  const { colors, styles } = useStyles();
   const time = formatTime(alarm.hour, alarm.minute);
   const days = getDaysString(alarm.days, t);
   const task = translateTask(t, alarm.task);
@@ -110,7 +111,7 @@ export function AlarmCard({
         <Switch
           value={alarm.enabled}
           onValueChange={handleToggleEnabled}
-          trackColor={{ false: colors.surface, true: colors.primary }}
+          trackColor={{ false: colors.switchTrack, true: colors.primary }}
           thumbColor={
             Platform.OS === "android"
               ? alarm.enabled
@@ -134,7 +135,7 @@ export function AlarmCard({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   card: {
     flexDirection: "row",
     alignItems: "center",
@@ -183,4 +184,4 @@ const styles = StyleSheet.create({
   checkboxSelected: {
     backgroundColor: colors.primary,
   },
-});
+}));

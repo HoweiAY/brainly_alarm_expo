@@ -1,5 +1,8 @@
 import { isAppLanguage, type AppLanguage } from "@/i18n/languages";
-import { normalizeUserSettings } from "@/settings/userSettings";
+import {
+  isAppColorScheme,
+  normalizeUserSettings,
+} from "@/settings/userSettings";
 import dayjs from "dayjs";
 import { eq } from "drizzle-orm";
 import { db, dbReady } from "./db";
@@ -40,7 +43,10 @@ export async function getPersistedUserSettings(
   if (!payload) return null;
   const settings = normalizeUserSettings(payload, fallbackLanguage);
   const source = payload as unknown as Record<string, unknown>;
-  if (!isAppLanguage(source.language)) {
+  if (
+    !isAppLanguage(source.language) ||
+    !isAppColorScheme(source.colorScheme)
+  ) {
     await persistUserSettings(settings);
   }
   return settings;

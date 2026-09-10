@@ -1,6 +1,6 @@
 import { SUPPORTED_LANGUAGES, type AppLanguage } from "@/i18n/languages";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
-import { colors, radii, spacing, typography } from "@/theme";
+import { createThemedStyles, radii, spacing, typography } from "@/theme";
 import { Lucide } from "@react-native-vector-icons/lucide";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -20,6 +20,7 @@ export function LanguageSelectionModal({
   onCancel,
 }: LanguageSelectionModalProps) {
   const { t } = useAppTranslation();
+  const { colors, styles } = useStyles();
 
   return (
     <Modal
@@ -98,7 +99,7 @@ export function LanguageSelectionModal({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   backdrop: {
     position: "absolute",
     top: 0,
@@ -123,9 +124,9 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     gap: spacing.md,
     elevation: 4,
-    shadowColor: "#000",
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 1,
     shadowRadius: 8,
   },
   title: {
@@ -180,4 +181,4 @@ const styles = StyleSheet.create({
     ...typography.bodyEmphasis,
     color: colors.primary,
   },
-});
+}));

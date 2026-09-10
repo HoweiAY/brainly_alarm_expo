@@ -94,11 +94,19 @@ src/
 ├─ store/
 │  ├─ alarmStore.ts                # all alarms (reactive), mirrors AlarmDatabaseViewModel
 │  ├─ homeStore.ts                 # HomeUiState equivalent
-│  └─ createAlarmStore.ts          # CreateAlarmUiState equivalent
+│  ├─ createAlarmStore.ts          # CreateAlarmUiState equivalent
+│  └─ settingsStore.ts             # UserSettings (language, colorScheme, snooze, etc.); persisted to the `settings` SQLite table
+├─ settings/
+│  └─ userSettings.ts              # normalizeUserSettings, isAppColorScheme, snooze clamping (pure, testable)
+├─ theme/
+│  ├─ colors.ts                    # darkColors (default) + lightColors palettes, shared `Colors` type
+│  ├─ index.ts                     # `Theme`, `useTheme()`, `createThemedStyles()` — driven by `settings.colorScheme`
+│  ├─ spacing.ts / radii.ts / typography.ts
 ├─ data/
-│  ├─ types.ts                     # Alarm, AlarmSnapshot, enums (weekdays, taskTypes, difficulties)
-│  ├─ db.ts                        # expo-sqlite / WatermelonDB setup + migrations
-│  └─ constants.ts                 # weekdays, taskTypes, taskDifficulties
+│  ├─ types.ts                     # Alarm, AlarmSnapshot, UserSettings, AppColorScheme, enums
+│  ├─ db.ts                        # expo-sqlite / Drizzle setup + migrations
+│  ├─ constants.ts                 # weekdays, taskTypes, taskDifficulties, DEFAULT_USER_SETTINGS
+│  └─ userSettings.ts              # persistence (read/write the single `settings` JSON row)
 ├─ alarms/
 │  ├─ AlarmScheduler.ts            # wraps the native module
 │  ├─ scheduling.ts               # setAlarm/cancelAlarm/resetAlarm/snooze logic
@@ -121,6 +129,7 @@ src/
   - A subscription so screens re-render on changes (Zustand `subscribeWithSelector` or WatermelonDB `withObservables`). This replaces `LiveData<List<Alarm>>`.
 - **`homeStore`:** mirrors `HomeUiState` (doc 04 §6.1): `optionsExpanded`, `alarmEditEnabled`, `selectedAlarms`, `enabledAlarms`, `nextAlarmDay/Hour/Minute`, `nextAlarmMsg`, plus the toggle flags. Actions: `selectOptions`, `dismissDropdown`, `toggleAlarmEnabled`, `enableAllAlarms`, `toggleAlarmSelected`, `selectAllAlarms`, `cancelAlarmsEdit`, `updateNextAlarm`, `updateNextAlarmMsg`.
 - **`createAlarmStore`:** mirrors `CreateAlarmUiState` (doc 04 §6.2): `alarmId`, `weekdaysSelected`, `hourSelected`, `minuteSelected`, `taskSelected`, `roundsSelected`, `difficultySelected`, `alarmSoundSelected`, `alarmSoundUri`, `snoozeEnabled`, `taskSelectorExpanded`. Actions: `reset`, `expandTaskSelector`, `updateWeekdays`, `updateTaskSelected`, `updateRoundCount`, `updateTaskDifficulty`, `updateSoundSelected`, `updateSnoozeEnabled`.
+- **`settingsStore` (shared):** holds the single `UserSettings` object (`autoDismissEnabled`, `snoozeMinutes`, `showTileNumbers`, `language`, `colorScheme`) and exposes `init()`, `ensureLoaded()`, `updateSettings(patch)`. Persisted as one JSON row in the `settings` SQLite table (`src/data/userSettings.ts`); normalization/validation lives in `src/settings/userSettings.ts`. The `colorScheme` field ("dark"|"light", default "dark") drives `useTheme()`/`createThemedStyles()` (see doc 04 §7 "Theme system") and is applied platform-wide by the root layout (`Appearance.setColorScheme` + `SystemUI.setBackgroundColorAsync`).
 - **Time-polling effects:** the per-minute `HomeMenu` countdown and the per-second `AlarmDisplay` clock become `setInterval` loops inside `useEffect`, cleaned up on unmount.
 
 ## 5. Data Model (TypeScript)
@@ -129,6 +138,7 @@ src/
 export type Weekday = "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
 export type TaskType = "Memory" | "Math" | "Shake phone" | "None";
 export type Difficulty = "Easy" | "Normal" | "Hard";
+export type AppColorScheme = "dark" | "light";
 
 export interface Alarm {
   id: number; // auto-increment PK
@@ -156,6 +166,15 @@ export interface AlarmSnapshot {
   snooze: boolean;
   enabled: boolean;
   isSnoozed: boolean;
+}
+
+// User preferences persisted as a single JSON row in the `settings` table.
+export interface UserSettings {
+  autoDismissEnabled: boolean;
+  snoozeMinutes: number; // 1..60, default 5
+  showTileNumbers: boolean;
+  language: AppLanguage; // "en" | "zh-Hant"
+  colorScheme: AppColorScheme; // "dark" (default) | "light"
 }
 ```
 

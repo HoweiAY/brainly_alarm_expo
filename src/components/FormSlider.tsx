@@ -1,6 +1,6 @@
 import { useScreenReaderEnabled } from "@/hooks/useAccessibility";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
-import { colors, radii, spacing, typography } from "@/theme";
+import { createThemedStyles, radii, spacing, typography } from "@/theme";
 import { useMemo, useState } from "react";
 import { PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -26,6 +26,7 @@ export function FormSlider({
   disabled = false,
 }: FormSliderProps) {
   const { t } = useAppTranslation();
+  const { styles } = useStyles();
   const screenReaderEnabled = useScreenReaderEnabled();
   const [trackWidth, setTrackWidth] = useState(0);
 
@@ -115,7 +116,7 @@ export function FormSlider({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   wrapper: {
     height: HIT_PAD * 2,
     justifyContent: "center",
@@ -176,4 +177,4 @@ const styles = StyleSheet.create({
   thumbDisabled: {
     backgroundColor: colors.textMuted,
   },
-});
+}));

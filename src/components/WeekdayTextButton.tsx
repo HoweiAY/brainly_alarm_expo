@@ -1,7 +1,7 @@
 import type { Weekday } from "@/data/types";
 import { translateWeekday } from "@/i18n/helpers";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
-import { colors, radii, spacing, typography } from "@/theme";
+import { createThemedStyles, radii, spacing, typography } from "@/theme";
 import { Pressable, StyleSheet, Text } from "react-native";
 
 interface WeekdayTextButtonProps {
@@ -18,6 +18,7 @@ export function WeekdayTextButton({
   disabled = false,
 }: WeekdayTextButtonProps) {
   const { t } = useAppTranslation();
+  const { styles } = useStyles();
   const weekdayLabel = translateWeekday(t, weekday);
 
   return (
@@ -46,7 +47,7 @@ export function WeekdayTextButton({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   pill: {
     flex: 1,
     paddingVertical: spacing.sm,
@@ -75,4 +76,4 @@ const styles = StyleSheet.create({
   labelSelected: {
     color: colors.primaryFg,
   },
-});
+}));

@@ -1,5 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, radii, spacing, typography } from "@/theme";
+import { createThemedStyles, radii, spacing, typography } from "@/theme";
+import { Pressable, Text, View } from "react-native";
 
 interface RadioButtonProps {
   label: string;
@@ -14,6 +14,8 @@ export function RadioButton({
   disabled = false,
   onSelect,
 }: RadioButtonProps) {
+  const { styles } = useStyles();
+
   return (
     <Pressable
       style={({ pressed }) => [
@@ -45,7 +47,7 @@ export function RadioButton({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   row: {
     flex: 1,
     flexDirection: "row",
@@ -90,4 +92,4 @@ const styles = StyleSheet.create({
   labelDisabled: {
     color: colors.textSubtle,
   },
-});
+}));

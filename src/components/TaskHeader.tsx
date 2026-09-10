@@ -1,7 +1,7 @@
 import { useTaskAutoDismiss } from "@/hooks/useTaskAutoDismiss";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { useSettingsStore } from "@/store/settingsStore";
-import { colors, radii, spacing, typography } from "@/theme";
+import { createThemedStyles, radii, spacing, typography } from "@/theme";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 interface TaskHeaderProps {
@@ -16,6 +16,7 @@ export function TaskHeader({
   autoDismissEnabled,
 }: TaskHeaderProps) {
   const { t } = useAppTranslation();
+  const { styles } = useStyles();
   const globalAutoDismissEnabled = useSettingsStore(
     (s) => s.settings.autoDismissEnabled,
   );
@@ -58,7 +59,7 @@ export function TaskHeader({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -106,4 +107,4 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: "600",
   },
-});
+}));

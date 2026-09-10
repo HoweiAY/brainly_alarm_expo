@@ -1,14 +1,7 @@
-import { colors, radii, spacing, typography } from "@/theme";
+import { createThemedStyles, radii, spacing, typography } from "@/theme";
 import { Lucide } from "@react-native-vector-icons/lucide";
 import type { ReactNode } from "react";
-import {
-  Platform,
-  Pressable,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from "react-native";
+import { Platform, Pressable, Switch, Text, View } from "react-native";
 
 interface SettingsRowProps {
   label: string;
@@ -31,6 +24,7 @@ export function SettingsRow({
   accessibilityHint,
   children,
 }: SettingsRowProps) {
+  const { styles } = useStyles();
   const content = (
     <>
       <View style={styles.textColumn}>
@@ -84,6 +78,8 @@ export function SettingsValue({
   value,
   showChevron = false,
 }: SettingsValueProps) {
+  const { colors, styles } = useStyles();
+
   return (
     <View style={styles.value}>
       <Text style={styles.valueText}>{value}</Text>
@@ -109,12 +105,14 @@ export function SettingsSwitch({
   accessibilityLabel,
   accessibilityHint,
 }: SettingsSwitchProps) {
+  const { colors } = useStyles();
+
   return (
     <Switch
       value={value}
       onValueChange={onValueChange}
       disabled={disabled}
-      trackColor={{ false: colors.surfaceElevated, true: colors.primary }}
+      trackColor={{ false: colors.switchTrack, true: colors.primary }}
       thumbColor={
         Platform.OS === "android"
           ? value
@@ -131,7 +129,7 @@ export function SettingsSwitch({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = createThemedStyles((colors) => ({
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -178,4 +176,4 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textMuted,
   },
-});
+}));
