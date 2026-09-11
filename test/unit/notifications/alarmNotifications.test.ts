@@ -153,7 +153,6 @@ describe("localized weekly reconciliation", () => {
       requestExactAlarmPermission: jest.fn(async () => true),
       playAlarmSound: jest.fn(async () => {}),
       stopAlarmSound: jest.fn(async () => {}),
-      forceDismissFiring: jest.fn(async () => {}),
       addListener: jest.fn(() => ({ remove() {} })),
     };
     const registry = {

@@ -1,5 +1,6 @@
 import { alarmToSnapshot } from "@/data/conversions";
 import type { Alarm, AlarmSnapshot, Difficulty, TaskType } from "@/data/types";
+import { clearDeliveredAlarmNotifications } from "@/notifications/AlarmNotifications";
 import { getAlarmNotificationCopy } from "@/notifications/alarmNotificationCopy";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
@@ -20,7 +21,8 @@ export async function setAlarm(alarm: Alarm): Promise<void> {
   const native = getAlarmScheduler();
   const registry = useAlarmRegistrationsStore.getState();
   if (useAlarmFiringStore.getState().activeSnapshot?.alarmId === alarm.id) {
-    await native.forceDismissFiring();
+    await native.stopAlarmSound();
+    await clearDeliveredAlarmNotifications();
   }
   await native.cancelAllForAlarm(alarm.id);
 

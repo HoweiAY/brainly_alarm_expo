@@ -20,8 +20,6 @@ import androidx.core.app.ServiceCompat
 
 class AlarmSoundService : Service() {
   companion object {
-    @Volatile
-    var currentSnapshot: AlarmSnapshotData? = null
     private const val EXTRA_SOUND_URI = "soundUri"
     private const val EXTRA_HAS_SNAPSHOT = "hasSnapshot"
 
@@ -51,7 +49,6 @@ class AlarmSoundService : Service() {
     val soundUri = intent?.getStringExtra(EXTRA_SOUND_URI)
     val hasSnapshot = intent?.getBooleanExtra(EXTRA_HAS_SNAPSHOT, false) ?: false
     val snapshot = intent?.takeIf { hasSnapshot }?.let(::readSnapshot)
-    currentSnapshot = snapshot
 
     val notificationCopy = getNotificationCopy()
     ensureChannel(notificationCopy)
@@ -75,7 +72,6 @@ class AlarmSoundService : Service() {
       runCatching { player.release() }
     }
     mediaPlayer = null
-    currentSnapshot = null
     super.onDestroy()
   }
 

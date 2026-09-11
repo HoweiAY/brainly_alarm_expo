@@ -15,7 +15,6 @@ function createStubAlarmScheduler(): AlarmScheduler {
     requestExactAlarmPermission: async () => true,
     playAlarmSound: noop,
     stopAlarmSound: noop,
-    forceDismissFiring: noop,
     addListener: () => ({ remove() {} }),
   };
 }

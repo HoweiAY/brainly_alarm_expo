@@ -146,7 +146,7 @@ class AlarmSchedulerModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("AlarmScheduler")
 
-    Events("onAlarmFired", "onAlarmDismissed")
+    Events("onAlarmFired")
 
     OnCreate {
       instance = this@AlarmSchedulerModule
@@ -193,29 +193,6 @@ class AlarmSchedulerModule : Module() {
 
     AsyncFunction("stopAlarmSound") {
       AlarmSoundService.stop(context)
-    }
-
-    AsyncFunction("forceDismissFiring") {
-      val snapshot = AlarmSoundService.currentSnapshot
-      AlarmSoundService.stop(context)
-      if (snapshot != null) {
-        val payload = bundleOf(
-          "alarmId" to snapshot.alarmId,
-          "weekday" to snapshot.weekday,
-          "hour" to snapshot.hour,
-          "minute" to snapshot.minute,
-          "task" to snapshot.task,
-          "roundCount" to snapshot.roundCount,
-          "difficulty" to snapshot.difficulty,
-          "sound" to snapshot.sound,
-          "snooze" to snapshot.snooze,
-          "enabled" to snapshot.enabled,
-          "isSnoozed" to snapshot.isSnoozed,
-          "notificationTitle" to snapshot.notificationTitle,
-          "notificationBody" to snapshot.notificationBody,
-        )
-        sendEvent("onAlarmDismissed", payload)
-      }
     }
   }
 

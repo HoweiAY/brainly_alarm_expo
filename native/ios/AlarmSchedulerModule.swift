@@ -13,12 +13,11 @@ public final class AlarmSchedulerModule: Module {
   private static let deepLinkHost = "alarm"
 
   private var player: AVAudioPlayer?
-  private var playerSnapshot: AlarmSnapshotRecord?
 
   public func definition() -> ModuleDefinition {
     Name("AlarmScheduler")
 
-    Events("onAlarmFired", "onAlarmDismissed")
+    Events("onAlarmFired")
 
     AsyncFunction("scheduleWeekly") { (opts: ScheduleWeeklyOptsRecord) -> String in
       let snapshot = opts.payload
@@ -54,19 +53,11 @@ public final class AlarmSchedulerModule: Module {
     }
 
     AsyncFunction("playAlarmSound") { (soundUri: String?) in
-      try self.startPlayback(soundUri: soundUri, snapshot: nil)
+      try self.startPlayback(soundUri: soundUri)
     }
 
     AsyncFunction("stopAlarmSound") {
       self.stopPlayback()
-    }
-
-    AsyncFunction("forceDismissFiring") {
-      let snapshot = self.playerSnapshot
-      self.stopPlayback()
-      if let snapshot {
-        self.sendEvent("onAlarmDismissed", Self.eventPayload(from: snapshot))
-      }
     }
 
     OnDestroy {
@@ -110,13 +101,10 @@ public final class AlarmSchedulerModule: Module {
     try UNUserNotificationCenter.current().add(request)
   }
 
-  private func startPlayback(soundUri: String?, snapshot: AlarmSnapshotRecord?) throws {
+  private func startPlayback(soundUri: String?) throws {
     stopPlayback()
     guard let soundUri, let url = URL(string: soundUri), FileManager.default.fileExists(atPath: url.path) else {
       // No custom sound: rely on the notification's `.default` sound.
-      if let snapshot {
-        playerSnapshot = snapshot
-      }
       return
     }
     try AVAudioSession.sharedInstance().setCategory(.alarm, mode: .default, options: [])
@@ -125,15 +113,11 @@ public final class AlarmSchedulerModule: Module {
     player?.numberOfLoops = -1
     player?.prepareToPlay()
     player?.play()
-    if let snapshot {
-      playerSnapshot = snapshot
-    }
   }
 
   private func stopPlayback() {
     player?.stop()
     player = nil
-    playerSnapshot = nil
     try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
   }
 
