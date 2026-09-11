@@ -13,17 +13,17 @@ import androidx.core.app.NotificationCompat
 
 object AlarmNotificationManager {
   const val NOTIFICATION_ID = 4269
-  private const val CHANNEL_ID = "brainly_alarm_id"
+  private const val LEGACY_CHANNEL_ID = "brainly_alarm_id"
+  private const val FOREGROUND_CHANNEL_ID = "brainly_alarm_foreground"
 
   fun syncChannel(context: Context, channelName: String) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
     val manager = context.getSystemService(NotificationManager::class.java)
-    val existing = manager.getNotificationChannel(CHANNEL_ID)
-    if (existing != null && existing.sound != null) {
-      manager.deleteNotificationChannel(CHANNEL_ID)
+    manager.getNotificationChannel(LEGACY_CHANNEL_ID)?.let {
+      manager.deleteNotificationChannel(LEGACY_CHANNEL_ID)
     }
     val channel = NotificationChannel(
-      CHANNEL_ID,
+      FOREGROUND_CHANNEL_ID,
       channelName,
       NotificationManager.IMPORTANCE_HIGH,
     ).apply {
@@ -60,7 +60,7 @@ object AlarmNotificationManager {
     )
     val title = snapshot?.notificationTitle?.takeIf { it.isNotBlank() } ?: copy.title
     val body = snapshot?.notificationBody?.takeIf { it.isNotBlank() } ?: copy.body
-    return NotificationCompat.Builder(context, CHANNEL_ID)
+    return NotificationCompat.Builder(context, FOREGROUND_CHANNEL_ID)
       .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
       .setContentTitle(title)
       .setContentText(body)
