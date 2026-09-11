@@ -1,5 +1,5 @@
-import { getAlarmScheduler } from "@/alarms/AlarmScheduler";
 import { stopAlarmSound } from "@/alarms/sound";
+import { clearDeliveredAlarmNotifications } from "@/notifications/AlarmNotifications";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { useRouter } from "expo-router";
 import { useCallback, useRef } from "react";
@@ -12,7 +12,7 @@ export function useAlarmDismissal() {
     dismissingRef.current = true;
     await Promise.allSettled([
       stopAlarmSound(),
-      getAlarmScheduler().forceDismissFiring(),
+      clearDeliveredAlarmNotifications(),
     ]);
     useAlarmFiringStore.getState().clearActive();
     router.dismissTo("/(main)");

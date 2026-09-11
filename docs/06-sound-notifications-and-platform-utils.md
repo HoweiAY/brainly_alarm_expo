@@ -119,6 +119,8 @@ Resolves the human-readable filename (e.g. `"morning_alarm.mp3"`) for display in
 
 ## 3. Notifications
 
+Sections 3.1–3.3 describe the original Android app. Section 3.4 specifies the implemented Expo architecture.
+
 ### 3.1 Channel
 
 Created in `MainActivity.createNotificationChannel()` (runs on every `onCreate`):
@@ -162,12 +164,25 @@ nm.cancel(1)
 
 So the alarm notification clears as soon as the user foregrounds the app.
 
-### 3.4 RN/Expo Mapping
+### 3.4 Expo Implementation
 
-- Use `expo-notifications` `setNotificationChannelAsync({ id: "brainly_alarm_id", name: "brainly_alarm", importance: "max" })` on Android.
-- For the firing notification, use `Notifications.scheduleNotificationAsync` for the trigger (see the scheduling doc) and a foreground `Notifications.presentScheduledNotificationAsync`-style path for the immediate fire.
-- Set `categoryIdentifier: UNNotificationCategoryAlarm` on iOS (iOS 15+) so the notification bypasses Focus/DND.
-- Cancel on app foreground via `Notifications.dismissNotificationAsync("1")` in an `AppState` listener.
+#### Android ownership
+
+- `AlarmNotificationManager.kt` is the single owner of Android channel creation and foreground-notification construction. `AlarmSoundService` delegates notification work to it and remains responsible only for foreground-service/audio lifecycle.
+- Channel id remains `"brainly_alarm_id"`. The manager configures `IMPORTANCE_HIGH`, vibration, DND bypass request, public lock-screen visibility, no badge, and `sound = null`; the foreground notification uses id `4269`, `CATEGORY_ALARM`, `PRIORITY_MAX`, full-screen/content deep-link intents, and `ongoing = true`.
+- `AlarmReceiver` validates the firing snapshot, starts `AlarmSoundService`, launches the alarm deep link, and emits `onAlarmFired` when the React Native module instance is available. There is no native `onAlarmDismissed` event; JS dismissal directly stops sound and clears delivered notifications.
+
+#### Localization and channel synchronization
+
+- `src/notifications/alarmNotificationCopy.ts` contains pure i18n copy lookup and has no Expo side effects. Snapshot creation stores localized title/body so scheduled alarms retain the copy selected when they were registered.
+- Native boot/service paths cannot rely on React Native. `AlarmNotificationCopy.kt` therefore stores supported fallback values in a locale-keyed hash map and resolves missing/unsupported language keys to English.
+- `src/notifications/AlarmNotifications.ts` owns the Expo foreground handler, permission checks, native channel synchronization, and delivered-notification cleanup; `useAlarmNotifications` owns received/response subscriptions. `syncAlarmNotificationChannel()` delegates the active localized channel name to native `syncNotificationChannel(channelName)` rather than configuring the same Android channel a second time through Expo.
+- Initialization synchronizes the native channel before checking notification permission, then requests permission only when it is neither granted nor provisionally authorized. Changing language synchronizes the channel and reconciles weekly schedule snapshots.
+
+#### Cross-platform delivery
+
+- Android exact wake-up and foreground notification delivery are native. Expo notification received/response listeners remain for the iOS local-notification path and route valid snapshots into the same alarm activation flow.
+- `clearDeliveredAlarmNotifications()` runs after notification responses, native dismissal flows, and app foreground transitions. Alarm sound is controlled separately through `playAlarmSound` / `stopAlarmSound`.
 
 ## 4. Room Type Converter — `TypeConverter`
 
@@ -221,9 +236,9 @@ From `AndroidManifest.xml`:
 
 ### RN Port Permission Plan
 
-| Permission                                      | Expo module                                                                                                                                                                                                                                  |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Notifications + alarm scheduling                | `expo-notifications` + a custom native module for exact wake-up alarms. Request `SCHEDULE_EXACT_ALARM` via the Android exact-alarm permission flow.                                                                                          |
-| Audio file access                               | `expo-document-picker` (no persistent storage permission needed on modern Android) **or** `expo-media-library` if reading from the user's music library. Prefer the picker + copy-to-sandbox approach to avoid storage permissions entirely. |
-| Foreground service for alarm playback (Android) | A custom native module running a foreground service while the alarm rings.                                                                                                                                                                   |
-| Override DND / silent                           | Android: use `CATEGORY_ALARM` + the alarm audio stream. iOS: `AVAudioSessionCategory(Ambient/Playback)` + `mixWithOthers = false`; document the silent-switch limitation.                                                                    |
+| Permission                                      | Expo module                                                                                                                                                                                                                                               |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Notifications + alarm scheduling                | `expo-notifications` checks/requests notification authorization and observes iOS delivery; the native scheduler owns Android exact wake-up alarms and channel configuration. `requestExactAlarmPermission()` opens the Android exact-alarm settings flow. |
+| Audio file access                               | `expo-document-picker` + sandbox copy avoids persistent storage permissions on modern Android.                                                                                                                                                            |
+| Foreground service for alarm playback (Android) | `AlarmSoundService` keeps playback alive while `AlarmNotificationManager` supplies its required ongoing foreground notification.                                                                                                                          |
+| Override DND / silent                           | Android uses `CATEGORY_ALARM`, a silent high-importance channel, and `AudioAttributes.USAGE_ALARM` for the separate looping player. iOS retains platform silent/Focus limitations.                                                                        |

@@ -12,23 +12,22 @@ private const val TAG = "AlarmScheduling"
 fun buildFirePendingIntent(
   context: Context,
   snapshot: AlarmSnapshotData,
-  create: Boolean,
 ): PendingIntent {
   val intent = Intent(context, AlarmReceiver::class.java).apply {
     action = ACTION_ALARM_FIRE
     putSnapshot(this, snapshot)
   }
-  val flags = if (create) {
-    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-  } else {
-    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE
-  }
-  return PendingIntent.getBroadcast(context, snapshot.identifier.hashCode(), intent, flags)
+  return PendingIntent.getBroadcast(
+    context,
+    snapshot.identifier.hashCode(),
+    intent,
+    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+  )
 }
 
 fun scheduleAlarmAt(context: Context, snapshot: AlarmSnapshotData, triggerAt: Long) {
   val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-  val pendingIntent = buildFirePendingIntent(context, snapshot, create = true)
+  val pendingIntent = buildFirePendingIntent(context, snapshot)
   try {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && am.canScheduleExactAlarms()) {
       am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)

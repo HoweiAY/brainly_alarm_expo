@@ -23,7 +23,7 @@ This repository is the **Expo-first re-implementation** of that original app. Th
 - **Flexible scheduling** — pick a time with the wheel picker and choose specific weekdays; leaving all days unselected rings every day.
 - **Customizable tasks** — configure the number of rounds (1–5) and difficulty (Easy / Normal / Hard) per alarm.
 - **Alarm sound support** — alarms play the device's default alarm tone; the data model and native player support custom audio URIs.
-- **Snooze** — optional snooze that re-triggers the alarm 5 minutes later.
+- **Snooze** — optional snooze that re-triggers the alarm after the user-configured duration (1–60 minutes, default 5).
 - **Exact, wake-up alarms** — precise scheduling that wakes the device, with automatic re-arming after device reboot (Android, via a custom native module).
 - **Alarm notifications & deep links** — a high-priority notification fires with the alarm; tapping it opens the full-screen ringing screen directly.
 - **Local persistence** — all alarms are stored on-device in SQLite with versioned migrations.
@@ -58,7 +58,7 @@ This repository is the **Expo-first re-implementation** of that original app. Th
 | Persistence      | [expo-sqlite](https://docs.expo.dev/versions/latest/sdk/sqlite/) + [Drizzle ORM](https://orm.drizzle.team) (`drizzle-orm/expo-sqlite`), drizzle-kit migrations                              |
 | Localization     | [`i18next`](https://www.i18next.com/) + [`react-i18next`](https://react.i18next.com/) + [`expo-localization`](https://docs.expo.dev/versions/latest/sdk/localization/) (English & 繁體中文) |
 | Alarm scheduling | Custom Expo native module (`alarm-scheduler`) — Kotlin on Android (`AlarmManager`, wake-up broadcasts, boot receiver), Swift on iOS                                                         |
-| Notifications    | `expo-notifications` + deep links (`brainlyalarmexpo://alarm`)                                                                                                                              |
+| Notifications    | Native Android `AlarmNotificationManager` + `expo-notifications` permission/listener APIs + deep links (`brainlyalarmexpo://alarm`)                                                         |
 | Sensors          | `expo-sensors` (Accelerometer) for the shake task                                                                                                                                           |
 | Math evaluation  | [`expr-eval`](https://github.com/silentmatt/expr-eval) (safe expression parsing — no `eval`)                                                                                                |
 | UI               | `@expo/ui`, Lucide icons (`@react-native-vector-icons/lucide`), Geist font family                                                                                                           |
@@ -66,6 +66,8 @@ This repository is the **Expo-first re-implementation** of that original app. Th
 | Tooling          | ESLint (`eslint-config-expo`), Prettier, Husky + lint-staged, TypeScript                                                                                                                    |
 
 > **Note on iOS:** iOS does not allow third-party apps to schedule exact wake-up alarms, so alarm behavior is degraded there compared to Android. This is a platform limitation, not a bug.
+
+On Android, `AlarmNotificationManager` is the single owner of the alarm notification channel and foreground notification. `AlarmSoundService` only manages foreground-service and audio-playback lifecycle. The TypeScript notification layer keeps localized copy separate from Expo side effects, delegates localized channel synchronization to the native module before requesting notification permission, and uses Expo listeners for notification receipt/response handling. Native boot and service paths resolve localized fallback copy from a locale-keyed map and default to English when the persisted language is missing or unsupported.
 
 ## Get Started
 
@@ -204,7 +206,7 @@ brainly_alarm_expo/
 │   ├── hooks/                # Shared hooks (useAlarmDismissal, useAlarmNotifications, ...)
 │   ├── i18n/                 # Localization: i18next instance, device-language resolver,
 │   │                         #   supported-language catalog, locale resources (en, zh-Hant)
-│   ├── notifications/        # Alarm notification channel & content
+│   ├── notifications/        # Pure localized copy + notification runtime integration
 │   ├── settings/             # User-settings helpers (snooze parsing/clamping,
 │   │                         #   normalization to UserSettings defaults)
 │   ├── store/                # Zustand stores (alarmStore, alarmFiringStore,
@@ -214,8 +216,8 @@ brainly_alarm_expo/
 │   └── utils/                # Time helpers
 │
 ├── native/                   # Custom "alarm-scheduler" Expo native module
-│   ├── android/              #   Kotlin: AlarmSchedulerModule, AlarmReceiver,
-│   │                         #   AlarmSoundService, BootReceiver
+│   ├── android/              #   Kotlin: scheduler/receivers, notification manager,
+│   │                         #   localized fallback copy, foreground sound service
 │   ├── ios/                  #   Swift: AlarmSchedulerModule
 │   └── app.plugin.js         #   Expo config plugin
 │

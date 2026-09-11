@@ -1,22 +1,18 @@
+import { getAlarmScheduler } from "@/alarms/AlarmScheduler";
 import {
   parseAlarmSnapshot,
   resetAlarm,
   snapshotToQueryParams,
 } from "@/alarms/scheduling";
-import { getAlarmScheduler } from "@/alarms/AlarmScheduler";
-import {
-  playAlarmSound,
-  stopAlarmSound,
-  soundUriFromSnapshot,
-} from "@/alarms/sound";
+import { playAlarmSound, soundUriFromSnapshot } from "@/alarms/sound";
+import type { AlarmSnapshot } from "@/data/types";
 import {
   clearDeliveredAlarmNotifications,
   initAlarmNotifications,
 } from "@/notifications/AlarmNotifications";
-import type { AlarmSnapshot } from "@/data/types";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
-import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
+import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import { AppState } from "react-native";
 
@@ -46,16 +42,9 @@ function navigateToAlarm(
   }
 }
 
-export async function dismissOldAlarmIfActive(
-  incoming?: AlarmSnapshot,
-): Promise<void> {
+export async function resetOldAlarm(incoming: AlarmSnapshot): Promise<void> {
   const oldSnapshot = useAlarmFiringStore.getState().activeSnapshot;
-  if (!oldSnapshot) return;
-  if (incoming && incoming.alarmId === oldSnapshot.alarmId) return;
-  if (!incoming) {
-    await stopAlarmSound();
-    await getAlarmScheduler().forceDismissFiring();
-  }
+  if (!oldSnapshot || incoming.alarmId === oldSnapshot.alarmId) return;
   await resetAlarm(oldSnapshot);
 }
 
@@ -68,7 +57,7 @@ async function activateAlarmForNotification(
   if (activeActivationId === snapshot.alarmId) return;
   activeActivationId = snapshot.alarmId;
   try {
-    await dismissOldAlarmIfActive(snapshot);
+    await resetOldAlarm(snapshot);
     useAlarmFiringStore.getState().setActive(snapshot);
     if (shouldPlaySound) {
       await playAlarmSound(soundUriFromSnapshot(snapshot));
@@ -92,13 +81,6 @@ export function useAlarmNotifications() {
       "onAlarmFired",
       (snapshot) => {
         void activateAlarmForNotification(snapshot, router, false, false);
-      },
-    );
-
-    const dismissedSub = getAlarmScheduler().addListener(
-      "onAlarmDismissed",
-      () => {
-        void clearDeliveredAlarmNotifications();
       },
     );
 
@@ -130,7 +112,6 @@ export function useAlarmNotifications() {
 
     return () => {
       firedSub.remove();
-      dismissedSub.remove();
       receivedSub.remove();
       responseSub.remove();
       appStateSub.remove();

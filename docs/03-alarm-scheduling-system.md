@@ -148,16 +148,28 @@ Used by every task-completion path and by the None/turn-off path to return the u
 
 ## 8. Notification Channel
 
+### 8.1 Original Android app
+
 - Created in `MainActivity.createNotificationChannel()`:
   - id: `"brainly_alarm_id"`
   - name: `"brainly_alarm"`
   - importance: `IMPORTANCE_HIGH`
 - The alarm notification uses id `1` and is cancelled in `MainActivity.onResume` so it disappears when the user opens the app.
 
+### 8.2 Expo implementation
+
+- `AlarmNotificationManager` is the single Android owner of channel configuration and foreground-notification construction. This keeps channel creation available to boot and alarm-fire paths that run before React Native is loaded.
+- The channel retains id `"brainly_alarm_id"`, `IMPORTANCE_HIGH`, vibration, DND bypass request, public lock-screen visibility, no badge, and no notification sound. Alarm audio is played separately by `AlarmSoundService` on `USAGE_ALARM`.
+- `AlarmSoundService` uses foreground notification id `4269` and delegates notification creation to the manager.
+- `syncNotificationChannel(channelName)` lets the TypeScript notification service update the localized channel name through the native owner. Initialization synchronizes the channel before checking/requesting notification permission, as required for the Android 13 permission flow.
+- Notification snapshots carry localized `notificationTitle` and `notificationBody`. Native boot/service fallbacks are held in a locale-keyed map (`"en"`, `"zh-Hant"`) with English as the default for missing or unsupported languages.
+- JS dismissal directly stops playback and clears delivered notifications. The redundant `forceDismissFiring` method and `onAlarmDismissed` event are not part of the bridge; `onAlarmFired` is the only native event.
+
 ## 9. Manifest Registration
 
 - `AlarmReceiver` is declared `exported=true`, `directBootAware=true`, with an intent filter for `BOOT_COMPLETED`.
   > The receiver listens for boot, but **no boot-handling logic actually re-schedules alarms**. After a device reboot, previously scheduled `PendingIntent`s survive (they are OS-managed), but alarms that were due while the device was off are dropped. **A RN port should implement explicit re-arming on boot via a persisted alarm list.**
+- The Expo implementation addresses this gap with a dedicated `BootReceiver`, which reads enabled alarms and the persisted language from the shared SQLite database, resolves localized notification fallback copy, and re-registers each weekly occurrence through the same scheduling functions used by the native module.
 
 ## 10. Mapping to React Native + Expo
 
@@ -170,33 +182,43 @@ Used by every task-completion path and by the None/turn-off path to return the u
 | Boot re-arming                           | Persist alarm list in SQLite; on `BOOT_COMPLETED` re-register all enabled alarms                         | Requires a native module + persisted store; not implemented in the original Kotlin app (https://github.com/HoweiAY/brainly-alarm).                                                                                                                                                                                                                                             |
 | 5-minute snooze                          | Re-schedule a one-shot alarm `now + N min`                                                               | Direct equivalent. In the RN port `N` is the user-configurable **snooze duration** setting (1–60 minutes, default 5) persisted in the `settings` table and read via `settingsStore` in `snoozeAlarm()` (`src/alarms/scheduling.ts`). The trigger time is computed in JS (`snoozeTriggerTime`) and passed to the native module as `triggerAt`, so no native changes are needed. |
 
-### 10.1 Suggested RN Module API
+### 10.1 Implemented RN Module API
 
 ```ts
-interface NativeAlarm {
-  // Schedule one fire for a given (alarmId, weekday) at HH:MM.
-  // Returns the OS identifier used to cancel later.
-  schedule(opts: {
-    alarmId: number;
-    weekday: number; // 1..7 (Cal-style) or 0..6 — pick a convention
+interface AlarmScheduler {
+  scheduleWeekly(opts: {
+    identifier: string;
+    weekday: number; // Mon=0 .. Sun=6
     hour: number;
     minute: number;
-    soundUri: string | null;
     payload: AlarmSnapshot;
+  }): Promise<string>;
+
+  scheduleOneShot(opts: {
+    identifier: string;
     triggerAt: number; // epoch ms
+    payload: AlarmSnapshot;
   }): Promise<string>;
 
   cancel(identifier: string): Promise<void>;
-  cancelAllForAlarm(alarmId: number): Promise<void>;
-  rescheduleWeekly(alarm: Alarm): Promise<void>;
-  snooze(alarm: Alarm, minutes: number): Promise<void>;
+  cancelAllForAlarm(alarmId: string): Promise<void>;
+  requestExactAlarmPermission(): Promise<boolean>;
+  syncNotificationChannel(channelName: string): Promise<void>;
+  playAlarmSound(soundUri: string | null): Promise<void>;
+  stopAlarmSound(): Promise<void>;
+  addListener(
+    type: "onAlarmFired",
+    callback: (payload: AlarmSnapshot) => void,
+  ): EventSubscription;
 }
 ```
 
-### 10.2 Critical Gaps to Address in the Port
+`identifier` and `payload` are the canonical schedule inputs. The bridge no longer repeats `alarmId` or `soundUri` beside the payload; Android derives a custom playback URI from `payload.sound` and maps `"Default"` to the system alarm tone. Weekly rescheduling and snooze orchestration remain TypeScript responsibilities in `src/alarms/scheduling.ts` rather than native bridge methods.
 
-1. **iOS exact alarms** — iOS has no exact-alarm primitive; design the iOS experience around `UNTimeIntervalNotificationTrigger` + a foreground dismissal task, or accept a degraded experience.
-2. **Doze / battery optimizations** — must request the Android "ignore battery optimizations" / exact-alarm permission at runtime (`SCHEDULE_EXACT_ALARM`). Expo exposes this via `expo-notifications` + permissions.
-3. **Boot persistence** — schedule reconstruction after reboot is missing in the current app and must be implemented.
-4. **Stale-alarm guard** — replicate the `today == day && hour == currentHour && minute == currentMinute` check so a backlog of missed alarms does not all fire at once when the device wakes.
-5. **Sound over DND / silent** — alarm sounds must honor the "Alarm" audio category, not media. `expo-av` may need native configuration to route to the alarm stream.
+### 10.2 Implementation Constraints and Status
+
+1. **iOS exact alarms** — iOS has no exact-alarm primitive; the Swift implementation uses `UNCalendarNotificationTrigger` / `UNTimeIntervalNotificationTrigger` and accepts degraded delivery behavior.
+2. **Doze / exact-alarm permission** — Android scheduling uses `AlarmManager`; `requestExactAlarmPermission()` opens the platform exact-alarm settings flow on Android 12+ when required and scheduling falls back to inexact delivery if permission is unavailable.
+3. **Boot persistence** — implemented by `BootReceiver` using the persisted SQLite alarm rows.
+4. **Stale-alarm guard** — implemented in `AlarmReceiver`; weekly alarms fire only when weekday/hour/minute match, while snoozed one-shots bypass the guard.
+5. **Sound over DND / silent** — Android playback runs in `AlarmSoundService` with `AudioAttributes.USAGE_ALARM`; the notification itself is silent to avoid duplicate sound.

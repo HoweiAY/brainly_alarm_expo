@@ -5,7 +5,7 @@ import {
 } from "@/alarms/scheduling";
 import { DEFAULT_USER_SETTINGS } from "@/data/constants";
 import {
-  dismissOldAlarmIfActive,
+  resetOldAlarm,
   useAlarmNotifications,
 } from "@/hooks/useAlarmNotifications";
 import { i18n } from "@/i18n";
@@ -72,7 +72,7 @@ function handleAlarmUrl(
   void (async () => {
     const alarm = await useAlarmStore.getState().getAlarmById(snapshot.alarmId);
     if (!alarm) return;
-    await dismissOldAlarmIfActive(snapshot);
+    await resetOldAlarm(snapshot);
     useAlarmFiringStore.getState().setActive(snapshot);
     router.replace({
       pathname: "/alarm",

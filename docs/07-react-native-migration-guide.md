@@ -28,43 +28,54 @@ The following native capabilities have no Expo/React-Native cross-platform equiv
 
 ```ts
 interface AlarmScheduler {
-  // Schedule one exact wake-up alarm for (alarmId, weekday) at HH:MM next occurrence.
   scheduleWeekly(opts: {
-    alarmId: number;
-    weekday: number; // 0=Sun .. 6=Sat  (pick a convention; Cal uses 1..7)
+    identifier: string;
+    weekday: number; // Mon=0 .. Sun=6
     hour: number; // 0..23
     minute: number; // 0..59
-    soundUri: string | null;
     payload: AlarmSnapshot;
-  }): Promise<string>; // returns OS identifier
+  }): Promise<string>;
 
-  // One-shot alarm at absolute epoch ms (used by snooze: now + 5min).
   scheduleOneShot(opts: {
-    alarmId: number;
+    identifier: string;
     triggerAt: number; // epoch ms
-    soundUri: string | null;
     payload: AlarmSnapshot;
   }): Promise<string>;
 
   cancel(identifier: string): Promise<void>;
-  cancelAllForAlarm(alarmId: number): Promise<void>;
-  rescheduleWeekly(alarm: Alarm): Promise<void>;
-  requestExactAlarmPermission(): Promise<boolean>; // Android 12+ SCHEDULE_EXACT_ALARM
+  cancelAllForAlarm(alarmId: string): Promise<void>;
+  requestExactAlarmPermission(): Promise<boolean>;
+  syncNotificationChannel(channelName: string): Promise<void>;
+  playAlarmSound(soundUri: string | null): Promise<void>;
+  stopAlarmSound(): Promise<void>;
+  addListener(
+    type: "onAlarmFired",
+    callback: (payload: AlarmSnapshot) => void,
+  ): EventSubscription;
 }
 ```
 
-- **Android:** wraps `AlarmManager.setExactAndAllowWhileIdle(RTC_WAKEUP, ...)`, one scheduled request per (alarmId, weekday) using the same `"${alarmId}${weekday}".hashCode()` scheduling-identifier scheme as the Kotlin app (doc 03 §2). On fire, send a broadcast that (a) starts a background playback task to loop the alarm sound and (b) posts a high-priority alarm notification that opens the app on `AlarmDisplay`.
-- **iOS:** no exact alarms. Use `UNCalendarNotificationTrigger` with `repeats: true` per weekday, accept the ~64-scheduled-notification limit, and a degraded UX (notification sound only; user opens app to perform the dismissal task). Document this limitation clearly.
-- **Boot persistence:** on device reboot (Android), re-register every enabled alarm from the SQLite store. The original Kotlin app (https://github.com/HoweiAY/brainly-alarm) does **not** do this — the RN port should fix it.
+- `identifier` and `payload` are canonical. Schedule options do not repeat `alarmId` or `soundUri`; Android derives its custom playback URI from `payload.sound` (`"Default"` selects the system alarm tone).
+- **Android:** wraps `AlarmManager`, one request per `"$alarmId:$weekday"` identifier (hashed for the `PendingIntent` request code). `AlarmReceiver` applies the stale guard, starts `AlarmSoundService`, launches the deep link, and emits `onAlarmFired`. `AlarmNotificationManager` owns the channel and foreground notification.
+- **iOS:** has no exact-alarm API. It uses `UNCalendarNotificationTrigger` / `UNTimeIntervalNotificationTrigger`, accepts the scheduled-notification limit and degraded delivery guarantees, and handles received/responses through Expo listeners.
+- **Boot persistence:** `BootReceiver` reads enabled alarms and language from SQLite and re-registers weekly schedules without requiring React Native to load.
+- Weekly rescheduling and snooze remain orchestration functions in `src/alarms/scheduling.ts`, not native bridge methods. Alarm dismissal calls `stopAlarmSound()` and clears delivered notifications directly; the bridge does not expose a dismissed event.
 
-### 2.2 `AlarmSoundModule` (or fold into `AlarmSchedulerModule`)
+### 2.2 Alarm Sound API (folded into `AlarmSchedulerModule`)
 
-- Loop an alarm sound (asset or local file URI) on the alarm audio stream, overriding silent/DND where the platform allows.
-- Singleton lifecycle (load on play, release on stop) matching `AlarmSoundManager`.
+- `playAlarmSound` / `stopAlarmSound` expose native looping playback through the shared scheduler bridge.
+- Android `AlarmSoundService` owns only foreground-service and `MediaPlayer` lifecycle, routes playback through `AudioAttributes.USAGE_ALARM`, and releases the player on stop.
+- iOS uses `AVAudioPlayer` only while the app is active and otherwise relies on notification sound, preserving the documented degraded behavior.
 
-### 2.3 Background Playback (Android)
+### 2.3 Android Notification Ownership
 
-While an alarm is ringing, run a background playback task so the sound keeps playing even if the user backgrounds the app, and so the system does not kill the process mid-task.
+- `AlarmNotificationManager` is the single owner of channel configuration and foreground-notification construction. Both JS channel synchronization and `AlarmSoundService` delegate to it.
+- `AlarmNotificationCopy.kt` stores native English and Traditional Chinese fallback values in a locale-keyed hash map; English is the default for unknown/missing language keys so boot and service paths work without React Native.
+- TypeScript keeps pure localized copy in `src/notifications/alarmNotificationCopy.ts` and Expo/runtime integration in `src/notifications/AlarmNotifications.ts`. The latter synchronizes the native channel before permission checks and avoids duplicate permission requests when authorization is already granted or provisional.
+
+### 2.4 Background Playback (Android)
+
+While an alarm is ringing, `AlarmSoundService` runs as a foreground media-playback service so the sound keeps playing if the user backgrounds the app. Its required ongoing notification is produced by `AlarmNotificationManager`.
 
 ## 3. Recommended Project Structure
 
@@ -111,15 +122,20 @@ src/
 │  ├─ AlarmScheduler.ts            # wraps the native module
 │  ├─ scheduling.ts               # setAlarm/cancelAlarm/resetAlarm/snooze logic
 │  └─ sound.ts                    # AlarmSoundManager equivalent (over the native module)
+├─ notifications/
+│  ├─ alarmNotificationCopy.ts    # pure localized notification copy
+│  └─ AlarmNotifications.ts       # Expo handler, permission, channel-sync, dismissal APIs
 ├─ tasks/
 │  ├─ memoryGame.ts                # game loop helpers (pure, testable)
 │  ├─ mathEquation.ts             # generateEquation + evaluateExpression (pure)
 │  └─ phoneShaking.ts            # threshold/debounce constants + shake counter
-├─ utils/
-│  ├─ time.ts                     # HH:mm formatting, weekday deltas, next-alarm countdown
-│  └─ permissions.ts
-└─ native/
-   └─ alarm-scheduler/             # the Expo native module (TS + Kotlin/Swift)
+└─ utils/
+   ├─ time.ts                     # HH:mm formatting, weekday deltas, next-alarm countdown
+   └─ permissions.ts
+native/
+├─ index.ts                        # shared TypeScript bridge contract
+├─ android/                        # scheduler, receivers, notification manager, sound service
+└─ ios/                            # degraded notification scheduling and foreground playback
 ```
 
 ## 4. State Management Strategy
@@ -141,31 +157,33 @@ export type Difficulty = "Easy" | "Normal" | "Hard";
 export type AppColorScheme = "dark" | "light";
 
 export interface Alarm {
-  id: number; // auto-increment PK
+  id: string;
   days: Weekday[]; // [] === every day (resolved at schedule time)
   hour: number; // 0..23
   minute: number; // 0..59
   task: TaskType;
   rounds: number; // 1..5
   difficulty: Difficulty;
-  sound: string; // "Default" or a file:// URI inside the sandbox
+  sound: string | null; // null = system default; otherwise sandbox file URI
   snooze: boolean;
   enabled: boolean;
 }
 
 // The serialized snapshot carried by the native scheduler / notification payload.
 export interface AlarmSnapshot {
-  alarmId: number;
-  weekday: number; // 0..6 (platform-calendar-style)
+  alarmId: string;
+  weekday: number; // Mon=0 .. Sun=6
   hour: number;
   minute: number;
   task: TaskType;
   roundCount: number;
   difficulty: Difficulty;
-  sound: string;
+  sound: string; // "Default" or sandbox file URI
   snooze: boolean;
   enabled: boolean;
   isSnoozed: boolean;
+  notificationTitle: string;
+  notificationBody: string;
 }
 
 // User preferences persisted as a single JSON row in the `settings` table.
@@ -207,7 +225,7 @@ export interface UserSettings {
 
 ### Phase 3 — Sound + notifications (1 week)
 
-- `expo-notifications` channel setup.
+- Native Android channel/foreground-notification ownership via `AlarmNotificationManager`; Expo permission and iOS notification listener setup.
 - Custom audio picking via `expo-document-picker` + sandbox copy (fixes the persisted-URI bug).
 - Looping alarm sound on the alarm audio stream; verify DND/silent behavior.
 

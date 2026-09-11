@@ -1,4 +1,4 @@
-import { getAlarmNotificationCopy } from "@/notifications/AlarmNotifications";
+import { getAlarmNotificationCopy } from "@/notifications/alarmNotificationCopy";
 import {
   difficultyToIndex,
   indexToDifficulty,

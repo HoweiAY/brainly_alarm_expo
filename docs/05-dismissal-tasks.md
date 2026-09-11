@@ -245,7 +245,7 @@ When `alarm.task == "None"` (the 4th entry of `taskTypes`):
 
 ## 5. Cross-Task Conventions for the RN Port
 
-1. **Shared completion handler** — implement a single `useAlarmDismissal()` hook that wraps `stopAlarmSound()` + the native alarm-completion callback (the RN equivalent of `onAlarmDismissed`). All tasks call it.
+1. **Shared completion handler** — use a single `useAlarmDismissal()` hook that stops native alarm sound, clears delivered notifications and active firing state, then dismisses the alarm modal to `/(main)`. All tasks call it; no native alarm-completion callback/event is needed.
 2. **Round/difficulty parsing** — pass `rounds` and `difficulty` via route params and validate against the same constant enums (`taskDifficulties`, `taskTypes`).
 3. **Difficulty-aware configuration** — keep the difficulty→grid-size / operand-count tables identical so difficulty semantics are preserved across platforms.
 4. **exp4j replacement** — use a controlled-expression evaluator; the generator only ever emits `[0-9]`, `+`, `-`, `*`, and spaces, so a strict regex validation + `Function("return " + expr)` is safe.

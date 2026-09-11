@@ -1,13 +1,13 @@
 import { alarmToSnapshot } from "@/data/conversions";
 import type { Alarm, AlarmSnapshot, Difficulty, TaskType } from "@/data/types";
-import { getAlarmNotificationCopy } from "@/notifications/AlarmNotifications";
+import { clearDeliveredAlarmNotifications } from "@/notifications/AlarmNotifications";
+import { getAlarmNotificationCopy } from "@/notifications/alarmNotificationCopy";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
 import { useAlarmStore } from "@/store/alarmStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import dayjs from "dayjs";
 import { getAlarmScheduler } from "./AlarmScheduler";
-import { soundUriFromSnapshot } from "./sound";
 import {
   expandWeekdays,
   identifierFor,
@@ -16,19 +16,12 @@ import {
   snoozeTriggerTime,
 } from "./weeklyTrigger";
 
-export {
-  expandWeekdays,
-  identifierFor,
-  nextWeeklyTriggerTime,
-  snoozeIdentifierFor,
-  snoozeTriggerTime,
-};
-
 export async function setAlarm(alarm: Alarm): Promise<void> {
   const native = getAlarmScheduler();
   const registry = useAlarmRegistrationsStore.getState();
   if (useAlarmFiringStore.getState().activeSnapshot?.alarmId === alarm.id) {
-    await native.forceDismissFiring();
+    await native.stopAlarmSound();
+    await clearDeliveredAlarmNotifications();
   }
   await native.cancelAllForAlarm(alarm.id);
 
@@ -45,11 +38,9 @@ export async function setAlarm(alarm: Alarm): Promise<void> {
     const payload = alarmToSnapshot(alarm, weekday, false);
     await native.scheduleWeekly({
       identifier,
-      alarmId: alarm.id,
       weekday,
       hour: alarm.hour,
       minute: alarm.minute,
-      soundUri: alarm.sound,
       payload,
     });
   }
@@ -60,11 +51,6 @@ export async function cancelAlarm(alarm: { id: string }): Promise<void> {
   const native = getAlarmScheduler();
   await native.cancelAllForAlarm(alarm.id);
   await useAlarmRegistrationsStore.getState().removeForAlarm(alarm.id);
-}
-
-export async function rescheduleWeekly(alarm: Alarm): Promise<void> {
-  await cancelAlarm(alarm);
-  await setAlarm(alarm);
 }
 
 export async function resetAlarm(snapshot: AlarmSnapshot): Promise<void> {
@@ -88,9 +74,7 @@ export async function resetAlarm(snapshot: AlarmSnapshot): Promise<void> {
     const payload: AlarmSnapshot = { ...snapshot, isSnoozed: false };
     await native.scheduleOneShot({
       identifier,
-      alarmId: snapshot.alarmId,
       triggerAt,
-      soundUri: soundUriFromSnapshot(snapshot),
       payload,
     });
   }
@@ -115,9 +99,7 @@ export async function snoozeAlarm(
   const payload: AlarmSnapshot = { ...snapshot, isSnoozed: true };
   await native.scheduleOneShot({
     identifier,
-    alarmId: snapshot.alarmId,
     triggerAt,
-    soundUri: soundUriFromSnapshot(snapshot),
     payload,
   });
   await registry.upsert(snapshot.alarmId, "snooze");
@@ -155,11 +137,9 @@ export async function reconcileSchedules(): Promise<void> {
         const payload = alarmToSnapshot(alarm, weekday, false);
         await native.scheduleWeekly({
           identifier,
-          alarmId: alarm.id,
           weekday,
           hour: alarm.hour,
           minute: alarm.minute,
-          soundUri: alarm.sound,
           payload,
         });
       }

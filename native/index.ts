@@ -1,28 +1,24 @@
+import type { AlarmSnapshot } from "@/data/types";
 import {
   requireOptionalNativeModule,
   type EventSubscription,
 } from "expo-modules-core";
-import type { AlarmSnapshot } from "@/data/types";
 
 export interface ScheduleWeeklyOpts {
   identifier: string;
-  alarmId: string;
   weekday: number;
   hour: number;
   minute: number;
-  soundUri: string | null;
   payload: AlarmSnapshot;
 }
 
 export interface ScheduleOneShotOpts {
   identifier: string;
-  alarmId: string;
   triggerAt: number;
-  soundUri: string | null;
   payload: AlarmSnapshot;
 }
 
-export type AlarmEventName = "onAlarmFired" | "onAlarmDismissed";
+export type AlarmEventName = "onAlarmFired";
 
 export interface AlarmScheduler {
   scheduleWeekly(opts: ScheduleWeeklyOpts): Promise<string>;
@@ -30,9 +26,9 @@ export interface AlarmScheduler {
   cancel(identifier: string): Promise<void>;
   cancelAllForAlarm(alarmId: string): Promise<void>;
   requestExactAlarmPermission(): Promise<boolean>;
+  syncNotificationChannel(channelName: string): Promise<void>;
   playAlarmSound(soundUri: string | null): Promise<void>;
   stopAlarmSound(): Promise<void>;
-  forceDismissFiring(): Promise<void>;
   addListener(
     type: AlarmEventName,
     cb: (payload: AlarmSnapshot) => void,
