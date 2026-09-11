@@ -6,19 +6,15 @@ import {
 
 export interface ScheduleWeeklyOpts {
   identifier: string;
-  alarmId: string;
   weekday: number;
   hour: number;
   minute: number;
-  soundUri: string | null;
   payload: AlarmSnapshot;
 }
 
 export interface ScheduleOneShotOpts {
   identifier: string;
-  alarmId: string;
   triggerAt: number;
-  soundUri: string | null;
   payload: AlarmSnapshot;
 }
 

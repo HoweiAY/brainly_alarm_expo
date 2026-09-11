@@ -2,8 +2,9 @@ package expo.modules.alarmscheduler
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
+import androidx.core.os.bundleOf
 import java.util.Calendar
-import java.util.Locale
 
 const val ACTION_ALARM_FIRE = "expo.modules.alarmscheduler.ALARM_FIRE"
 const val ALARM_CHANNEL_ID = "brainly_alarm_id"
@@ -44,7 +45,23 @@ data class AlarmSnapshotData(
   val isSnoozed: Boolean,
   val notificationTitle: String,
   val notificationBody: String,
-)
+) {
+  fun toBundle(): Bundle = bundleOf(
+    "alarmId" to alarmId,
+    "weekday" to weekday,
+    "hour" to hour,
+    "minute" to minute,
+    "task" to task,
+    "roundCount" to roundCount,
+    "difficulty" to difficulty,
+    "sound" to sound,
+    "snooze" to snooze,
+    "enabled" to enabled,
+    "isSnoozed" to isSnoozed,
+    "notificationTitle" to notificationTitle,
+    "notificationBody" to notificationBody,
+  )
+}
 
 // JS sends weekday as Mon=0..Sun=6 (src/data/constants weekdayToIndex).
 // Calendar.DAY_OF_WEEK uses Sun=1..Sat=7.
@@ -139,17 +156,3 @@ fun snapshotToDeepLink(snapshot: AlarmSnapshotData): Uri {
   }
   return Uri.parse("$DEEP_LINK_SCHEME://$DEEP_LINK_HOST?$query")
 }
-
-fun weekdayName(index: Int): String = when (index) {
-  0 -> "Mon"
-  1 -> "Tue"
-  2 -> "Wed"
-  3 -> "Thu"
-  4 -> "Fri"
-  5 -> "Sat"
-  6 -> "Sun"
-  else -> ""
-}
-
-fun formatTimeLabel(hour: Int, minute: Int): String =
-  String.format(Locale.US, "%02d:%02d", hour, minute)

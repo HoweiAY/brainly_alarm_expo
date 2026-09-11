@@ -7,7 +7,6 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
-import androidx.core.os.bundleOf
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import expo.modules.kotlin.records.Field
@@ -55,7 +54,7 @@ class AlarmSnapshotRecord : Record {
   @Field
   val notificationBody: String = ENGLISH_ALARM_NOTIFICATION_COPY.body
 
-  fun toData(identifier: String, soundUri: String?): AlarmSnapshotData =
+  fun toData(identifier: String): AlarmSnapshotData =
     AlarmSnapshotData(
       identifier = identifier,
       alarmId = alarmId,
@@ -66,37 +65,18 @@ class AlarmSnapshotRecord : Record {
       roundCount = roundCount,
       difficulty = difficulty,
       sound = sound,
-      soundUri = soundUri,
+      soundUri = sound.takeUnless { it == "Default" },
       snooze = snooze,
       enabled = enabled,
       isSnoozed = isSnoozed,
       notificationTitle = notificationTitle,
       notificationBody = notificationBody,
     )
-
-  fun toBundle(): android.os.Bundle = bundleOf(
-    "alarmId" to alarmId,
-    "weekday" to weekday,
-    "hour" to hour,
-    "minute" to minute,
-    "task" to task,
-    "roundCount" to roundCount,
-    "difficulty" to difficulty,
-    "sound" to sound,
-    "snooze" to snooze,
-    "enabled" to enabled,
-    "isSnoozed" to isSnoozed,
-    "notificationTitle" to notificationTitle,
-    "notificationBody" to notificationBody,
-  )
 }
 
 class ScheduleWeeklyOptsRecord : Record {
   @Field
   val identifier: String = ""
-
-  @Field
-  val alarmId: String = ""
 
   @Field
   val weekday: Int = 0
@@ -108,9 +88,6 @@ class ScheduleWeeklyOptsRecord : Record {
   val minute: Int = 0
 
   @Field
-  val soundUri: String? = null
-
-  @Field
   val payload: AlarmSnapshotRecord = AlarmSnapshotRecord()
 }
 
@@ -119,13 +96,7 @@ class ScheduleOneShotOptsRecord : Record {
   val identifier: String = ""
 
   @Field
-  val alarmId: String = ""
-
-  @Field
   val triggerAt: Double = 0.0
-
-  @Field
-  val soundUri: String? = null
 
   @Field
   val payload: AlarmSnapshotRecord = AlarmSnapshotRecord()
@@ -157,7 +128,7 @@ class AlarmSchedulerModule : Module() {
     }
 
     AsyncFunction("scheduleWeekly") { opts: ScheduleWeeklyOptsRecord ->
-      val snapshot = opts.payload.toData(opts.identifier, opts.soundUri)
+      val snapshot = opts.payload.toData(opts.identifier)
       val triggerAt = nextWeeklyTrigger(
         opts.weekday,
         opts.hour,
@@ -169,7 +140,7 @@ class AlarmSchedulerModule : Module() {
     }
 
     AsyncFunction("scheduleOneShot") { opts: ScheduleOneShotOptsRecord ->
-      val snapshot = opts.payload.toData(opts.identifier, opts.soundUri)
+      val snapshot = opts.payload.toData(opts.identifier)
       val triggerAt = opts.triggerAt.toLong()
       scheduleAlarmAt(context, snapshot, triggerAt)
       return@AsyncFunction opts.identifier
@@ -197,24 +168,7 @@ class AlarmSchedulerModule : Module() {
   }
 
   fun emitAlarmFired(snapshot: AlarmSnapshotData) {
-    sendEvent(
-      "onAlarmFired",
-      bundleOf(
-        "alarmId" to snapshot.alarmId,
-        "weekday" to snapshot.weekday,
-        "hour" to snapshot.hour,
-        "minute" to snapshot.minute,
-        "task" to snapshot.task,
-        "roundCount" to snapshot.roundCount,
-        "difficulty" to snapshot.difficulty,
-        "sound" to snapshot.sound,
-        "snooze" to snapshot.snooze,
-        "enabled" to snapshot.enabled,
-        "isSnoozed" to snapshot.isSnoozed,
-        "notificationTitle" to snapshot.notificationTitle,
-        "notificationBody" to snapshot.notificationBody,
-      ),
-    )
+    sendEvent("onAlarmFired", snapshot.toBundle())
   }
 
   @Suppress("DEPRECATION")

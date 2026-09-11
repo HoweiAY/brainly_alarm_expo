@@ -158,18 +158,14 @@ struct AlarmSnapshotRecord: Record {
 
 struct ScheduleWeeklyOptsRecord: Record {
   @Field var identifier: String = ""
-  @Field var alarmId: String = ""
   @Field var weekday: Int = 0
   @Field var hour: Int = 0
   @Field var minute: Int = 0
-  @Field var soundUri: String?
   @Field var payload: AlarmSnapshotRecord = AlarmSnapshotRecord()
 }
 
 struct ScheduleOneShotOptsRecord: Record {
   @Field var identifier: String = ""
-  @Field var alarmId: String = ""
   @Field var triggerAt: Double = 0
-  @Field var soundUri: String?
   @Field var payload: AlarmSnapshotRecord = AlarmSnapshotRecord()
 }

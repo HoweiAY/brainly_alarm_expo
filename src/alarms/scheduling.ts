@@ -8,7 +8,6 @@ import { useAlarmStore } from "@/store/alarmStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import dayjs from "dayjs";
 import { getAlarmScheduler } from "./AlarmScheduler";
-import { soundUriFromSnapshot } from "./sound";
 import {
   expandWeekdays,
   identifierFor,
@@ -39,11 +38,9 @@ export async function setAlarm(alarm: Alarm): Promise<void> {
     const payload = alarmToSnapshot(alarm, weekday, false);
     await native.scheduleWeekly({
       identifier,
-      alarmId: alarm.id,
       weekday,
       hour: alarm.hour,
       minute: alarm.minute,
-      soundUri: alarm.sound,
       payload,
     });
   }
@@ -77,9 +74,7 @@ export async function resetAlarm(snapshot: AlarmSnapshot): Promise<void> {
     const payload: AlarmSnapshot = { ...snapshot, isSnoozed: false };
     await native.scheduleOneShot({
       identifier,
-      alarmId: snapshot.alarmId,
       triggerAt,
-      soundUri: soundUriFromSnapshot(snapshot),
       payload,
     });
   }
@@ -104,9 +99,7 @@ export async function snoozeAlarm(
   const payload: AlarmSnapshot = { ...snapshot, isSnoozed: true };
   await native.scheduleOneShot({
     identifier,
-    alarmId: snapshot.alarmId,
     triggerAt,
-    soundUri: soundUriFromSnapshot(snapshot),
     payload,
   });
   await registry.upsert(snapshot.alarmId, "snooze");
@@ -144,11 +137,9 @@ export async function reconcileSchedules(): Promise<void> {
         const payload = alarmToSnapshot(alarm, weekday, false);
         await native.scheduleWeekly({
           identifier,
-          alarmId: alarm.id,
           weekday,
           hour: alarm.hour,
           minute: alarm.minute,
-          soundUri: alarm.sound,
           payload,
         });
       }
