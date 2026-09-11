@@ -7,7 +7,6 @@ import androidx.core.os.bundleOf
 import java.util.Calendar
 
 const val ACTION_ALARM_FIRE = "expo.modules.alarmscheduler.ALARM_FIRE"
-const val ALARM_CHANNEL_ID = "brainly_alarm_id"
 const val DEEP_LINK_SCHEME = "brainlyalarmexpo"
 const val DEEP_LINK_HOST = "alarm"
 

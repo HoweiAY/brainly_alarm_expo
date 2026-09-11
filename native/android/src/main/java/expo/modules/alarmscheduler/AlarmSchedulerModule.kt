@@ -12,8 +12,6 @@ import expo.modules.kotlin.modules.ModuleDefinition
 import expo.modules.kotlin.records.Field
 import expo.modules.kotlin.records.Record
 
-const val ALARM_NOTIFICATION_ID = 4269
-
 class AlarmSnapshotRecord : Record {
   @Field
   val alarmId: String = ""
@@ -156,6 +154,10 @@ class AlarmSchedulerModule : Module() {
 
     AsyncFunction("requestExactAlarmPermission") {
       return@AsyncFunction ensureExactAlarmPermission()
+    }
+
+    AsyncFunction("syncNotificationChannel") { channelName: String ->
+      AlarmNotificationManager.syncChannel(context, channelName)
     }
 
     AsyncFunction("playAlarmSound") { soundUri: String? ->

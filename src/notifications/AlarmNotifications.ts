@@ -1,13 +1,7 @@
+import { getAlarmScheduler } from "@/alarms/AlarmScheduler";
 import { getAlarmNotificationCopy } from "@/notifications/alarmNotificationCopy";
 import * as Notifications from "expo-notifications";
-import {
-  AndroidImportance,
-  AndroidNotificationPriority,
-  AndroidNotificationVisibility,
-} from "expo-notifications";
-import { Platform } from "react-native";
-
-export const ALARM_CHANNEL_ID = "brainly_alarm_id";
+import { AndroidNotificationPriority } from "expo-notifications";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -20,34 +14,31 @@ Notifications.setNotificationHandler({
 });
 
 export async function syncAlarmNotificationChannel(): Promise<void> {
-  if (Platform.OS !== "android") return;
   try {
     const { channelName } = getAlarmNotificationCopy();
-    await Notifications.setNotificationChannelAsync(ALARM_CHANNEL_ID, {
-      name: channelName,
-      importance: AndroidImportance.MAX,
-      bypassDnd: true,
-      enableVibrate: true,
-      showBadge: false,
-      sound: null,
-      lockscreenVisibility: AndroidNotificationVisibility.PUBLIC,
-    });
+    await getAlarmScheduler().syncNotificationChannel(channelName);
   } catch {
     // Channel creation is Android-only; ignore on platforms without the API.
   }
 }
 
 export async function initAlarmNotifications(): Promise<void> {
+  await syncAlarmNotificationChannel();
+
   try {
-    await Notifications.requestPermissionsAsync({
-      ios: { allowAlert: true, allowBadge: true, allowSound: true },
-    });
+    const permissions = await Notifications.getPermissionsAsync();
+    const isProvisional =
+      permissions.ios?.status ===
+      Notifications.IosAuthorizationStatus.PROVISIONAL;
+    if (!permissions.granted && !isProvisional) {
+      await Notifications.requestPermissionsAsync({
+        ios: { allowAlert: true, allowBadge: true, allowSound: true },
+      });
+    }
   } catch {
     // Permissions API may be unavailable on some environments (e.g. web / Expo Go
     // limited); failure here is non-fatal — the native scheduler still fires.
   }
-
-  await syncAlarmNotificationChannel();
 }
 
 export async function clearDeliveredAlarmNotifications(): Promise<void> {

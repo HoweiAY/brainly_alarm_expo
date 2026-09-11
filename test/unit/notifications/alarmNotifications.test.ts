@@ -7,14 +7,18 @@ import { alarmToSnapshot } from "@/data/conversions";
 import type { Alarm, AlarmSnapshot } from "@/data/types";
 import { i18n } from "@/i18n";
 import {
-  ALARM_CHANNEL_ID,
+  initAlarmNotifications,
   syncAlarmNotificationChannel,
 } from "@/notifications/AlarmNotifications";
 import { getAlarmNotificationCopy } from "@/notifications/alarmNotificationCopy";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
-let mockChannelCalls: [string, Record<string, unknown>][] = [];
 let mockNative: unknown;
+let mockSyncNotificationChannel: ReturnType<typeof jest.fn>;
+let mockNotificationLifecycle: string[] = [];
+let mockPermissionGranted = true;
+let mockIosPermissionStatus = "authorized";
+let mockPermissionError = false;
 let mockAlarmFiringStoreState: unknown;
 let mockAlarmRegistrationsStoreState: unknown;
 let mockAlarmStoreState: unknown;
@@ -36,17 +40,20 @@ jest.mock("react-native", () => ({
 }));
 
 jest.mock("expo-notifications", () => ({
-  AndroidImportance: { MAX: "max" },
   AndroidNotificationPriority: { MAX: "max" },
-  AndroidNotificationVisibility: { PUBLIC: "public" },
+  IosAuthorizationStatus: { PROVISIONAL: "provisional" },
   dismissAllNotificationsAsync: async () => {},
-  requestPermissionsAsync: async () => ({ status: "granted" }),
-  setNotificationChannelAsync: async (
-    id: string,
-    options: Record<string, unknown>,
-  ) => {
-    mockChannelCalls.push([id, options]);
-    return null;
+  getPermissionsAsync: async () => {
+    mockNotificationLifecycle.push("permissions");
+    if (mockPermissionError) throw new Error("permissions unavailable");
+    return {
+      granted: mockPermissionGranted,
+      ios: { status: mockIosPermissionStatus },
+    };
+  },
+  requestPermissionsAsync: async () => {
+    mockNotificationLifecycle.push("request");
+    return { status: "granted" };
   },
   setNotificationHandler: () => {},
 }));
@@ -87,8 +94,14 @@ const alarm: Alarm = {
 };
 
 beforeEach(async () => {
-  mockChannelCalls = [];
-  mockNative = undefined;
+  mockNotificationLifecycle = [];
+  mockPermissionGranted = true;
+  mockIosPermissionStatus = "authorized";
+  mockPermissionError = false;
+  mockSyncNotificationChannel = jest.fn(async (_channelName: string) => {
+    mockNotificationLifecycle.push("channel");
+  });
+  mockNative = { syncNotificationChannel: mockSyncNotificationChannel };
   mockAlarmFiringStoreState = undefined;
   mockAlarmRegistrationsStoreState = undefined;
   mockAlarmStoreState = undefined;
@@ -126,16 +139,47 @@ describe("localized alarm notification copy", () => {
     expect(params.notificationBody).toBe("輕觸以關閉鬧鐘。");
   });
 
-  it("synchronizes the Android channel with the active locale", async () => {
+  it("delegates localized channel synchronization to native", async () => {
     await i18n.changeLanguage("zh-Hant");
 
     expect(getAlarmNotificationCopy().channelName).toBe("鬧鐘");
     await syncAlarmNotificationChannel();
 
-    expect(mockChannelCalls).toContainEqual([
-      ALARM_CHANNEL_ID,
-      expect.objectContaining({ name: "鬧鐘" }),
+    expect(mockSyncNotificationChannel).toHaveBeenCalledWith("鬧鐘");
+  });
+});
+
+describe("notification initialization", () => {
+  it("synchronizes the channel before requesting permission", async () => {
+    mockPermissionGranted = false;
+    mockIosPermissionStatus = "denied";
+
+    await initAlarmNotifications();
+
+    expect(mockNotificationLifecycle).toEqual([
+      "channel",
+      "permissions",
+      "request",
     ]);
+  });
+
+  it("does not request permission when already granted or provisional", async () => {
+    await initAlarmNotifications();
+    expect(mockNotificationLifecycle).toEqual(["channel", "permissions"]);
+
+    mockNotificationLifecycle = [];
+    mockPermissionGranted = false;
+    mockIosPermissionStatus = "provisional";
+    await initAlarmNotifications();
+
+    expect(mockNotificationLifecycle).toEqual(["channel", "permissions"]);
+  });
+
+  it("treats permission API failures as non-fatal", async () => {
+    mockPermissionError = true;
+
+    await expect(initAlarmNotifications()).resolves.toBeUndefined();
+    expect(mockNotificationLifecycle).toEqual(["channel", "permissions"]);
   });
 });
 
@@ -151,6 +195,7 @@ describe("localized weekly reconciliation", () => {
       cancel: jest.fn(async (_identifier: string) => {}),
       cancelAllForAlarm: jest.fn(async (_alarmId: string) => {}),
       requestExactAlarmPermission: jest.fn(async () => true),
+      syncNotificationChannel: jest.fn(async (_channelName: string) => {}),
       playAlarmSound: jest.fn(async () => {}),
       stopAlarmSound: jest.fn(async () => {}),
       addListener: jest.fn(() => ({ remove() {} })),

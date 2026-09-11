@@ -1,9 +1,5 @@
 package expo.modules.alarmscheduler
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -15,7 +11,6 @@ import android.os.Build
 import android.os.IBinder
 import android.provider.Settings
 import android.util.Log
-import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 
 class AlarmSoundService : Service() {
@@ -49,17 +44,19 @@ class AlarmSoundService : Service() {
     val soundUri = intent?.getStringExtra(EXTRA_SOUND_URI)
     val hasSnapshot = intent?.getBooleanExtra(EXTRA_HAS_SNAPSHOT, false) ?: false
     val snapshot = intent?.takeIf { hasSnapshot }?.let(::readSnapshot)
-
-    val notificationCopy = getNotificationCopy()
-    ensureChannel(notificationCopy)
-    val notification = buildNotification(snapshot, notificationCopy)
+    val notification = AlarmNotificationManager.createForegroundNotification(this, snapshot)
     val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
       ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
     } else {
       0
     }
     runCatching {
-      ServiceCompat.startForeground(this, ALARM_NOTIFICATION_ID, notification, type)
+      ServiceCompat.startForeground(
+        this,
+        AlarmNotificationManager.NOTIFICATION_ID,
+        notification,
+        type,
+      )
     }.onFailure { Log.e("AlarmSoundService", "startForeground failed", it) }
 
     startPlayback(soundUri)
@@ -76,65 +73,6 @@ class AlarmSoundService : Service() {
   }
 
   override fun onBind(intent: Intent?): IBinder? = null
-
-  private fun getNotificationCopy(): AlarmNotificationCopy = runCatching {
-    AlarmStore(this).use { alarmNotificationCopy(it.getLanguage()) }
-  }.getOrDefault(ENGLISH_ALARM_NOTIFICATION_COPY)
-
-  private fun ensureChannel(copy: AlarmNotificationCopy) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      val manager = getSystemService(NotificationManager::class.java)
-      val existing = manager.getNotificationChannel(ALARM_CHANNEL_ID)
-      if (existing != null && existing.sound != null) {
-        manager.deleteNotificationChannel(ALARM_CHANNEL_ID)
-      }
-      val channel = NotificationChannel(
-        ALARM_CHANNEL_ID,
-        copy.channelName,
-        NotificationManager.IMPORTANCE_HIGH,
-      ).apply {
-        enableVibration(true)
-        setBypassDnd(true)
-        setSound(
-          null,
-          AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_ALARM)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-            .build(),
-        )
-      }
-      manager.createNotificationChannel(channel)
-    }
-  }
-
-  private fun buildNotification(
-    snapshot: AlarmSnapshotData?,
-    copy: AlarmNotificationCopy,
-  ): Notification {
-    val deepLink = if (snapshot != null) snapshotToDeepLink(snapshot)
-      else Uri.parse("$DEEP_LINK_SCHEME://$DEEP_LINK_HOST")
-    val contentIntent = PendingIntent.getActivity(
-      this,
-      0,
-      Intent(Intent.ACTION_VIEW, deepLink).addFlags(
-        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP,
-      ),
-      PendingIntent.FLAG_IMMUTABLE,
-    )
-    val title = snapshot?.notificationTitle?.takeIf { it.isNotBlank() } ?: copy.title
-    val body = snapshot?.notificationBody?.takeIf { it.isNotBlank() } ?: copy.body
-    return NotificationCompat.Builder(this, ALARM_CHANNEL_ID)
-      .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-      .setContentTitle(title)
-      .setContentText(body)
-      .setCategory(NotificationCompat.CATEGORY_ALARM)
-      .setPriority(NotificationCompat.PRIORITY_MAX)
-      .setSilent(true)
-      .setFullScreenIntent(contentIntent, true)
-      .setContentIntent(contentIntent)
-      .setOngoing(true)
-      .build()
-  }
 
   private fun startPlayback(soundUri: String?) {
     mediaPlayer?.let { runCatching { it.release() } }

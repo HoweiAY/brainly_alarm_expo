@@ -52,6 +52,8 @@ public final class AlarmSchedulerModule: Module {
       return true
     }
 
+    AsyncFunction("syncNotificationChannel") { (_: String) in }
+
     AsyncFunction("playAlarmSound") { (soundUri: String?) in
       try self.startPlayback(soundUri: soundUri)
     }

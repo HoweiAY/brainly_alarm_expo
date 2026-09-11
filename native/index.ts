@@ -26,6 +26,7 @@ export interface AlarmScheduler {
   cancel(identifier: string): Promise<void>;
   cancelAllForAlarm(alarmId: string): Promise<void>;
   requestExactAlarmPermission(): Promise<boolean>;
+  syncNotificationChannel(channelName: string): Promise<void>;
   playAlarmSound(soundUri: string | null): Promise<void>;
   stopAlarmSound(): Promise<void>;
   addListener(
