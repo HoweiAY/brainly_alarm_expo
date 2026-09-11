@@ -1,6 +1,6 @@
 import { alarmToSnapshot } from "@/data/conversions";
 import type { Alarm, AlarmSnapshot, Difficulty, TaskType } from "@/data/types";
-import { getAlarmNotificationCopy } from "@/notifications/AlarmNotifications";
+import { getAlarmNotificationCopy } from "@/notifications/alarmNotificationCopy";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
 import { useAlarmStore } from "@/store/alarmStore";
@@ -15,14 +15,6 @@ import {
   snoozeIdentifierFor,
   snoozeTriggerTime,
 } from "./weeklyTrigger";
-
-export {
-  expandWeekdays,
-  identifierFor,
-  nextWeeklyTriggerTime,
-  snoozeIdentifierFor,
-  snoozeTriggerTime,
-};
 
 export async function setAlarm(alarm: Alarm): Promise<void> {
   const native = getAlarmScheduler();
@@ -60,11 +52,6 @@ export async function cancelAlarm(alarm: { id: string }): Promise<void> {
   const native = getAlarmScheduler();
   await native.cancelAllForAlarm(alarm.id);
   await useAlarmRegistrationsStore.getState().removeForAlarm(alarm.id);
-}
-
-export async function rescheduleWeekly(alarm: Alarm): Promise<void> {
-  await cancelAlarm(alarm);
-  await setAlarm(alarm);
 }
 
 export async function resetAlarm(snapshot: AlarmSnapshot): Promise<void> {

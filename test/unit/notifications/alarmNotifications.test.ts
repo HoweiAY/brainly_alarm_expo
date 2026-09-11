@@ -8,9 +8,9 @@ import type { Alarm, AlarmSnapshot } from "@/data/types";
 import { i18n } from "@/i18n";
 import {
   ALARM_CHANNEL_ID,
-  getAlarmNotificationCopy,
   syncAlarmNotificationChannel,
 } from "@/notifications/AlarmNotifications";
+import { getAlarmNotificationCopy } from "@/notifications/alarmNotificationCopy";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 let mockChannelCalls: [string, Record<string, unknown>][] = [];
