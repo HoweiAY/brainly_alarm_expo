@@ -28,9 +28,13 @@ function findAndroidSdk() {
     process.env.ANDROID_HOME,
     process.env.ANDROID_SDK_ROOT,
     path.join(os.homedir(), "Library", "Android", "sdk"),
+    process.env.LOCALAPPDATA &&
+      path.join(process.env.LOCALAPPDATA, "Android", "Sdk"),
+    path.join(os.homedir(), "AppData", "Local", "Android", "Sdk"),
+    path.join(os.homedir(), "Android", "Sdk"),
   ].filter(Boolean);
   for (const candidate of candidates) {
-    if (fs.existsSync(path.join(candidate, "platform-tools"))) {
+    if (fs.existsSync(path.join(candidate, "platform-tools", "package.xml"))) {
       return candidate;
     }
   }
@@ -47,8 +51,9 @@ function writeLocalProperties() {
     return;
   }
   const localPropsPath = path.join(androidDir, "local.properties");
-  fs.writeFileSync(localPropsPath, `sdk.dir=${sdk}\n`);
-  console.log(`[android] Wrote ${localPropsPath} (sdk.dir=${sdk})`);
+  const sdkDir = sdk.replace(/\\/g, "/");
+  fs.writeFileSync(localPropsPath, `sdk.dir=${sdkDir}\n`);
+  console.log(`[android] Wrote ${localPropsPath} (sdk.dir=${sdkDir})`);
 }
 
 function prebuild(platform) {
