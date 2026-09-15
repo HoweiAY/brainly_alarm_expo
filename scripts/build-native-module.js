@@ -1,5 +1,6 @@
 const { execSync } = require("child_process");
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 
 const ROOT = process.cwd();
@@ -22,9 +23,40 @@ function hasPlatform(platform) {
   }
 }
 
+function findAndroidSdk() {
+  const candidates = [
+    process.env.ANDROID_HOME,
+    process.env.ANDROID_SDK_ROOT,
+    path.join(os.homedir(), "Library", "Android", "sdk"),
+  ].filter(Boolean);
+  for (const candidate of candidates) {
+    if (fs.existsSync(path.join(candidate, "platform-tools"))) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+function writeLocalProperties() {
+  const sdk = findAndroidSdk();
+  const androidDir = path.join(ROOT, "android");
+  if (!sdk) {
+    console.warn(
+      "[android] Could not locate Android SDK. Set ANDROID_HOME or install the SDK at ~/Library/Android/sdk.",
+    );
+    return;
+  }
+  const localPropsPath = path.join(androidDir, "local.properties");
+  fs.writeFileSync(localPropsPath, `sdk.dir=${sdk}\n`);
+  console.log(`[android] Wrote ${localPropsPath} (sdk.dir=${sdk})`);
+}
+
 function prebuild(platform) {
   console.log(`\n[prebuild] Running expo prebuild --platform ${platform}...`);
   run(`npx expo prebuild --platform ${platform} --no-install`);
+  if (platform === "android") {
+    writeLocalProperties();
+  }
 }
 
 function buildAndroid() {
@@ -32,6 +64,8 @@ function buildAndroid() {
   if (!fs.existsSync(androidDir)) {
     console.log("android/ directory not found; running prebuild first...");
     prebuild("android");
+  } else if (!fs.existsSync(path.join(androidDir, "local.properties"))) {
+    writeLocalProperties();
   }
 
   const gradlew =
