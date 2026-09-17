@@ -51,7 +51,10 @@ function writeLocalProperties() {
     return;
   }
   const localPropsPath = path.join(androidDir, "local.properties");
-  const sdkDir = sdk.replace(/\\/g, "/");
+  const sdkDir =
+    process.platform === "win32"
+      ? sdk.replace(/\\/g, "/")
+      : sdk.replace(/\\/g, "\\\\");
   fs.writeFileSync(localPropsPath, `sdk.dir=${sdkDir}\n`);
   console.log(`[android] Wrote ${localPropsPath} (sdk.dir=${sdkDir})`);
 }
