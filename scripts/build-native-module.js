@@ -46,7 +46,7 @@ function writeLocalProperties() {
   const androidDir = path.join(ROOT, "android");
   if (!sdk) {
     console.warn(
-      "[android] Could not locate Android SDK. Set ANDROID_HOME or install the SDK at ~/Library/Android/sdk.",
+      "[android] Could not locate Android SDK. Set ANDROID_HOME or ANDROID_SDK_ROOT, or install the SDK in a default location: %LOCALAPPDATA%\\Android\\Sdk (Windows), ~/Library/Android/sdk (macOS), ~/Android/Sdk (Linux).",
     );
     return;
   }
