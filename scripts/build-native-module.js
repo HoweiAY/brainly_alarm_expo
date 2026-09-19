@@ -78,8 +78,11 @@ function buildAndroid() {
   if (!fs.existsSync(androidDir)) {
     console.log("android/ directory not found; running prebuild first...");
     prebuild("android");
-  } else if (!fs.existsSync(path.join(androidDir, "local.properties"))) {
-    writeLocalProperties();
+  } else if (
+    !fs.existsSync(path.join(androidDir, "local.properties")) ||
+    overwriteLocalProperties
+  ) {
+    writeLocalProperties({ overwrite: overwriteLocalProperties });
   }
 
   const gradlew =
