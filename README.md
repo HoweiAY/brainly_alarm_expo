@@ -117,9 +117,14 @@ The custom `alarm-scheduler` module lives in [`native/`](native/). Rebuild it af
 npm run build:native
 npm run build:native android
 npm run build:native ios
+
+# Regenerate android/local.properties even if it already exists
+npm run build:native android -- --overwrite-local-properties
 ```
 
 The script runs `expo prebuild` if the native project directories are missing, then compiles just the module: `./gradlew :alarm-scheduler:assembleRelease` on Android, `pod install` on iOS. The module is auto-linked via `expo.autolinking.nativeModulesDir` in `package.json`, and its config plugin (`native/app.plugin.js`) is registered in `app.json`.
+
+On Android, the script generates `android/local.properties` with the detected SDK path when the file is absent. An existing `android/local.properties` is preserved as-is by default; pass `--overwrite-local-properties` to regenerate it with the currently detected SDK location (e.g. after moving your Android SDK install).
 
 ### Android build troubleshooting
 
@@ -167,17 +172,17 @@ npm run format
 
 ### All scripts
 
-| Script                            | Description                                                              |
-| --------------------------------- | ------------------------------------------------------------------------ |
-| `npm start`                       | Start the Expo dev server (Metro)                                        |
-| `npm run android`                 | Prebuild (if needed), build, and run the app on Android                  |
-| `npm run ios`                     | Prebuild (if needed), build, and run the app on iOS                      |
-| `npm run web`                     | Start a web preview (no native alarm scheduling)                         |
-| `npm test`                        | Run Jest unit tests                                                      |
-| `npm run lint`                    | Run ESLint                                                               |
-| `npm run format`                  | Format the codebase with Prettier                                        |
-| `npm run db:generate`             | Generate Drizzle SQL migrations from `src/data/schema.ts`                |
-| `npm run build:native [platform]` | Compile the `alarm-scheduler` native module (`android`, `ios`, or `all`) |
+| Script                            | Description                                                                                                                                              |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm start`                       | Start the Expo dev server (Metro)                                                                                                                        |
+| `npm run android`                 | Prebuild (if needed), build, and run the app on Android                                                                                                  |
+| `npm run ios`                     | Prebuild (if needed), build, and run the app on iOS                                                                                                      |
+| `npm run web`                     | Start a web preview (no native alarm scheduling)                                                                                                         |
+| `npm test`                        | Run Jest unit tests                                                                                                                                      |
+| `npm run lint`                    | Run ESLint                                                                                                                                               |
+| `npm run format`                  | Format the codebase with Prettier                                                                                                                        |
+| `npm run db:generate`             | Generate Drizzle SQL migrations from `src/data/schema.ts`                                                                                                |
+| `npm run build:native [platform]` | Compile the `alarm-scheduler` native module (`android`, `ios`, or `all`; add `-- --overwrite-local-properties` to regenerate `android/local.properties`) |
 
 ## Project Structure
 
