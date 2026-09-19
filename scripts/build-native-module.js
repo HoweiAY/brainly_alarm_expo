@@ -41,7 +41,7 @@ function findAndroidSdk() {
   return null;
 }
 
-function writeLocalProperties() {
+function writeLocalProperties({ overwrite = false } = {}) {
   const sdk = findAndroidSdk();
   const androidDir = path.join(ROOT, "android");
   if (!sdk) {
@@ -51,6 +51,12 @@ function writeLocalProperties() {
     return;
   }
   const localPropsPath = path.join(androidDir, "local.properties");
+  if (fs.existsSync(localPropsPath) && !overwrite) {
+    console.log(
+      `[android] Preserving existing ${localPropsPath}. Pass --overwrite-local-properties to regenerate it.`,
+    );
+    return;
+  }
   const sdkDir =
     process.platform === "win32"
       ? sdk.replace(/\\/g, "/")
@@ -63,7 +69,7 @@ function prebuild(platform) {
   console.log(`\n[prebuild] Running expo prebuild --platform ${platform}...`);
   run(`npx expo prebuild --platform ${platform} --no-install`);
   if (platform === "android") {
-    writeLocalProperties();
+    writeLocalProperties({ overwrite: overwriteLocalProperties });
   }
 }
 
@@ -115,10 +121,14 @@ function buildIos() {
   );
 }
 
-const platform = process.argv[2] || "all";
+const args = process.argv.slice(2);
+const overwriteLocalProperties = args.includes("--overwrite-local-properties");
+const platform = args.find((arg) => !arg.startsWith("--")) || "all";
 
 if (!["android", "ios", "all"].includes(platform)) {
-  console.error("Usage: node scripts/build-native-module.js [android|ios|all]");
+  console.error(
+    "Usage: node scripts/build-native-module.js [android|ios|all] [--overwrite-local-properties]",
+  );
   process.exit(1);
 }
 
