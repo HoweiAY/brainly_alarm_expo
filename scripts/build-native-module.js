@@ -1,5 +1,6 @@
 const { execSync } = require("child_process");
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 
 const ROOT = process.cwd();
@@ -22,9 +23,54 @@ function hasPlatform(platform) {
   }
 }
 
+function findAndroidSdk() {
+  const candidates = [
+    process.env.ANDROID_HOME,
+    process.env.ANDROID_SDK_ROOT,
+    path.join(os.homedir(), "Library", "Android", "sdk"),
+    process.env.LOCALAPPDATA &&
+      path.join(process.env.LOCALAPPDATA, "Android", "Sdk"),
+    path.join(os.homedir(), "AppData", "Local", "Android", "Sdk"),
+    path.join(os.homedir(), "Android", "Sdk"),
+  ].filter(Boolean);
+  for (const candidate of candidates) {
+    if (fs.existsSync(path.join(candidate, "platform-tools", "package.xml"))) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+function writeLocalProperties({ overwrite = false } = {}) {
+  const sdk = findAndroidSdk();
+  const androidDir = path.join(ROOT, "android");
+  if (!sdk) {
+    console.warn(
+      "[android] Could not locate Android SDK. Set ANDROID_HOME or ANDROID_SDK_ROOT, or install the SDK in a default location: %LOCALAPPDATA%\\Android\\Sdk (Windows), ~/Library/Android/sdk (macOS), ~/Android/Sdk (Linux).",
+    );
+    return;
+  }
+  const localPropsPath = path.join(androidDir, "local.properties");
+  if (fs.existsSync(localPropsPath) && !overwrite) {
+    console.log(
+      `[android] Preserving existing ${localPropsPath}. Pass --overwrite-local-properties to regenerate it.`,
+    );
+    return;
+  }
+  const sdkDir =
+    process.platform === "win32"
+      ? sdk.replace(/\\/g, "/")
+      : sdk.replace(/\\/g, "\\\\");
+  fs.writeFileSync(localPropsPath, `sdk.dir=${sdkDir}\n`);
+  console.log(`[android] Wrote ${localPropsPath} (sdk.dir=${sdkDir})`);
+}
+
 function prebuild(platform) {
   console.log(`\n[prebuild] Running expo prebuild --platform ${platform}...`);
   run(`npx expo prebuild --platform ${platform} --no-install`);
+  if (platform === "android") {
+    writeLocalProperties({ overwrite: overwriteLocalProperties });
+  }
 }
 
 function buildAndroid() {
@@ -32,6 +78,11 @@ function buildAndroid() {
   if (!fs.existsSync(androidDir)) {
     console.log("android/ directory not found; running prebuild first...");
     prebuild("android");
+  } else if (
+    !fs.existsSync(path.join(androidDir, "local.properties")) ||
+    overwriteLocalProperties
+  ) {
+    writeLocalProperties({ overwrite: overwriteLocalProperties });
   }
 
   const gradlew =
@@ -73,10 +124,25 @@ function buildIos() {
   );
 }
 
-const platform = process.argv[2] || "all";
+const SUPPORTED_FLAGS = new Set(["--overwrite-local-properties"]);
+
+const args = process.argv.slice(2);
+const overwriteLocalProperties = args.includes("--overwrite-local-properties");
+const unknownFlag = args.find(
+  (arg) => arg.startsWith("--") && !SUPPORTED_FLAGS.has(arg),
+);
+
+if (unknownFlag) {
+  console.error(`Unknown flag: ${unknownFlag}`);
+  process.exit(1);
+}
+
+const platform = args.find((arg) => !arg.startsWith("--")) || "all";
 
 if (!["android", "ios", "all"].includes(platform)) {
-  console.error("Usage: node scripts/build-native-module.js [android|ios|all]");
+  console.error(
+    "Usage: node scripts/build-native-module.js [android|ios|all] [--overwrite-local-properties]",
+  );
   process.exit(1);
 }
 
