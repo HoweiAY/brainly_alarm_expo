@@ -124,8 +124,19 @@ function buildIos() {
   );
 }
 
+const SUPPORTED_FLAGS = new Set(["--overwrite-local-properties"]);
+
 const args = process.argv.slice(2);
 const overwriteLocalProperties = args.includes("--overwrite-local-properties");
+const unknownFlag = args.find(
+  (arg) => arg.startsWith("--") && !SUPPORTED_FLAGS.has(arg),
+);
+
+if (unknownFlag) {
+  console.error(`Unknown flag: ${unknownFlag}`);
+  process.exit(1);
+}
+
 const platform = args.find((arg) => !arg.startsWith("--")) || "all";
 
 if (!["android", "ios", "all"].includes(platform)) {
