@@ -39,6 +39,10 @@ export interface AlarmSnapshot {
   notificationBody: string;
 }
 
+export interface ActiveAlarmSnapshot extends AlarmSnapshot {
+  resolvedTask: TaskType;
+}
+
 export interface UserSettings {
   autoDismissEnabled: boolean;
   snoozeMinutes: number;
