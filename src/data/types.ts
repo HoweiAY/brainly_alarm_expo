@@ -4,6 +4,8 @@ export type Weekday = "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
 
 export type TaskType = "Memory" | "Math" | "Shake phone" | "None";
 
+export type AlarmTask = TaskType | "Random";
+
 export type Difficulty = "Easy" | "Normal" | "Hard";
 
 export type AppColorScheme = "dark" | "light";
