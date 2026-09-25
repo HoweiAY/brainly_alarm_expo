@@ -73,10 +73,10 @@ function handleAlarmUrl(
     const alarm = await useAlarmStore.getState().getAlarmById(snapshot.alarmId);
     if (!alarm) return;
     await resetOldAlarm(snapshot);
-    useAlarmFiringStore.getState().setActive(snapshot);
+    const active = useAlarmFiringStore.getState().setActive(snapshot);
     router.replace({
       pathname: "/alarm",
-      params: snapshotToQueryParams(snapshot),
+      params: snapshotToQueryParams(active),
     });
   })();
 }

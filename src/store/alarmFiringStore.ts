@@ -1,15 +1,20 @@
-import type { AlarmSnapshot } from "@/data/types";
+import { isSameTrigger, resolveActiveSnapshot } from "@/alarms/activeSnapshot";
 import {
   clearPersistedActiveAlarm,
-  persistActiveAlarm,
   getPersistedActiveAlarm,
+  persistActiveAlarm,
 } from "@/data/activeAlarm";
+import type { ActiveAlarmSnapshot, AlarmSnapshot } from "@/data/types";
+import dayjs from "dayjs";
 import { create } from "zustand";
 
 interface AlarmFiringStoreState {
-  activeSnapshot: AlarmSnapshot | null;
+  activeSnapshot: ActiveAlarmSnapshot | null;
+  activatedAt: number | null;
   loaded: boolean;
-  setActive: (snapshot: AlarmSnapshot) => void;
+  setActive: (
+    snapshot: AlarmSnapshot | ActiveAlarmSnapshot,
+  ) => ActiveAlarmSnapshot;
   clearActive: () => void;
   init: () => Promise<void>;
 }
@@ -17,19 +22,38 @@ interface AlarmFiringStoreState {
 export const useAlarmFiringStore = create<AlarmFiringStoreState>(
   (set, get) => ({
     activeSnapshot: null,
+    activatedAt: null,
     loaded: false,
     setActive: (snapshot) => {
-      set({ activeSnapshot: snapshot });
-      void persistActiveAlarm(snapshot);
+      const now = dayjs().valueOf();
+      const { activeSnapshot, activatedAt } = get();
+      const current =
+        activeSnapshot && activatedAt !== null
+          ? { snapshot: activeSnapshot, activatedAt }
+          : null;
+      const resolved = resolveActiveSnapshot(snapshot, current, now);
+      set({
+        activeSnapshot: resolved,
+        activatedAt: isSameTrigger(snapshot, current, now)
+          ? current.activatedAt
+          : now,
+      });
+      void persistActiveAlarm(resolved);
+      return resolved;
     },
     clearActive: () => {
-      set({ activeSnapshot: null });
+      set({ activeSnapshot: null, activatedAt: null });
       void clearPersistedActiveAlarm();
     },
     init: async () => {
       if (get().loaded) return;
       const persisted = await getPersistedActiveAlarm();
-      set({ activeSnapshot: persisted, loaded: true });
+      set({
+        activeSnapshot: persisted
+          ? resolveActiveSnapshot(persisted, null, dayjs().valueOf())
+          : null,
+        loaded: true,
+      });
     },
   }),
 );
