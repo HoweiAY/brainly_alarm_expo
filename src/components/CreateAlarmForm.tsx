@@ -180,6 +180,9 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
               ))}
             </View>
           ) : null}
+          {form.taskSelected === "Random" ? (
+            <Text style={styles.helperText}>{t("editor.randomTaskHint")}</Text>
+          ) : null}
         </View>
 
         <View

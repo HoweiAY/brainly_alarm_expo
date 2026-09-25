@@ -207,6 +207,8 @@ export const zhHant = {
     taskTypeLabel: "任務類型：{{task}}",
     taskTypeHint: "開啟任務類型選擇",
     taskOptionLabel: "{{task}}任務",
+    randomTaskHint:
+      "每次鬧鐘響起時，會隨機選擇一項任務（記憶、數學或搖動手機）。",
     rounds: "回合數",
     roundsSelected: "已選擇 {{count}} 回合",
     difficulty: "難度",
