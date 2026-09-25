@@ -1,4 +1,4 @@
-import type { Alarm } from "@/data/types";
+import type { Alarm, AlarmTask } from "@/data/types";
 import { announce } from "@/hooks/useAccessibility";
 import { translateTask } from "@/i18n/helpers";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
@@ -18,8 +18,9 @@ const taskIcons = {
   Math: "sigma",
   Memory: "brain",
   "Shake phone": "vibrate",
+  Random: "shuffle",
   None: "alarm-clock",
-} as const;
+} as const satisfies Record<AlarmTask, string>;
 
 interface AlarmCardProps {
   alarm: Alarm;
