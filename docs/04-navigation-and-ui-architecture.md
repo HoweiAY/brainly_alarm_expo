@@ -127,6 +127,8 @@ A Material 3 `Card` representing one alarm.
 6. **Sound** — label + "Select" `TextButton` launching `ActivityResultContracts.GetContent("audio/*")`. The chosen file's display name is resolved via `MediaStore` and shown; the URI string is stored.
 7. **Snooze** — `Switch` bound to `snoozeEnabled`.
 
+> **RN port addition:** the Task dropdown lists `alarmTasks` (`Memory`, `Math`, `Shake phone`, `Random`, `None`). Rounds and Difficulty stay enabled for `Random`, and a helper caption explains that a random task is picked each time the alarm rings. The alarm card shows a `shuffle` icon for Random alarms. See doc 05 §7.
+
 **Footer actions:**
 
 - **Cancel** — resets UI state and `navController.popBackStack()`.
@@ -157,6 +159,8 @@ A Material 3 `Card` representing one alarm.
     4. `setAlarm(updatedAlarm(...), reset=false, snoozed=true)` (fires in 5 min).
     5. `Toast("Alarm snoozed for 5 minutes")`.
     6. `onAlarmDismissed(context)`.
+
+> **RN port addition:** `src/app/(alarm)/alarm.tsx` parses an `ActiveAlarmSnapshot` from route params. The task label, the Begin/Turn off choice and task routing all use `resolvedTask`, which is the concrete task drawn for this trigger when the configured task is `"Random"`.
 
 ### 5.5 Dismissal Tasks
 
