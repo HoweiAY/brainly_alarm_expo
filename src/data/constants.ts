@@ -49,17 +49,19 @@ export const indexToWeekday: Record<number, Weekday> = {
   6: "Sun",
 };
 
-export const taskTypeToStorage: Record<TaskType, string> = {
+export const taskTypeToStorage: Record<AlarmTask, string> = {
   Memory: "memory",
   Math: "math",
   "Shake phone": "shake_phone",
+  Random: "random",
   None: "none",
 };
 
-export const storageToTaskType: Record<string, TaskType> = {
+export const storageToTaskType: Record<string, AlarmTask> = {
   memory: "Memory",
   math: "Math",
   shake_phone: "Shake phone",
+  random: "Random",
   none: "None",
 };
 

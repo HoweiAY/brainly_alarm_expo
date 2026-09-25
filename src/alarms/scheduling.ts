@@ -1,5 +1,6 @@
+import { alarmTasks } from "@/data/constants";
 import { alarmToSnapshot } from "@/data/conversions";
-import type { Alarm, AlarmSnapshot, Difficulty, TaskType } from "@/data/types";
+import type { Alarm, AlarmSnapshot, AlarmTask, Difficulty } from "@/data/types";
 import { clearDeliveredAlarmNotifications } from "@/notifications/AlarmNotifications";
 import { getAlarmNotificationCopy } from "@/notifications/alarmNotificationCopy";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
@@ -151,7 +152,6 @@ export async function reconcileSchedules(): Promise<void> {
   }
 }
 
-const TASK_TYPES: TaskType[] = ["Memory", "Math", "Shake phone", "None"];
 const DIFFICULTIES: Difficulty[] = ["Easy", "Normal", "Hard"];
 
 function toBool(value: unknown): boolean {
@@ -174,8 +174,8 @@ export function parseAlarmSnapshot(
   if (!alarmId) return null;
   const taskRaw = get("task");
   const task =
-    taskRaw && (TASK_TYPES as string[]).includes(taskRaw)
-      ? (taskRaw as TaskType)
+    taskRaw && (alarmTasks as string[]).includes(taskRaw)
+      ? (taskRaw as AlarmTask)
       : "Memory";
   const difficultyRaw = get("difficulty");
   const difficulty =

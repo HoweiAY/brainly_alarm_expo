@@ -139,6 +139,14 @@ describe("localized alarm notification copy", () => {
     expect(params.notificationBody).toBe("輕觸以關閉鬧鐘。");
   });
 
+  it("preserves the Random task through payload parsing", () => {
+    const snapshot = alarmToSnapshot({ ...alarm, task: "Random" }, 0);
+    expect(snapshot.task).toBe("Random");
+    expect(parseAlarmSnapshot(snapshotToQueryParams(snapshot))?.task).toBe(
+      "Random",
+    );
+  });
+
   it("delegates localized channel synchronization to native", async () => {
     await i18n.changeLanguage("zh-Hant");
 

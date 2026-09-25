@@ -15,7 +15,7 @@ export interface Alarm {
   days: Weekday[];
   hour: number;
   minute: number;
-  task: TaskType;
+  task: AlarmTask;
   rounds: number;
   difficulty: Difficulty;
   sound: string | null;
@@ -28,7 +28,7 @@ export interface AlarmSnapshot {
   weekday: number;
   hour: number;
   minute: number;
-  task: TaskType;
+  task: AlarmTask;
   roundCount: number;
   difficulty: Difficulty;
   sound: string;
