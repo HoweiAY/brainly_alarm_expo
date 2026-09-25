@@ -39,6 +39,7 @@ export const en = {
       Memory: "Memory",
       Math: "Math",
       ShakePhone: "Shake phone",
+      Random: "Random",
       None: "None",
       Shake: "Shake",
     },

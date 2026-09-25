@@ -42,6 +42,7 @@ export const zhHant = {
       Memory: "記憶",
       Math: "數學",
       ShakePhone: "搖動手機",
+      Random: "隨機",
       None: "無",
       Shake: "搖動",
     },

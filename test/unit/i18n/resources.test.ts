@@ -35,11 +35,13 @@ describe("translation resources", () => {
     await instance.changeLanguage("en");
     expect(translateWeekday(instance.t, "Mon")).toBe("Mon");
     expect(translateTask(instance.t, "Shake phone")).toBe("Shake phone");
+    expect(translateTask(instance.t, "Random")).toBe("Random");
     expect(translateDifficulty(instance.t, "Hard")).toBe("Hard");
 
     await instance.changeLanguage("zh-Hant");
     expect(translateWeekday(instance.t, "Mon")).toBe("一");
     expect(translateTask(instance.t, "Shake phone")).toBe("搖動手機");
+    expect(translateTask(instance.t, "Random")).toBe("隨機");
     expect(translateDifficulty(instance.t, "Hard")).toBe("困難");
     expect(instance.t("editor.am")).toBe("上午");
     expect(instance.t("editor.pm")).toBe("下午");
