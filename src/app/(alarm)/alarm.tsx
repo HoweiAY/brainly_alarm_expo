@@ -1,5 +1,5 @@
 import {
-  parseAlarmSnapshot,
+  parseActiveAlarmSnapshot,
   resetAlarm,
   snoozeAlarm,
 } from "@/alarms/scheduling";
@@ -9,6 +9,7 @@ import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { useAlarmStore } from "@/store/alarmStore";
 import { useSettingsStore } from "@/store/settingsStore";
+import { resolveAlarmTask } from "@/tasks/randomTask";
 import { createThemedStyles, radii, spacing, typography } from "@/theme";
 import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -22,8 +23,12 @@ export default function AlarmDisplay() {
   const { t } = useAppTranslation();
   const { styles } = useStyles();
   const params = useLocalSearchParams();
-  const snapshot = parseAlarmSnapshot(
-    params as Record<string, string | string[] | undefined>,
+  const snapshot = useMemo(
+    () =>
+      parseActiveAlarmSnapshot(
+        params as Record<string, string | string[] | undefined>,
+      ),
+    [params],
   );
 
   const currentAlarm = useAlarmStore((s) =>
@@ -40,6 +45,10 @@ export default function AlarmDisplay() {
         ? {
             ...snapshot,
             task: currentAlarm.task,
+            resolvedTask: resolveAlarmTask(
+              currentAlarm.task,
+              snapshot.resolvedTask,
+            ),
             difficulty: currentAlarm.difficulty,
             roundCount: currentAlarm.rounds,
             sound: currentAlarm.sound ?? "Default",
@@ -94,17 +103,17 @@ export default function AlarmDisplay() {
 
   const handleBegin = () => {
     void resetAlarm(effectiveSnapshot);
-    if (effectiveSnapshot.task === "None") {
+    if (effectiveSnapshot.resolvedTask === "None") {
       void dismiss();
       return;
     }
     const rounds = String(effectiveSnapshot.roundCount || 1);
     const difficulty = effectiveSnapshot.difficulty;
-    if (effectiveSnapshot.task === "Shake phone") {
+    if (effectiveSnapshot.resolvedTask === "Shake phone") {
       router.push("/tasks/phone-shaking");
-    } else if (effectiveSnapshot.task === "Memory") {
+    } else if (effectiveSnapshot.resolvedTask === "Memory") {
       router.push(`/tasks/memory-game/${rounds}/${difficulty}`);
-    } else if (effectiveSnapshot.task === "Math") {
+    } else if (effectiveSnapshot.resolvedTask === "Math") {
       router.push(`/tasks/math-equation/${rounds}/${difficulty}`);
     }
   };
@@ -120,7 +129,7 @@ export default function AlarmDisplay() {
     router.dismissTo("/(main)");
   };
 
-  const translatedTask = translateTask(t, effectiveSnapshot.task);
+  const translatedTask = translateTask(t, effectiveSnapshot.resolvedTask);
   const alarmLabel = t(
     effectiveSnapshot.isSnoozed ? "alarm.snoozedLabel" : "alarm.label",
   );
@@ -140,7 +149,7 @@ export default function AlarmDisplay() {
         </Text>
       </View>
       <View style={styles.actions}>
-        {effectiveSnapshot.task === "None" ? (
+        {effectiveSnapshot.resolvedTask === "None" ? (
           <Pressable
             style={({ pressed }) => [
               styles.button,
