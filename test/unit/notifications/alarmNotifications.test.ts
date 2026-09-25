@@ -1,7 +1,9 @@
 import {
   parseAlarmSnapshot,
   reconcileSchedules,
+  resetAlarm,
   snapshotToQueryParams,
+  snoozeAlarm,
 } from "@/alarms/scheduling";
 import { alarmToSnapshot } from "@/data/conversions";
 import type { Alarm, AlarmSnapshot } from "@/data/types";
@@ -234,6 +236,35 @@ describe("localized weekly reconciliation", () => {
         }),
       }),
     );
+  });
+
+  it("reschedules Random alarms with their configured task", async () => {
+    const native = {
+      cancel: jest.fn(async (_identifier: string) => {}),
+      scheduleOneShot: jest.fn(
+        async ({ identifier }: { identifier: string }) => identifier,
+      ),
+      stopAlarmSound: jest.fn(async () => {}),
+    };
+    mockNative = native;
+    mockAlarmRegistrationsStoreState = {
+      remove: jest.fn(async () => {}),
+      upsert: jest.fn(async () => {}),
+    };
+    const active = {
+      ...alarmToSnapshot({ ...alarm, task: "Random" }, 0),
+      resolvedTask: "Math" as const,
+    };
+
+    await resetAlarm(active);
+    await snoozeAlarm(active, 5);
+
+    expect(native.scheduleOneShot).toHaveBeenCalledTimes(2);
+    for (const [opts] of native.scheduleOneShot.mock.calls) {
+      const { payload } = opts as unknown as { payload: AlarmSnapshot };
+      expect(payload.task).toBe("Random");
+      expect(payload).not.toHaveProperty("resolvedTask");
+    }
   });
 
   it("propagates weekly scheduling failures", async () => {

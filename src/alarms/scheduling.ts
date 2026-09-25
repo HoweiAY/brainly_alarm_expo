@@ -9,6 +9,7 @@ import { useAlarmStore } from "@/store/alarmStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import dayjs from "dayjs";
 import { getAlarmScheduler } from "./AlarmScheduler";
+import { toScheduledSnapshot } from "./activeSnapshot";
 import {
   expandWeekdays,
   identifierFor,
@@ -72,7 +73,10 @@ export async function resetAlarm(snapshot: AlarmSnapshot): Promise<void> {
       dayjs().valueOf(),
       true,
     );
-    const payload: AlarmSnapshot = { ...snapshot, isSnoozed: false };
+    const payload: AlarmSnapshot = {
+      ...toScheduledSnapshot(snapshot),
+      isSnoozed: false,
+    };
     await native.scheduleOneShot({
       identifier,
       triggerAt,
@@ -97,7 +101,10 @@ export async function snoozeAlarm(
     dayjs(),
     minutes ?? useSettingsStore.getState().settings.snoozeMinutes,
   );
-  const payload: AlarmSnapshot = { ...snapshot, isSnoozed: true };
+  const payload: AlarmSnapshot = {
+    ...toScheduledSnapshot(snapshot),
+    isSnoozed: true,
+  };
   await native.scheduleOneShot({
     identifier,
     triggerAt,
