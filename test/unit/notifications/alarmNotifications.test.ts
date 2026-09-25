@@ -1,4 +1,5 @@
 import {
+  parseActiveAlarmSnapshot,
   parseAlarmSnapshot,
   reconcileSchedules,
   resetAlarm,
@@ -147,6 +148,29 @@ describe("localized alarm notification copy", () => {
     expect(parseAlarmSnapshot(snapshotToQueryParams(snapshot))?.task).toBe(
       "Random",
     );
+  });
+
+  it("carries the resolved task through alarm route params", () => {
+    const scheduled = alarmToSnapshot({ ...alarm, task: "Random" }, 0);
+    expect(snapshotToQueryParams(scheduled)).not.toHaveProperty("resolvedTask");
+
+    const params = snapshotToQueryParams({
+      ...scheduled,
+      resolvedTask: "Shake phone",
+    });
+    expect(params.resolvedTask).toBe("Shake phone");
+    expect(parseActiveAlarmSnapshot(params)).toMatchObject({
+      task: "Random",
+      resolvedTask: "Shake phone",
+    });
+    expect(
+      parseActiveAlarmSnapshot({ ...params, resolvedTask: "None" })
+        ?.resolvedTask,
+    ).not.toBe("None");
+    expect(
+      parseActiveAlarmSnapshot(snapshotToQueryParams(alarmToSnapshot(alarm, 0)))
+        ?.resolvedTask,
+    ).toBe("Memory");
   });
 
   it("delegates localized channel synchronization to native", async () => {

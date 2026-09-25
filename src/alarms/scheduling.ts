@@ -1,12 +1,20 @@
-import { alarmTasks } from "@/data/constants";
+import { alarmTasks, taskTypes } from "@/data/constants";
 import { alarmToSnapshot } from "@/data/conversions";
-import type { Alarm, AlarmSnapshot, AlarmTask, Difficulty } from "@/data/types";
+import type {
+  ActiveAlarmSnapshot,
+  Alarm,
+  AlarmSnapshot,
+  AlarmTask,
+  Difficulty,
+  TaskType,
+} from "@/data/types";
 import { clearDeliveredAlarmNotifications } from "@/notifications/AlarmNotifications";
 import { getAlarmNotificationCopy } from "@/notifications/alarmNotificationCopy";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
 import { useAlarmStore } from "@/store/alarmStore";
 import { useSettingsStore } from "@/store/settingsStore";
+import { resolveAlarmTask } from "@/tasks/randomTask";
 import dayjs from "dayjs";
 import { getAlarmScheduler } from "./AlarmScheduler";
 import { toScheduledSnapshot } from "./activeSnapshot";
@@ -207,8 +215,24 @@ export function parseAlarmSnapshot(
   };
 }
 
+export function parseActiveAlarmSnapshot(
+  params: Record<string, string | string[] | undefined>,
+): ActiveAlarmSnapshot | null {
+  const snapshot = parseAlarmSnapshot(params);
+  if (!snapshot) return null;
+  const raw = params.resolvedTask;
+  const resolvedRaw = Array.isArray(raw) ? raw[0] : raw;
+  const previous = (taskTypes as string[]).includes(resolvedRaw ?? "")
+    ? (resolvedRaw as TaskType)
+    : undefined;
+  return {
+    ...snapshot,
+    resolvedTask: resolveAlarmTask(snapshot.task, previous),
+  };
+}
+
 export function snapshotToQueryParams(
-  snapshot: AlarmSnapshot,
+  snapshot: AlarmSnapshot | ActiveAlarmSnapshot,
 ): Record<string, string> {
   const notification = getAlarmNotificationCopy();
   return {
@@ -225,5 +249,8 @@ export function snapshotToQueryParams(
     isSnoozed: String(snapshot.isSnoozed),
     notificationTitle: snapshot.notificationTitle ?? notification.title,
     notificationBody: snapshot.notificationBody ?? notification.body,
+    ...("resolvedTask" in snapshot
+      ? { resolvedTask: snapshot.resolvedTask }
+      : {}),
   };
 }
