@@ -88,27 +88,44 @@ function AlarmStoreInit() {
     useAlarmStore.getState().loadAlarms();
     useAlarmRegistrationsStore.getState().load();
 
-    const sub = Linking.addEventListener("url", ({ url }) =>
-      handleAlarmUrl(url, router),
-    );
-    Linking.getInitialURL()
-      .then(async (url) => {
-        await useAlarmFiringStore.getState().init();
-        if (url) {
-          handleAlarmUrl(url, router);
-          return;
-        }
-        const persisted = useAlarmFiringStore.getState().activeSnapshot;
-        if (persisted) {
-          router.replace({
-            pathname: "/alarm",
-            params: snapshotToQueryParams(persisted),
-          });
-        }
-      })
+    let disposed = false;
+    let initialized = false;
+    const pendingUrls: string[] = [];
+    const onUrl = (url: string) => {
+      if (!initialized) {
+        pendingUrls.push(url);
+        return;
+      }
+      handleAlarmUrl(url, router);
+    };
+    const sub = Linking.addEventListener("url", ({ url }) => onUrl(url));
+    const initialUrl = Linking.getInitialURL().catch((err: unknown) => {
+      console.warn("getInitialURL failed", err);
+      return null;
+    });
+    const firingStoreInit = useAlarmFiringStore
+      .getState()
+      .init()
       .catch((err: unknown) => {
-        console.warn("getInitialURL / init failed", err);
+        console.warn("alarmFiringStore init failed", err);
       });
+    void Promise.all([initialUrl, firingStoreInit]).then(([url]) => {
+      if (disposed) return;
+      initialized = true;
+      const urls = [...new Set([...(url ? [url] : []), ...pendingUrls])];
+      pendingUrls.length = 0;
+      if (urls.length > 0) {
+        urls.forEach((pendingUrl) => handleAlarmUrl(pendingUrl, router));
+        return;
+      }
+      const persisted = useAlarmFiringStore.getState().activeSnapshot;
+      if (persisted) {
+        router.replace({
+          pathname: "/alarm",
+          params: snapshotToQueryParams(persisted),
+        });
+      }
+    });
 
     let alarmsReady = useAlarmStore.getState().loaded;
     let registryReady = useAlarmRegistrationsStore.getState().loaded;
@@ -148,6 +165,7 @@ function AlarmStoreInit() {
     tryReconcile();
 
     return () => {
+      disposed = true;
       sub.remove();
       disposers.forEach((d) => d());
     };
