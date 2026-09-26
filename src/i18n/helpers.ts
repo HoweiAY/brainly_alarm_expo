@@ -1,4 +1,4 @@
-import type { Difficulty, TaskType, Weekday } from "@/data/types";
+import type { AlarmTask, Difficulty, Weekday } from "@/data/types";
 import type { TFunction } from "i18next";
 
 const weekdayKeys = {
@@ -15,6 +15,7 @@ const taskKeys = {
   Memory: "common.tasks.Memory",
   Math: "common.tasks.Math",
   "Shake phone": "common.tasks.ShakePhone",
+  Random: "common.tasks.Random",
   None: "common.tasks.None",
 } as const;
 
@@ -28,7 +29,7 @@ export function translateWeekday(t: TFunction, weekday: Weekday): string {
   return t(weekdayKeys[weekday]);
 }
 
-export function translateTask(t: TFunction, task: TaskType): string {
+export function translateTask(t: TFunction, task: AlarmTask): string {
   return t(taskKeys[task]);
 }
 

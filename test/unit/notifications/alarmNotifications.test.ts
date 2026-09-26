@@ -1,7 +1,10 @@
 import {
+  parseActiveAlarmSnapshot,
   parseAlarmSnapshot,
   reconcileSchedules,
+  resetAlarm,
   snapshotToQueryParams,
+  snoozeAlarm,
 } from "@/alarms/scheduling";
 import { alarmToSnapshot } from "@/data/conversions";
 import type { Alarm, AlarmSnapshot } from "@/data/types";
@@ -139,6 +142,37 @@ describe("localized alarm notification copy", () => {
     expect(params.notificationBody).toBe("輕觸以關閉鬧鐘。");
   });
 
+  it("preserves the Random task through payload parsing", () => {
+    const snapshot = alarmToSnapshot({ ...alarm, task: "Random" }, 0);
+    expect(snapshot.task).toBe("Random");
+    expect(parseAlarmSnapshot(snapshotToQueryParams(snapshot))?.task).toBe(
+      "Random",
+    );
+  });
+
+  it("carries the resolved task through alarm route params", () => {
+    const scheduled = alarmToSnapshot({ ...alarm, task: "Random" }, 0);
+    expect(snapshotToQueryParams(scheduled)).not.toHaveProperty("resolvedTask");
+
+    const params = snapshotToQueryParams({
+      ...scheduled,
+      resolvedTask: "Shake phone",
+    });
+    expect(params.resolvedTask).toBe("Shake phone");
+    expect(parseActiveAlarmSnapshot(params)).toMatchObject({
+      task: "Random",
+      resolvedTask: "Shake phone",
+    });
+    expect(
+      parseActiveAlarmSnapshot({ ...params, resolvedTask: "None" })
+        ?.resolvedTask,
+    ).not.toBe("None");
+    expect(
+      parseActiveAlarmSnapshot(snapshotToQueryParams(alarmToSnapshot(alarm, 0)))
+        ?.resolvedTask,
+    ).toBe("Memory");
+  });
+
   it("delegates localized channel synchronization to native", async () => {
     await i18n.changeLanguage("zh-Hant");
 
@@ -226,6 +260,35 @@ describe("localized weekly reconciliation", () => {
         }),
       }),
     );
+  });
+
+  it("reschedules Random alarms with their configured task", async () => {
+    const native = {
+      cancel: jest.fn(async (_identifier: string) => {}),
+      scheduleOneShot: jest.fn(
+        async ({ identifier }: { identifier: string }) => identifier,
+      ),
+      stopAlarmSound: jest.fn(async () => {}),
+    };
+    mockNative = native;
+    mockAlarmRegistrationsStoreState = {
+      remove: jest.fn(async () => {}),
+      upsert: jest.fn(async () => {}),
+    };
+    const active = {
+      ...alarmToSnapshot({ ...alarm, task: "Random" }, 0),
+      resolvedTask: "Math" as const,
+    };
+
+    await resetAlarm(active);
+    await snoozeAlarm(active, 5);
+
+    expect(native.scheduleOneShot).toHaveBeenCalledTimes(2);
+    for (const [opts] of native.scheduleOneShot.mock.calls) {
+      const { payload } = opts as unknown as { payload: AlarmSnapshot };
+      expect(payload.task).toBe("Random");
+      expect(payload).not.toHaveProperty("resolvedTask");
+    }
   });
 
   it("propagates weekly scheduling failures", async () => {

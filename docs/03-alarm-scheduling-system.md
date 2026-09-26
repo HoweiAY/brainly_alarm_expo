@@ -215,6 +215,8 @@ interface AlarmScheduler {
 
 `identifier` and `payload` are the canonical schedule inputs. The bridge no longer repeats `alarmId` or `soundUri` beside the payload; Android derives a custom playback URI from `payload.sound` and maps `"Default"` to the system alarm tone. Weekly rescheduling and snooze orchestration remain TypeScript responsibilities in `src/alarms/scheduling.ts` rather than native bridge methods.
 
+`payload.task` is the configured task and may be `"Random"`. Native code passes it through unchanged: the Record `task` field is a free string, and `AlarmStore.mapTask` maps the stored `random` key to `"Random"` for boot re-arming. The concrete task is drawn in JavaScript when the alarm activates (`alarmFiringStore.setActive`, see doc 05 §7). The resulting `resolvedTask` lives only in `ActiveAlarmSnapshot` and is stripped by `toScheduledSnapshot()` before `resetAlarm()`/`snoozeAlarm()` schedule again, so every trigger is randomized independently.
+
 ### 10.2 Implementation Constraints and Status
 
 1. **iOS exact alarms** — iOS has no exact-alarm primitive; the Swift implementation uses `UNCalendarNotificationTrigger` / `UNTimeIntervalNotificationTrigger` and accepts degraded delivery behavior.

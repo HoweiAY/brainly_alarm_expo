@@ -265,3 +265,18 @@ The RN port applies an auto-dismiss timeout to Memory, Math, and Phone Shaking. 
 - Reaching 0 uses the same shared completion handler as successful task completion, stopping the alarm sound, dismissing the native firing state, clearing active alarm state, and returning to Home.
 - The mechanism is enabled by default. The enabled flag is a global user preference (`autoDismissEnabled` in `UserSettings`, toggled from the Settings screen under **Alarm → Auto dismiss tasks**). `TaskHeader` reads it from `useSettingsStore` and passes it to `useTaskAutoDismiss`; an explicit `autoDismissEnabled` prop on `TaskHeader` still overrides the global value for per-screen use. Timing configuration remains injectable but is not yet user-facing.
 - Countdown state is derived from absolute `dayjs` deadlines rather than decrement-only timers. If JavaScript is suspended while the app is backgrounded, an overdue task dismisses as soon as the app becomes active again; exact dismissal while suspended is not guaranteed.
+
+---
+
+## 7. Random Task (RN port addition)
+
+The Expo port adds a configurable `"Random"` task. It has no Kotlin counterpart.
+
+- **Configured vs. resolved task.** `Alarm.task` and the scheduled `AlarmSnapshot.task` hold the configured `AlarmTask`, which may be `"Random"`. The dismissal task actually shown is `ActiveAlarmSnapshot.resolvedTask`, a concrete `TaskType`.
+- **Pool.** `RANDOM_TASK_POOL` in `src/tasks/randomTask.ts` is `taskTypes` without `"None"`: `Memory`, `Math`, `Shake phone`. `pickRandomTask()` draws uniformly from it and `resolveAlarmTask()` is the single resolution entry point.
+- **When the draw happens.** The draw happens once per trigger, at fire time in JavaScript, when `alarmFiringStore.setActive()` receives the snapshot. It does not happen at schedule time. Every entry path goes through `setActive`: the Android deep link, the `onAlarmFired` event, the iOS notification received and response listeners, and the alarm screen fallback. The navigation that follows uses the resolved snapshot it returns.
+- **Every trigger redraws.** `resetAlarm()` and `snoozeAlarm()` build their payloads with `toScheduledSnapshot()`, which strips `resolvedTask`, so the next weekly or snoozed trigger carries `"Random"` again and gets a fresh, independent draw. Repeats are allowed: a snooze may draw the same task as the previous trigger. Weekly payloads from `setAlarm()`, `reconcileSchedules()`, the Android `BootReceiver` and iOS repeating notifications also carry `"Random"`.
+- **Same-trigger de-duplication.** A single fire can reach JS more than once: the Android deep link plus `onAlarmFired`, or the iOS received plus response listeners. `resolveActiveSnapshot()` reuses the current `resolvedTask` only when the incoming snapshot has the same `alarmId`, `weekday` and `isSnoozed` and arrives within `SAME_TRIGGER_WINDOW_MS` (60 s) of the original activation. `activatedAt` is persisted with the active snapshot. Snoozing and dismissal call `clearActive()`, so the next trigger always draws again.
+- **Cold start.** The persisted `active_alarm` row stores the complete activation, so relaunching while an alarm is still active restores the same task and activation timestamp. Legacy snapshots without `resolvedTask` are normalized on `init()`.
+- **Rounds and difficulty.** The editor keeps Rounds and Difficulty enabled for `Random`. They apply when Memory or Math is drawn; Shake phone ignores them as usual.
+- **Display.** `AlarmDisplay` shows the drawn task (for example "Task: Math"), and **Begin** routes by `resolvedTask`. `None` is never drawn, so a Random alarm always shows **Begin**.

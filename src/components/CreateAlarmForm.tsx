@@ -1,5 +1,5 @@
-import { taskDifficulties, taskTypes, weekdays } from "@/data/constants";
-import type { Difficulty, TaskType } from "@/data/types";
+import { alarmTasks, taskDifficulties, weekdays } from "@/data/constants";
+import type { AlarmTask, Difficulty } from "@/data/types";
 import type { UseCreateAlarmFormResult } from "@/hooks/useCreateAlarmForm";
 import { translateDifficulty, translateTask } from "@/i18n/helpers";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
@@ -146,7 +146,7 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
           </Pressable>
           {form.taskSelectorExpanded ? (
             <View style={styles.dropdownList}>
-              {taskTypes.map((task: TaskType) => (
+              {alarmTasks.map((task: AlarmTask) => (
                 <Pressable
                   key={task}
                   style={({ pressed }) => [
@@ -179,6 +179,9 @@ export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
                 </Pressable>
               ))}
             </View>
+          ) : null}
+          {form.taskSelected === "Random" ? (
+            <Text style={styles.helperText}>{t("editor.randomTaskHint")}</Text>
           ) : null}
         </View>
 

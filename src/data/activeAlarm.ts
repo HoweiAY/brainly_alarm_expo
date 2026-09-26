@@ -2,10 +2,10 @@ import dayjs from "dayjs";
 import { eq } from "drizzle-orm";
 import { db, dbReady } from "./db";
 import { activeAlarmTable } from "./schema";
-import type { AlarmSnapshot } from "./types";
+import type { AlarmActivation } from "./types";
 
 export async function persistActiveAlarm(
-  snapshot: AlarmSnapshot,
+  activation: AlarmActivation,
 ): Promise<void> {
   await dbReady;
   const now = dayjs().valueOf();
@@ -13,13 +13,13 @@ export async function persistActiveAlarm(
     .insert(activeAlarmTable)
     .values({
       id: "current",
-      payload: snapshot,
+      payload: activation,
       createdAt: now,
       updatedAt: now,
     })
     .onConflictDoUpdate({
       target: activeAlarmTable.id,
-      set: { payload: snapshot, updatedAt: now },
+      set: { payload: activation, updatedAt: now },
     });
 }
 
@@ -28,7 +28,7 @@ export async function clearPersistedActiveAlarm(): Promise<void> {
   await db.delete(activeAlarmTable).where(eq(activeAlarmTable.id, "current"));
 }
 
-export async function getPersistedActiveAlarm(): Promise<AlarmSnapshot | null> {
+export async function getPersistedActiveAlarm(): Promise<AlarmActivation | null> {
   await dbReady;
   const rows = await db
     .select({ payload: activeAlarmTable.payload })

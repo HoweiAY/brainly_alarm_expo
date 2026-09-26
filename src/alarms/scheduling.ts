@@ -1,13 +1,23 @@
+import { alarmTasks, taskTypes } from "@/data/constants";
 import { alarmToSnapshot } from "@/data/conversions";
-import type { Alarm, AlarmSnapshot, Difficulty, TaskType } from "@/data/types";
+import type {
+  ActiveAlarmSnapshot,
+  Alarm,
+  AlarmSnapshot,
+  AlarmTask,
+  Difficulty,
+  TaskType,
+} from "@/data/types";
 import { clearDeliveredAlarmNotifications } from "@/notifications/AlarmNotifications";
 import { getAlarmNotificationCopy } from "@/notifications/alarmNotificationCopy";
 import { useAlarmFiringStore } from "@/store/alarmFiringStore";
 import { useAlarmRegistrationsStore } from "@/store/alarmRegistrationsStore";
 import { useAlarmStore } from "@/store/alarmStore";
 import { useSettingsStore } from "@/store/settingsStore";
+import { resolveAlarmTask } from "@/tasks/randomTask";
 import dayjs from "dayjs";
 import { getAlarmScheduler } from "./AlarmScheduler";
+import { toScheduledSnapshot } from "./activeSnapshot";
 import {
   expandWeekdays,
   identifierFor,
@@ -71,7 +81,10 @@ export async function resetAlarm(snapshot: AlarmSnapshot): Promise<void> {
       dayjs().valueOf(),
       true,
     );
-    const payload: AlarmSnapshot = { ...snapshot, isSnoozed: false };
+    const payload: AlarmSnapshot = {
+      ...toScheduledSnapshot(snapshot),
+      isSnoozed: false,
+    };
     await native.scheduleOneShot({
       identifier,
       triggerAt,
@@ -96,7 +109,10 @@ export async function snoozeAlarm(
     dayjs(),
     minutes ?? useSettingsStore.getState().settings.snoozeMinutes,
   );
-  const payload: AlarmSnapshot = { ...snapshot, isSnoozed: true };
+  const payload: AlarmSnapshot = {
+    ...toScheduledSnapshot(snapshot),
+    isSnoozed: true,
+  };
   await native.scheduleOneShot({
     identifier,
     triggerAt,
@@ -151,7 +167,6 @@ export async function reconcileSchedules(): Promise<void> {
   }
 }
 
-const TASK_TYPES: TaskType[] = ["Memory", "Math", "Shake phone", "None"];
 const DIFFICULTIES: Difficulty[] = ["Easy", "Normal", "Hard"];
 
 function toBool(value: unknown): boolean {
@@ -174,8 +189,8 @@ export function parseAlarmSnapshot(
   if (!alarmId) return null;
   const taskRaw = get("task");
   const task =
-    taskRaw && (TASK_TYPES as string[]).includes(taskRaw)
-      ? (taskRaw as TaskType)
+    taskRaw && (alarmTasks as string[]).includes(taskRaw)
+      ? (taskRaw as AlarmTask)
       : "Memory";
   const difficultyRaw = get("difficulty");
   const difficulty =
@@ -200,8 +215,24 @@ export function parseAlarmSnapshot(
   };
 }
 
+export function parseActiveAlarmSnapshot(
+  params: Record<string, string | string[] | undefined>,
+): ActiveAlarmSnapshot | null {
+  const snapshot = parseAlarmSnapshot(params);
+  if (!snapshot) return null;
+  const raw = params.resolvedTask;
+  const resolvedRaw = Array.isArray(raw) ? raw[0] : raw;
+  const previous = (taskTypes as string[]).includes(resolvedRaw ?? "")
+    ? (resolvedRaw as TaskType)
+    : undefined;
+  return {
+    ...snapshot,
+    resolvedTask: resolveAlarmTask(snapshot.task, previous),
+  };
+}
+
 export function snapshotToQueryParams(
-  snapshot: AlarmSnapshot,
+  snapshot: AlarmSnapshot | ActiveAlarmSnapshot,
 ): Record<string, string> {
   const notification = getAlarmNotificationCopy();
   return {
@@ -218,5 +249,8 @@ export function snapshotToQueryParams(
     isSnoozed: String(snapshot.isSnoozed),
     notificationTitle: snapshot.notificationTitle ?? notification.title,
     notificationBody: snapshot.notificationBody ?? notification.body,
+    ...("resolvedTask" in snapshot
+      ? { resolvedTask: snapshot.resolvedTask }
+      : {}),
   };
 }

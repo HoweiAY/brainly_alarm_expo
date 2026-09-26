@@ -4,6 +4,8 @@ export type Weekday = "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
 
 export type TaskType = "Memory" | "Math" | "Shake phone" | "None";
 
+export type AlarmTask = TaskType | "Random";
+
 export type Difficulty = "Easy" | "Normal" | "Hard";
 
 export type AppColorScheme = "dark" | "light";
@@ -13,7 +15,7 @@ export interface Alarm {
   days: Weekday[];
   hour: number;
   minute: number;
-  task: TaskType;
+  task: AlarmTask;
   rounds: number;
   difficulty: Difficulty;
   sound: string | null;
@@ -26,7 +28,7 @@ export interface AlarmSnapshot {
   weekday: number;
   hour: number;
   minute: number;
-  task: TaskType;
+  task: AlarmTask;
   roundCount: number;
   difficulty: Difficulty;
   sound: string;
@@ -35,6 +37,15 @@ export interface AlarmSnapshot {
   isSnoozed: boolean;
   notificationTitle: string;
   notificationBody: string;
+}
+
+export interface ActiveAlarmSnapshot extends AlarmSnapshot {
+  resolvedTask: TaskType;
+}
+
+export interface AlarmActivation {
+  snapshot: ActiveAlarmSnapshot;
+  activatedAt: number;
 }
 
 export interface UserSettings {

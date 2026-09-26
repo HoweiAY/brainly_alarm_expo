@@ -153,6 +153,7 @@ native/
 ```ts
 export type Weekday = "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
 export type TaskType = "Memory" | "Math" | "Shake phone" | "None";
+export type AlarmTask = TaskType | "Random"; // configured task; "Random" is drawn per trigger
 export type Difficulty = "Easy" | "Normal" | "Hard";
 export type AppColorScheme = "dark" | "light";
 
@@ -161,7 +162,7 @@ export interface Alarm {
   days: Weekday[]; // [] === every day (resolved at schedule time)
   hour: number; // 0..23
   minute: number; // 0..59
-  task: TaskType;
+  task: AlarmTask;
   rounds: number; // 1..5
   difficulty: Difficulty;
   sound: string | null; // null = system default; otherwise sandbox file URI
@@ -175,7 +176,7 @@ export interface AlarmSnapshot {
   weekday: number; // Mon=0 .. Sun=6
   hour: number;
   minute: number;
-  task: TaskType;
+  task: AlarmTask; // configured task, may be "Random"
   roundCount: number;
   difficulty: Difficulty;
   sound: string; // "Default" or sandbox file URI
@@ -184,6 +185,12 @@ export interface AlarmSnapshot {
   isSnoozed: boolean;
   notificationTitle: string;
   notificationBody: string;
+}
+
+// The firing alarm held by `alarmFiringStore`, persisted in `active_alarm` and
+// passed to `/alarm` route params. Never sent to the native scheduler.
+export interface ActiveAlarmSnapshot extends AlarmSnapshot {
+  resolvedTask: TaskType; // concrete task drawn for this trigger
 }
 
 // User preferences persisted as a single JSON row in the `settings` table.

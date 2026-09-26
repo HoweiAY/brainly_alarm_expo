@@ -9,7 +9,7 @@ import { findConflictingAlarm } from "@/alarms/conflicts";
 import { pickAlarmSoundFromDevice } from "@/alarms/pickAlarmSound";
 import { setAlarm } from "@/alarms/scheduling";
 import { weekdays } from "@/data/constants";
-import type { Alarm, Difficulty, TaskType, Weekday } from "@/data/types";
+import type { Alarm, AlarmTask, Difficulty, Weekday } from "@/data/types";
 import { useAppTranslation } from "@/i18n/useAppTranslation";
 import { useAlarmStore } from "@/store/alarmStore";
 import { formatTime } from "@/utils/time";
@@ -43,7 +43,7 @@ export interface CreateAlarmUiState {
   weekdaysSelected: Weekday[];
   hourSelected: number;
   minuteSelected: number;
-  taskSelected: TaskType;
+  taskSelected: AlarmTask;
   roundsSelected: number;
   difficultySelected: Difficulty;
   alarmSoundSelected: string;
@@ -60,7 +60,7 @@ export interface UseCreateAlarmFormResult extends CreateAlarmUiState {
   selectAllDays: () => void;
   setHour: (hour24: number) => void;
   setMinute: (minute: number) => void;
-  setTask: (task: TaskType) => void;
+  setTask: (task: AlarmTask) => void;
   setRounds: (rounds: number) => void;
   setDifficulty: (difficulty: Difficulty) => void;
   pickSound: () => void;
@@ -91,7 +91,7 @@ function createDefaults(
   };
 }
 
-function isTaskConfigurable(task: TaskType): boolean {
+function isTaskConfigurable(task: AlarmTask): boolean {
   return task !== "Shake phone" && task !== "None";
 }
 
@@ -204,7 +204,7 @@ export function useCreateAlarmForm(
     setState((prev) => ({ ...prev, minuteSelected: minute }));
   }, []);
 
-  const setTask = useCallback((task: TaskType) => {
+  const setTask = useCallback((task: AlarmTask) => {
     if (persistingRef.current) {
       return;
     }

@@ -4,7 +4,7 @@ import {
   sqliteTable,
   text,
 } from "drizzle-orm/sqlite-core";
-import type { AlarmSnapshot, UserSettings } from "./types";
+import type { AlarmActivation, UserSettings } from "./types";
 
 export const alarmsTable = sqliteTable("alarms", {
   id: text("id").primaryKey(),
@@ -35,7 +35,7 @@ export const alarmRegistrationsTable = sqliteTable(
 
 export const activeAlarmTable = sqliteTable("active_alarm", {
   id: text("id").primaryKey(),
-  payload: text("payload", { mode: "json" }).$type<AlarmSnapshot>().notNull(),
+  payload: text("payload", { mode: "json" }).$type<AlarmActivation>().notNull(),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });
