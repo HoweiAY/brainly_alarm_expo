@@ -1,12 +1,13 @@
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import type { AlarmSnapshot } from "@/data/types";
 import { useAlarmFiringStore as store } from "@/store/alarmFiringStore";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 let mockPersisted: unknown = null;
-const mockPersistActiveAlarm = jest.fn(async (_snapshot: unknown) => {});
+const mockPersistActiveAlarm = jest.fn(async (_activation: unknown) => {});
 
 jest.mock("@/data/activeAlarm", () => ({
-  persistActiveAlarm: (snapshot: unknown) => mockPersistActiveAlarm(snapshot),
+  persistActiveAlarm: (activation: unknown) =>
+    mockPersistActiveAlarm(activation),
   clearPersistedActiveAlarm: async () => {},
   getPersistedActiveAlarm: async () => mockPersisted,
 }));
@@ -40,7 +41,10 @@ describe("alarm firing store", () => {
     expect(active.task).toBe("Random");
     expect(active.resolvedTask).not.toBe("None");
     expect(store.getState().activeSnapshot).toEqual(active);
-    expect(mockPersistActiveAlarm).toHaveBeenCalledWith(active);
+    expect(mockPersistActiveAlarm).toHaveBeenCalledWith({
+      snapshot: active,
+      activatedAt: store.getState().activatedAt,
+    });
   });
 
   it("reuses the draw for a duplicate delivery of the same trigger", async () => {
@@ -66,11 +70,16 @@ describe("alarm firing store", () => {
     random.mockRestore();
   });
 
-  it("normalizes a persisted snapshot without a resolved task", async () => {
-    mockPersisted = { ...snapshot, task: "Math" };
+  it("restores an activation and normalizes its snapshot", async () => {
+    const activatedAt = 1_700_000_000_000;
+    mockPersisted = {
+      snapshot: { ...snapshot, task: "Math" },
+      activatedAt,
+    };
 
     await store.getState().init();
 
     expect(store.getState().activeSnapshot?.resolvedTask).toBe("Math");
+    expect(store.getState().activatedAt).toBe(activatedAt);
   });
 });

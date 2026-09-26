@@ -1,16 +1,14 @@
 import type {
   ActiveAlarmSnapshot,
+  AlarmActivation,
   AlarmSnapshot,
   TaskType,
 } from "@/data/types";
 import { resolveAlarmTask } from "@/tasks/randomTask";
 
-export const SAME_TRIGGER_WINDOW_MS = 60_000;
+export type { AlarmActivation } from "@/data/types";
 
-export interface AlarmActivation {
-  snapshot: ActiveAlarmSnapshot;
-  activatedAt: number;
-}
+export const SAME_TRIGGER_WINDOW_MS = 60_000;
 
 export function isSameTrigger(
   incoming: AlarmSnapshot,

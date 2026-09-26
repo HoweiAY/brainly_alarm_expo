@@ -32,14 +32,18 @@ export const useAlarmFiringStore = create<AlarmFiringStoreState>(
           ? { snapshot: activeSnapshot, activatedAt }
           : null;
       const resolved = resolveActiveSnapshot(snapshot, current, now);
-      set({
-        activeSnapshot: resolved,
+      const activation = {
+        snapshot: resolved,
         activatedAt: isSameTrigger(snapshot, current, now)
           ? current.activatedAt
           : now,
+      };
+      set({
+        activeSnapshot: activation.snapshot,
+        activatedAt: activation.activatedAt,
       });
-      void persistActiveAlarm(resolved);
-      return resolved;
+      void persistActiveAlarm(activation);
+      return activation.snapshot;
     },
     clearActive: () => {
       set({ activeSnapshot: null, activatedAt: null });
@@ -50,8 +54,13 @@ export const useAlarmFiringStore = create<AlarmFiringStoreState>(
       const persisted = await getPersistedActiveAlarm();
       set({
         activeSnapshot: persisted
-          ? resolveActiveSnapshot(persisted, null, dayjs().valueOf())
+          ? resolveActiveSnapshot(
+              persisted.snapshot,
+              persisted,
+              dayjs().valueOf(),
+            )
           : null,
+        activatedAt: persisted?.activatedAt ?? null,
         loaded: true,
       });
     },
