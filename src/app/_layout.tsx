@@ -93,11 +93,11 @@ function AlarmStoreInit() {
     );
     Linking.getInitialURL()
       .then(async (url) => {
+        await useAlarmFiringStore.getState().init();
         if (url) {
           handleAlarmUrl(url, router);
           return;
         }
-        await useAlarmFiringStore.getState().init();
         const persisted = useAlarmFiringStore.getState().activeSnapshot;
         if (persisted) {
           router.replace({
