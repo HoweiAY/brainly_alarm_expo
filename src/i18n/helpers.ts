@@ -29,6 +29,7 @@ export function translateWeekday(t: TFunction, weekday: Weekday): string {
   return t(weekdayKeys[weekday]);
 }
 
+/** Returns the localized label for a configured task, including Random. */
 export function translateTask(t: TFunction, task: AlarmTask): string {
   return t(taskKeys[task]);
 }

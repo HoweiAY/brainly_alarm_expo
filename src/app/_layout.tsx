@@ -57,6 +57,11 @@ function runOnceLoaded(store: StoreWithLoaded, cb: () => void): () => void {
   return unsub;
 }
 
+/**
+ * Starts activation and navigation for an `alarm` link whose ID exists in the
+ * alarm store, rescheduling a different active alarm first. Returns before the
+ * asynchronous work finishes; its rejections are not caught here.
+ */
 function handleAlarmUrl(
   url: string,
   router: ReturnType<typeof useRouter>,
@@ -81,6 +86,12 @@ function handleAlarmUrl(
   })();
 }
 
+/**
+ * Initializes alarm stores and notification handling without rendering UI.
+ * Buffers links until activation restoration settles, then handles queued links
+ * or restores the persisted alarm route. Reconciles schedules once both the
+ * alarm and registration stores are loaded.
+ */
 function AlarmStoreInit() {
   const router = useRouter();
   useAlarmNotifications();
@@ -91,6 +102,7 @@ function AlarmStoreInit() {
     let disposed = false;
     let initialized = false;
     const pendingUrls: string[] = [];
+    /** Queues links during initialization, then dispatches new links immediately. */
     const onUrl = (url: string) => {
       if (!initialized) {
         pendingUrls.push(url);

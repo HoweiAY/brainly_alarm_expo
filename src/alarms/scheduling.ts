@@ -63,6 +63,13 @@ export async function cancelAlarm(alarm: { id: string }): Promise<void> {
   await useAlarmRegistrationsStore.getState().removeForAlarm(alarm.id);
 }
 
+/**
+ * Cancels the snapshot's weekday schedule and, if enabled, schedules that
+ * weekday and time in the next calendar week. Removes a snooze registry entry
+ * for snoozed snapshots and omits the resolved task from the new payload.
+ *
+ * @throws Propagates scheduler and registration persistence failures.
+ */
 export async function resetAlarm(snapshot: AlarmSnapshot): Promise<void> {
   const native = getAlarmScheduler();
   const registry = useAlarmRegistrationsStore.getState();
@@ -93,6 +100,15 @@ export async function resetAlarm(snapshot: AlarmSnapshot): Promise<void> {
   }
 }
 
+/**
+ * Stops playback and replaces the alarm's snooze with a registered one-shot,
+ * retaining the configured task and omitting its resolved selection.
+ *
+ * @param minutes Delay from now, rounded and clamped to 1–60 minutes; non-finite
+ * values use 5 minutes. If omitted, loads and uses the current snooze setting;
+ * a handled settings-load failure leaves the existing setting in use.
+ * @throws Propagates scheduler and registration persistence failures.
+ */
 export async function snoozeAlarm(
   snapshot: AlarmSnapshot,
   minutes?: number,
@@ -178,6 +194,13 @@ function toNumber(value: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+/**
+ * Parses route values using the first item of each array; returns null for a
+ * missing or empty alarm ID. Unknown tasks and difficulties become Memory and
+ * Easy. Missing or non-finite numbers become 0, without range validation, and
+ * boolean flags accept only true or "true". Missing sound and notification copy
+ * use the default sound and current locale. Random remains unresolved.
+ */
 export function parseAlarmSnapshot(
   params: Record<string, string | string[] | undefined>,
 ): AlarmSnapshot | null {
@@ -215,6 +238,11 @@ export function parseAlarmSnapshot(
   };
 }
 
+/**
+ * Parses an alarm route with {@link parseAlarmSnapshot}'s defaults and null
+ * result. Concrete tasks resolve to themselves; Random reuses an eligible
+ * `resolvedTask` (the first array value) or draws a task other than None.
+ */
 export function parseActiveAlarmSnapshot(
   params: Record<string, string | string[] | undefined>,
 ): ActiveAlarmSnapshot | null {
@@ -231,6 +259,10 @@ export function parseActiveAlarmSnapshot(
   };
 }
 
+/**
+ * Builds route parameters, preserving `resolvedTask` when present and filling
+ * nullish notification copy from the current locale. Values are not URL-encoded.
+ */
 export function snapshotToQueryParams(
   snapshot: AlarmSnapshot | ActiveAlarmSnapshot,
 ): Record<string, string> {

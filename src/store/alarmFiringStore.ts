@@ -24,6 +24,11 @@ export const useAlarmFiringStore = create<AlarmFiringStoreState>(
     activeSnapshot: null,
     activatedAt: null,
     loaded: false,
+    /**
+     * Resolves, stores, and returns the active snapshot, preserving the original
+     * activation time for a duplicate trigger. Starts persistence without waiting
+     * for it; persistence rejections are not caught or returned to the caller.
+     */
     setActive: (snapshot) => {
       const now = dayjs().valueOf();
       const { activeSnapshot, activatedAt } = get();
@@ -45,10 +50,20 @@ export const useAlarmFiringStore = create<AlarmFiringStoreState>(
       void persistActiveAlarm(activation);
       return activation.snapshot;
     },
+    /**
+     * Clears the in-memory activation and starts deleting its persisted row.
+     * Deletion rejections are not caught or returned to the caller.
+     */
     clearActive: () => {
       set({ activeSnapshot: null, activatedAt: null });
       void clearPersistedActiveAlarm();
     },
+    /**
+     * Restores the persisted activation and resolves its task, or clears state
+     * if none is stored. Does nothing once loaded; preserves the activation time.
+     *
+     * @throws Rejects on persistence read failures or snapshot resolution errors.
+     */
     init: async () => {
       if (get().loaded) return;
       const persisted = await getPersistedActiveAlarm();

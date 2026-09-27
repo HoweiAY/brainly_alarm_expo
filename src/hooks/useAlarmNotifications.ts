@@ -48,6 +48,15 @@ export async function resetOldAlarm(incoming: AlarmSnapshot): Promise<void> {
   await resetAlarm(oldSnapshot);
 }
 
+/**
+ * Activates and routes to a resolved alarm, skipping a delivery whose alarm ID
+ * is already being activated. Reschedules a different previously active alarm.
+ *
+ * @param shouldPlaySound Starts playback before navigation when true.
+ * @param shouldClearDelivered Starts notification cleanup without awaiting it.
+ * @throws Propagates rescheduling and playback failures. Navigation and
+ * notification cleanup failures are handled internally.
+ */
 async function activateAlarmForNotification(
   snapshot: AlarmSnapshot,
   router: ReturnType<typeof useRouter>,

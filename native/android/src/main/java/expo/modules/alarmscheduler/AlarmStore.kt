@@ -107,6 +107,7 @@ class AlarmStore(context: Context) : AutoCloseable {
     }
   }
 
+  /** Maps a stored task key to its payload name, defaulting unknown keys to Memory. */
   private fun mapTask(storage: String): String = when (storage) {
     "memory" -> "Memory"
     "math" -> "Math"

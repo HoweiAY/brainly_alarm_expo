@@ -10,6 +10,12 @@ export type { AlarmActivation } from "@/data/types";
 
 export const SAME_TRIGGER_WINDOW_MS = 60_000;
 
+/**
+ * Matches alarm ID, weekday, and snooze state within 0–60,000 milliseconds
+ * of the current activation, inclusive. Future activations do not match.
+ *
+ * @param now Current time in epoch milliseconds, compared with `activatedAt`.
+ */
 export function isSameTrigger(
   incoming: AlarmSnapshot,
   current: AlarmActivation | null,
@@ -25,6 +31,15 @@ export function isSameTrigger(
   );
 }
 
+/**
+ * Copies the incoming snapshot with a concrete dismissal task. For Random,
+ * uses its supplied resolution when present; otherwise considers the current
+ * resolution if {@link isSameTrigger} matches. An ineligible selection redraws.
+ *
+ * @param now Current time in epoch milliseconds for duplicate detection.
+ * @param random Supplies a value in [0, 1) when a new draw is needed.
+ * @throws Propagates errors from `random` when drawing.
+ */
 export function resolveActiveSnapshot(
   incoming: AlarmSnapshot & { resolvedTask?: TaskType },
   current: AlarmActivation | null,
@@ -42,6 +57,10 @@ export function resolveActiveSnapshot(
   };
 }
 
+/**
+ * Copies a snapshot without `resolvedTask`, preserving the configured task so
+ * a scheduled Random alarm can draw again when it activates.
+ */
 export function toScheduledSnapshot(
   snapshot: AlarmSnapshot | ActiveAlarmSnapshot,
 ): AlarmSnapshot {

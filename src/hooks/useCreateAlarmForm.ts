@@ -91,6 +91,7 @@ function createDefaults(
   };
 }
 
+/** Returns whether rounds and difficulty are editable, including for Random. */
 function isTaskConfigurable(task: AlarmTask): boolean {
   return task !== "Shake phone" && task !== "None";
 }
@@ -115,6 +116,12 @@ function fromAlarm(
   };
 }
 
+/**
+ * Returns alarm editor state and handlers, seeded once from `initial` or defaults;
+ * use `reset` to replace the draft later. Confirmation checks for conflicts,
+ * persists and schedules the alarm, then navigates back if still mounted. Save
+ * failures show an alert while mounted; scheduling failures still close the editor.
+ */
 export function useCreateAlarmForm(
   initial?: Alarm | null,
 ): UseCreateAlarmFormResult {
@@ -204,6 +211,7 @@ export function useCreateAlarmForm(
     setState((prev) => ({ ...prev, minuteSelected: minute }));
   }, []);
 
+  /** Selects the configured task and closes its picker unless a save is in progress. */
   const setTask = useCallback((task: AlarmTask) => {
     if (persistingRef.current) {
       return;

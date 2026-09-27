@@ -17,6 +17,11 @@ import { useEffect, useMemo, useState } from "react";
 import { BackHandler, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+/**
+ * Displays the route's resolved alarm task with begin, dismiss, and snooze
+ * controls, or a fallback when no snapshot can be parsed. Snoozed alarms use
+ * current task, difficulty, rounds, and sound settings when available.
+ */
 export default function AlarmDisplay() {
   const router = useRouter();
   const dismiss = useAlarmDismissal();
@@ -101,6 +106,10 @@ export default function AlarmDisplay() {
     );
   }
 
+  /**
+   * Starts weekly rescheduling without awaiting it, then opens the resolved
+   * dismissal task or starts dismissal for None.
+   */
   const handleBegin = () => {
     void resetAlarm(effectiveSnapshot);
     if (effectiveSnapshot.resolvedTask === "None") {

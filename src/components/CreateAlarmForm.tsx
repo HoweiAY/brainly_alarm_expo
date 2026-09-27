@@ -25,6 +25,11 @@ interface CreateAlarmFormProps {
   form: UseCreateAlarmFormResult;
 }
 
+/**
+ * Renders the supplied form state and delegates edits to its handlers. Random
+ * shows selection guidance; rounds and difficulty follow `taskConfigurable`,
+ * and saving disables the editing and action controls.
+ */
 export function CreateAlarmForm({ title, form }: CreateAlarmFormProps) {
   const { t } = useAppTranslation();
   const { colors, styles } = useStyles();
