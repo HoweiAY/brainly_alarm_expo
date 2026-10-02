@@ -1,3 +1,5 @@
+import { isAppLanguage } from "@/i18n/languages";
+import { isAppColorScheme } from "@/settings/userSettings";
 import type {
   ActiveAlarmSnapshot,
   AlarmActivation,
@@ -25,4 +27,14 @@ export function normalizeActiveAlarmPayload(
   return isLegacyActiveAlarmPayload(payload)
     ? { snapshot: payload, activatedAt: 0 }
     : payload;
+}
+
+export function isLegacyUserSettingsPayload(payload: unknown): boolean {
+  const source =
+    payload && typeof payload === "object"
+      ? (payload as Record<string, unknown>)
+      : {};
+  return (
+    !isAppLanguage(source.language) || !isAppColorScheme(source.colorScheme)
+  );
 }

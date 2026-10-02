@@ -1,6 +1,9 @@
-import { describe, expect, it } from "@jest/globals";
-import { normalizeActiveAlarmPayload } from "@/data/legacyPayloads";
+import {
+  isLegacyUserSettingsPayload,
+  normalizeActiveAlarmPayload,
+} from "@/data/legacyPayloads";
 import type { AlarmActivation, AlarmSnapshot } from "@/data/types";
+import { describe, expect, it } from "@jest/globals";
 
 const snapshot: AlarmSnapshot = {
   alarmId: "alarm-1",
@@ -40,5 +43,22 @@ describe("normalizeActiveAlarmPayload", () => {
       snapshot: legacy,
       activatedAt: 0,
     });
+  });
+});
+
+describe("isLegacyUserSettingsPayload", () => {
+  it("accepts a current settings payload", () => {
+    expect(
+      isLegacyUserSettingsPayload({ language: "en", colorScheme: "light" }),
+    ).toBe(false);
+  });
+
+  it.each([
+    ["missing language", { colorScheme: "dark" }],
+    ["missing color scheme", { language: "zh-Hant" }],
+    ["invalid color scheme", { language: "en", colorScheme: "system" }],
+    ["non-object payload", null],
+  ])("flags a %s", (_label, payload) => {
+    expect(isLegacyUserSettingsPayload(payload)).toBe(true);
   });
 });
