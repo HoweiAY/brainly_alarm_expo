@@ -4,6 +4,7 @@ import {
   getPersistedActiveAlarm,
   persistActiveAlarm,
 } from "@/data/activeAlarm";
+import { normalizeActiveAlarmPayload } from "@/data/legacyPayloads";
 import type { ActiveAlarmSnapshot, AlarmSnapshot } from "@/data/types";
 import dayjs from "dayjs";
 import { create } from "zustand";
@@ -52,15 +53,14 @@ export const useAlarmFiringStore = create<AlarmFiringStoreState>(
     init: async () => {
       if (get().loaded) return;
       const persisted = await getPersistedActiveAlarm();
+      const activation = persisted
+        ? normalizeActiveAlarmPayload(persisted)
+        : null;
       set({
-        activeSnapshot: persisted
-          ? resolveActiveSnapshot(
-              persisted.snapshot,
-              persisted,
-              dayjs().valueOf(),
-            )
+        activeSnapshot: activation
+          ? resolveActiveSnapshot(activation.snapshot, null, dayjs().valueOf())
           : null,
-        activatedAt: persisted?.activatedAt ?? null,
+        activatedAt: activation?.activatedAt ?? null,
         loaded: true,
       });
     },

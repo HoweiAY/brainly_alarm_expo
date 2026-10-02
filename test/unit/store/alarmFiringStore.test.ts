@@ -82,4 +82,27 @@ describe("alarm firing store", () => {
     expect(store.getState().activeSnapshot?.resolvedTask).toBe("Math");
     expect(store.getState().activatedAt).toBe(activatedAt);
   });
+
+  it("restores a legacy persisted snapshot row", async () => {
+    mockPersisted = { ...snapshot, task: "Math" };
+
+    await store.getState().init();
+
+    expect(store.getState().activeSnapshot).toEqual({
+      ...snapshot,
+      task: "Math",
+      resolvedTask: "Math",
+    });
+    expect(store.getState().activatedAt).toBe(0);
+    expect(store.getState().loaded).toBe(true);
+  });
+
+  it("keeps the resolved task of a legacy active snapshot row", async () => {
+    mockPersisted = { ...snapshot, resolvedTask: "Shake phone" };
+
+    await store.getState().init();
+
+    expect(store.getState().activeSnapshot?.resolvedTask).toBe("Shake phone");
+    expect(store.getState().activatedAt).toBe(0);
+  });
 });

@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import { eq } from "drizzle-orm";
 import { db, dbReady } from "./db";
+import type { PersistedActiveAlarmPayload } from "./legacyPayloads";
 import { activeAlarmTable } from "./schema";
 import type { AlarmActivation } from "./types";
 
@@ -28,7 +29,7 @@ export async function clearPersistedActiveAlarm(): Promise<void> {
   await db.delete(activeAlarmTable).where(eq(activeAlarmTable.id, "current"));
 }
 
-export async function getPersistedActiveAlarm(): Promise<AlarmActivation | null> {
+export async function getPersistedActiveAlarm(): Promise<PersistedActiveAlarmPayload | null> {
   await dbReady;
   const rows = await db
     .select({ payload: activeAlarmTable.payload })
