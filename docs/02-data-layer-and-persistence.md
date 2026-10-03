@@ -41,6 +41,8 @@ val taskDifficulties = listOf("Easy","Normal","Hard")
 ```
 
 > **RN port note:** Replace these with a TypeScript enum/const object. The string `"Shake phone"` (with a space) is used as the task identifier; the `"None"` sentinel is the 4th element of `taskTypes`.
+>
+> **RN port addition — Random task:** the Expo port adds a configurable `"Random"` task (`AlarmTask = TaskType | "Random"` in `src/data/types.ts`). `taskTypes` still lists only the four concrete dismissal tasks; the editor picker uses `alarmTasks` (`Memory`, `Math`, `Shake phone`, `Random`, `None`). `Alarm.task` holds the configured `AlarmTask`; the concrete task is drawn per trigger at fire time (see doc 05 §7).
 
 ## 2. Type Conversion — `TypeConverter`
 
@@ -166,3 +168,4 @@ Because `foundAlarm` is a single shared `MutableLiveData`, the caller must verif
 3. Replace `LiveData` reactivity with a store subscription model and expose an `observeAllAlarms` API.
 4. Centralize all CRUD in a shared Zustand store (e.g. `alarmStore`) so UI components never touch SQL or storage directly. This mirrors the `AlarmRepository` boundary from the Kotlin app while following React idioms — the store acts as the single source of truth and exposes subscription-based reactivity, replacing the native-Android repository pattern with a React-context/store equivalent.
 5. Generate the auto-increment `id` from the database (SQLite `INTEGER PRIMARY KEY AUTOINCREMENT`) so it matches the current behavior used by `AlarmManager` request codes.
+6. The `task` column is free `TEXT` holding a storage key (`memory`, `math`, `shake_phone`, `random`, `none`; see `taskTypeToStorage` in `src/data/constants.ts`). Adding `"random"` required no SQL migration. Unknown keys fall back to `Memory` in both `rowToAlarm` and the native boot re-arm (`AlarmStore.mapTask`), so older builds degrade gracefully. The `active_alarm` payload is a JSON column typed as `ActiveAlarmSnapshot`; payloads persisted before `resolvedTask` existed are normalized when `alarmFiringStore.init()` runs.

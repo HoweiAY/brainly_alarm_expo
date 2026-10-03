@@ -58,11 +58,11 @@ async function activateAlarmForNotification(
   activeActivationId = snapshot.alarmId;
   try {
     await resetOldAlarm(snapshot);
-    useAlarmFiringStore.getState().setActive(snapshot);
+    const active = useAlarmFiringStore.getState().setActive(snapshot);
     if (shouldPlaySound) {
-      await playAlarmSound(soundUriFromSnapshot(snapshot));
+      await playAlarmSound(soundUriFromSnapshot(active));
     }
-    navigateToAlarm(router, snapshot);
+    navigateToAlarm(router, active);
     if (shouldClearDelivered) {
       void clearDeliveredAlarmNotifications();
     }

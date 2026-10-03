@@ -18,6 +18,7 @@ This repository is the **Expo-first re-implementation** of that original app. Th
   - **Memory game** — watch a sequence of tiles light up on a grid, then repeat it in order (3×3 grid on Easy/Normal, 4×4 on Hard).
   - **Math equation** — solve randomly generated arithmetic equations; difficulty controls operand count, ranges, and operators.
   - **Shake phone** — physically shake the device a target number of times, detected via the accelerometer.
+  - **Random** — Memory, Math, or Shake phone is picked at random each time the alarm rings, including after a snooze.
   - **None** — a plain alarm with no task.
 - **Full alarm management** — create, edit, delete, and toggle multiple alarms from the home screen.
 - **Flexible scheduling** — pick a time with the wheel picker and choose specific weekdays; leaving all days unselected rings every day.

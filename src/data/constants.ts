@@ -1,5 +1,11 @@
 import { DEFAULT_LANGUAGE } from "@/i18n/languages";
-import type { Difficulty, TaskType, UserSettings, Weekday } from "./types";
+import type {
+  AlarmTask,
+  Difficulty,
+  TaskType,
+  UserSettings,
+  Weekday,
+} from "./types";
 
 export const weekdays: Weekday[] = [
   "Mon",
@@ -12,6 +18,14 @@ export const weekdays: Weekday[] = [
 ];
 
 export const taskTypes: TaskType[] = ["Memory", "Math", "Shake phone", "None"];
+
+export const alarmTasks: AlarmTask[] = [
+  "Memory",
+  "Math",
+  "Shake phone",
+  "Random",
+  "None",
+];
 
 export const taskDifficulties: Difficulty[] = ["Easy", "Normal", "Hard"];
 
@@ -35,17 +49,19 @@ export const indexToWeekday: Record<number, Weekday> = {
   6: "Sun",
 };
 
-export const taskTypeToStorage: Record<TaskType, string> = {
+export const taskTypeToStorage: Record<AlarmTask, string> = {
   Memory: "memory",
   Math: "math",
   "Shake phone": "shake_phone",
+  Random: "random",
   None: "none",
 };
 
-export const storageToTaskType: Record<string, TaskType> = {
+export const storageToTaskType: Record<string, AlarmTask> = {
   memory: "Memory",
   math: "Math",
   shake_phone: "Shake phone",
+  random: "Random",
   none: "None",
 };
 

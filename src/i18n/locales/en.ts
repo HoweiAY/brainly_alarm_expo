@@ -39,6 +39,7 @@ export const en = {
       Memory: "Memory",
       Math: "Math",
       ShakePhone: "Shake phone",
+      Random: "Random",
       None: "None",
       Shake: "Shake",
     },
@@ -209,6 +210,8 @@ export const en = {
     taskTypeLabel: "Task type: {{task}}",
     taskTypeHint: "Opens task type selection",
     taskOptionLabel: "{{task}} task",
+    randomTaskHint:
+      "A random task (Memory, Math or Shake phone) is picked each time the alarm rings.",
     rounds: "Rounds",
     roundsSelected: "{{count}} rounds selected",
     difficulty: "Difficulty",

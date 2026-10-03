@@ -111,6 +111,7 @@ class AlarmStore(context: Context) : AutoCloseable {
     "memory" -> "Memory"
     "math" -> "Math"
     "shake_phone" -> "Shake phone"
+    "random" -> "Random"
     "none" -> "None"
     else -> "Memory"
   }
