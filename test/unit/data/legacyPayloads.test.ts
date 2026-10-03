@@ -44,6 +44,27 @@ describe("normalizeActiveAlarmPayload", () => {
       activatedAt: 0,
     });
   });
+
+  it.each([
+    ["scalar", "not an alarm"],
+    ["incomplete snapshot", { alarmId: "alarm-1" }],
+    [
+      "activation with an incomplete snapshot",
+      {
+        snapshot: { alarmId: "alarm-1" },
+        activatedAt: 1_700_000_000_000,
+      },
+    ],
+    [
+      "activation without a resolved task",
+      {
+        snapshot,
+        activatedAt: 1_700_000_000_000,
+      },
+    ],
+  ])("rejects a %s", (_label, payload) => {
+    expect(normalizeActiveAlarmPayload(payload)).toBeNull();
+  });
 });
 
 describe("isLegacyUserSettingsPayload", () => {
