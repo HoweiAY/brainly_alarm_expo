@@ -70,10 +70,10 @@ describe("alarm firing store", () => {
     random.mockRestore();
   });
 
-  it("restores an activation and normalizes its snapshot", async () => {
+  it("restores a persisted activation and its resolved task", async () => {
     const activatedAt = 1_700_000_000_000;
     mockPersisted = {
-      snapshot: { ...snapshot, task: "Math" },
+      snapshot: { ...snapshot, task: "Math", resolvedTask: "Math" },
       activatedAt,
     };
 
