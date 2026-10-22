@@ -1,0 +1,39 @@
+name: Android build
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: github.event.action != 'closed' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - run: npm ci
+      - name: Generate clean Android project
+        run: npx expo prebuild --platform android --clean --no-install
+      - name: Clean Android build
+        working-directory: android
+        run: ./gradlew clean
+      - name: Build native module debug
+        working-directory: android
+        run: ./gradlew :alarm-scheduler:assembleDebug
+      - name: Build native module release
+        run: npm run build:native -- android
+      - name: Build Android release
+        working-directory: android
+        run: ./gradlew assembleRelease
