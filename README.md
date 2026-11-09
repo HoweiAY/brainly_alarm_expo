@@ -151,15 +151,15 @@ The project is linked to an EAS project ([`extra.eas.projectId`](app.json)) and 
 
 Prerequisites: `npm install --global eas-cli`, then `eas login`. Three Android build profiles are defined in [`eas.json`](eas.json):
 
-| Profile       | Output                                      | npm script                      |
-| ------------- | ------------------------------------------- | ------------------------------- |
-| `development` | Dev-client APK (internal distribution)      | `npm run build:android:dev`     |
-| `preview`     | Installable release APK (internal)          | `npm run build:android:preview` |
-| `production`  | Release AAB, auto-incremented `versionCode` | `npm run build:android:prod`    |
+| Profile       | Output                                      | npm script                          |
+| ------------- | ------------------------------------------- | ----------------------------------- |
+| `development` | Dev-client APK (internal distribution)      | `npm run eas-build:android:dev`     |
+| `preview`     | Installable release APK (internal)          | `npm run eas-build:android:preview` |
+| `production`  | Release AAB, auto-incremented `versionCode` | `npm run eas-build:android:prod`    |
 
 ```bash
 # Example: build an installable release APK on EAS
-npm run build:android:preview
+npm run eas-build:android:preview
 ```
 
 Notes:
@@ -198,20 +198,20 @@ npm run format
 
 ### All scripts
 
-| Script                            | Description                                                                                                                                              |
-| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm start`                       | Start the Expo dev server (Metro)                                                                                                                        |
-| `npm run android`                 | Prebuild (if needed), build, and run the app on Android                                                                                                  |
-| `npm run ios`                     | Prebuild (if needed), build, and run the app on iOS                                                                                                      |
-| `npm run web`                     | Start a web preview (no native alarm scheduling)                                                                                                         |
-| `npm test`                        | Run Jest unit tests                                                                                                                                      |
-| `npm run lint`                    | Run ESLint                                                                                                                                               |
-| `npm run format`                  | Format the codebase with Prettier                                                                                                                        |
-| `npm run db:generate`             | Generate Drizzle SQL migrations from `src/data/schema.ts`                                                                                                |
-| `npm run build:native [platform]` | Compile the `alarm-scheduler` native module (`android`, `ios`, or `all`; add `-- --overwrite-local-properties` to regenerate `android/local.properties`) |
-| `npm run build:android:dev`       | EAS cloud build, `development` profile (dev-client APK, internal distribution)                                                                           |
-| `npm run build:android:preview`   | EAS cloud build, `preview` profile (installable release APK, internal distribution)                                                                      |
-| `npm run build:android:prod`      | EAS cloud build, `production` profile (AAB, auto-incremented `versionCode`)                                                                              |
+| Script                              | Description                                                                                                                                              |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm start`                         | Start the Expo dev server (Metro)                                                                                                                        |
+| `npm run android`                   | Prebuild (if needed), build, and run the app on Android                                                                                                  |
+| `npm run ios`                       | Prebuild (if needed), build, and run the app on iOS                                                                                                      |
+| `npm run web`                       | Start a web preview (no native alarm scheduling)                                                                                                         |
+| `npm test`                          | Run Jest unit tests                                                                                                                                      |
+| `npm run lint`                      | Run ESLint                                                                                                                                               |
+| `npm run format`                    | Format the codebase with Prettier                                                                                                                        |
+| `npm run db:generate`               | Generate Drizzle SQL migrations from `src/data/schema.ts`                                                                                                |
+| `npm run build:native [platform]`   | Compile the `alarm-scheduler` native module (`android`, `ios`, or `all`; add `-- --overwrite-local-properties` to regenerate `android/local.properties`) |
+| `npm run eas-build:android:dev`     | EAS cloud build, `development` profile (dev-client APK, internal distribution)                                                                           |
+| `npm run eas-build:android:preview` | EAS cloud build, `preview` profile (installable release APK, internal distribution)                                                                      |
+| `npm run eas-build:android:prod`    | EAS cloud build, `production` profile (AAB, auto-incremented `versionCode`)                                                                              |
 
 ## Project Structure
 

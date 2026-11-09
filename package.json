@@ -75,9 +75,9 @@
     "test": "jest",
     "db:generate": "drizzle-kit generate",
     "build:native": "node ./scripts/build-native-module.js",
-    "build:android:dev": "eas build --platform android --profile development",
-    "build:android:preview": "eas build --platform android --profile preview",
-    "build:android:prod": "eas build --platform android --profile production",
+    "eas-build:android:dev": "eas build --platform android --profile development",
+    "eas-build:android:preview": "eas build --platform android --profile preview",
+    "eas-build:android:prod": "eas build --platform android --profile production",
     "prepare": "husky"
   },
   "lint-staged": {
