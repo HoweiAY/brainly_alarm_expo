@@ -1,9 +1,8 @@
 name: EAS development build
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    types: [opened, reopened]
 
 permissions:
   contents: read
