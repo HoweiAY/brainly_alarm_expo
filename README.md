@@ -65,6 +65,7 @@ This repository is the **Expo-first re-implementation** of that original app. Th
 | UI               | `@expo/ui`, Lucide icons (`@react-native-vector-icons/lucide`), Geist font family                                                                                                           |
 | Testing          | Jest (unit tests for pure scheduling/task logic)                                                                                                                                            |
 | Tooling          | ESLint (`eslint-config-expo`), Prettier, Husky + lint-staged, TypeScript                                                                                                                    |
+| Builds           | [EAS Build](https://docs.expo.dev/build/introduction/) (cloud builds, profiles in [`eas.json`](eas.json)); GitHub Actions Android CI                                                        |
 
 > **Note on iOS:** iOS does not allow third-party apps to schedule exact wake-up alarms, so alarm behavior is degraded there compared to Android. This is a platform limitation, not a bug.
 
@@ -144,6 +145,30 @@ If `clean` still fails with a Windows file-lock error on lint-cache jars (a Grad
 ./gradlew :react-native-vector-icons_lucide:generateCodegenSchemaFromJavaScript :react-native-vector-icons_lucide:generateCodegenArtifactsFromSchema
 ```
 
+### Build with EAS (cloud)
+
+The project is linked to an EAS project ([`extra.eas.projectId`](app.json)) and can be built in the cloud with [EAS Build](https://docs.expo.dev/build/introduction/). Because the generated `android/` / `ios/` directories are gitignored and never uploaded, EAS runs `expo prebuild` on the build worker — the `alarm-scheduler` module is auto-linked and both config plugins (`native/app.plugin.js`, `plugins/withCxxCleanFix.js`) apply exactly as they do locally, so no EAS-specific native configuration is required.
+
+Prerequisites: `npm install --global eas-cli`, then `eas login`. Three Android build profiles are defined in [`eas.json`](eas.json):
+
+| Profile       | Output                                      | npm script                          |
+| ------------- | ------------------------------------------- | ----------------------------------- |
+| `development` | Dev-client APK (internal distribution)      | `npm run eas-build:android:dev`     |
+| `preview`     | Installable release APK (internal)          | `npm run eas-build:android:preview` |
+| `production`  | Release AAB, auto-incremented `versionCode` | `npm run eas-build:android:prod`    |
+
+```bash
+# Example: build an installable release APK on EAS
+npm run eas-build:android:preview
+```
+
+Notes:
+
+- `appVersionSource` is `remote`, so EAS owns the Android `versionCode`; the `production` profile auto-increments it. `expo.version` in `app.json` remains the user-facing version string.
+- Android credentials are managed remotely — EAS generates and stores the upload keystore on the first build.
+- Every profile sets `HUSKY=0` in `env` — `npm ci` on the build worker runs the `prepare: husky` script inside a git-less tarball, which fails without it.
+- **iOS is not set up yet.** `bundleIdentifier` (`com.howeiay.brainlyalarm`, shared with the Android `package`) is already configured; device builds additionally require an Apple Developer account and provisioning, or add `"ios": { "simulator": true }` to a dev profile for simulator-only builds.
+
 ### Database migrations
 
 The schema is defined in [`src/data/schema.ts`](src/data/schema.ts) and managed with drizzle-kit. After editing the schema:
@@ -173,23 +198,27 @@ npm run format
 
 ### All scripts
 
-| Script                            | Description                                                                                                                                              |
-| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm start`                       | Start the Expo dev server (Metro)                                                                                                                        |
-| `npm run android`                 | Prebuild (if needed), build, and run the app on Android                                                                                                  |
-| `npm run ios`                     | Prebuild (if needed), build, and run the app on iOS                                                                                                      |
-| `npm run web`                     | Start a web preview (no native alarm scheduling)                                                                                                         |
-| `npm test`                        | Run Jest unit tests                                                                                                                                      |
-| `npm run lint`                    | Run ESLint                                                                                                                                               |
-| `npm run format`                  | Format the codebase with Prettier                                                                                                                        |
-| `npm run db:generate`             | Generate Drizzle SQL migrations from `src/data/schema.ts`                                                                                                |
-| `npm run build:native [platform]` | Compile the `alarm-scheduler` native module (`android`, `ios`, or `all`; add `-- --overwrite-local-properties` to regenerate `android/local.properties`) |
+| Script                              | Description                                                                                                                                              |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm start`                         | Start the Expo dev server (Metro)                                                                                                                        |
+| `npm run android`                   | Prebuild (if needed), build, and run the app on Android                                                                                                  |
+| `npm run ios`                       | Prebuild (if needed), build, and run the app on iOS                                                                                                      |
+| `npm run web`                       | Start a web preview (no native alarm scheduling)                                                                                                         |
+| `npm test`                          | Run Jest unit tests                                                                                                                                      |
+| `npm run lint`                      | Run ESLint                                                                                                                                               |
+| `npm run format`                    | Format the codebase with Prettier                                                                                                                        |
+| `npm run db:generate`               | Generate Drizzle SQL migrations from `src/data/schema.ts`                                                                                                |
+| `npm run build:native [platform]`   | Compile the `alarm-scheduler` native module (`android`, `ios`, or `all`; add `-- --overwrite-local-properties` to regenerate `android/local.properties`) |
+| `npm run eas-build:android:dev`     | EAS cloud build, `development` profile (dev-client APK, internal distribution)                                                                           |
+| `npm run eas-build:android:preview` | EAS cloud build, `preview` profile (installable release APK, internal distribution)                                                                      |
+| `npm run eas-build:android:prod`    | EAS cloud build, `production` profile (AAB, auto-incremented `versionCode`)                                                                              |
 
 ## Project Structure
 
 ```
 brainly_alarm_expo/
-├── app.json                  # Expo config (plugins, scheme, icons)
+├── app.json                  # Expo config (plugins, scheme, icons, app IDs, EAS project link)
+├── eas.json                  # EAS Build profiles (development / preview / production)
 ├── package.json              # Dependencies and npm scripts
 ├── drizzle.config.ts         # drizzle-kit config (SQLite / expo driver)
 ├── babel.config.js           # babel-plugin-inline-import (.sql migrations)

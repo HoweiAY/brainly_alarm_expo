@@ -1,0 +1,30 @@
+{
+  "cli": {
+    "version": ">= 27.5.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "HUSKY": "0"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "HUSKY": "0"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "HUSKY": "0"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

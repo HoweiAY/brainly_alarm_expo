@@ -15,6 +15,7 @@
     "expo": "~57.0.6",
     "expo-constants": "~57.0.5",
     "expo-crypto": "~57.0.1",
+    "expo-dev-client": "~57.0.21",
     "expo-device": "~57.0.1",
     "expo-document-picker": "~57.0.1",
     "expo-file-system": "~57.0.2",
@@ -74,6 +75,9 @@
     "test": "jest",
     "db:generate": "drizzle-kit generate",
     "build:native": "node ./scripts/build-native-module.js",
+    "eas-build:android:dev": "eas build --platform android --profile development",
+    "eas-build:android:preview": "eas build --platform android --profile preview",
+    "eas-build:android:prod": "eas build --platform android --profile production",
     "prepare": "husky"
   },
   "lint-staged": {
