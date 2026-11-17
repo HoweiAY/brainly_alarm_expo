@@ -130,7 +130,7 @@ ExpressionBuilder(expression).build().evaluate().toInt()
 
 On any exception → returns `0`. Integer division is implicit in the cast.
 
-> **RN port note:** Replace exp4j with JS libraries such as **Math.js** or **JavaScript Expression Evaluator (expr-eval)** (after sanitizing to `[\d+\-*\s]` only) or a hand-written tokenizer. Do **not** `eval` unsanitized input. Since generation is fully controlled, a sanitized `Function("return " + expr)` is acceptable; the original relies on the same trust boundary.
+> **RN port note:** Use the built-in bounded arithmetic tokenizer. It accepts only digits, `+`, `-`, `*`, and whitespace; validates alternating operands and operators; and preserves multiplication precedence. Do **not** use `eval`, `Function`, or a third-party expression evaluator for this controlled grammar.
 
 ### 2.3 State
 
@@ -248,7 +248,7 @@ When `alarm.task == "None"` (the 4th entry of `taskTypes`):
 1. **Shared completion handler** — use a single `useAlarmDismissal()` hook that stops native alarm sound, clears delivered notifications and active firing state, then dismisses the alarm modal to `/(main)`. All tasks call it; no native alarm-completion callback/event is needed.
 2. **Round/difficulty parsing** — pass `rounds` and `difficulty` via route params and validate against the same constant enums (`taskDifficulties`, `taskTypes`).
 3. **Difficulty-aware configuration** — keep the difficulty→grid-size / operand-count tables identical so difficulty semantics are preserved across platforms.
-4. **exp4j replacement** — use a controlled-expression evaluator; the generator only ever emits `[0-9]`, `+`, `-`, `*`, and spaces, so a strict regex validation + `Function("return " + expr)` is safe.
+4. **exp4j replacement** — use the built-in bounded arithmetic tokenizer. It validates the controlled grammar of digits, `+`, `-`, `*`, and whitespace without dynamic code evaluation.
 5. **Shake sensor threshold calibration** — verify the threshold against `expo-sensors` accelerometer output on real devices, since units/normalization differ from the Android `SensorManager`.
 6. **Accessibility** — none of the current tasks have accessibility labels (no `contentDescription` on task tiles, no screen-reader hints). The RN port should add `accessibilityLabel` / `accessibilityRole` to tiles, the answer input, and the shake counter.
 

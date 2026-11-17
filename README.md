@@ -61,7 +61,7 @@ This repository is the **Expo-first re-implementation** of that original app. Th
 | Alarm scheduling | Custom Expo native module (`alarm-scheduler`) — Kotlin on Android (`AlarmManager`, wake-up broadcasts, boot receiver), Swift on iOS                                                         |
 | Notifications    | Native Android `AlarmNotificationManager` + `expo-notifications` permission/listener APIs + deep links (`brainlyalarmexpo://alarm`)                                                         |
 | Sensors          | `expo-sensors` (Accelerometer) for the shake task                                                                                                                                           |
-| Math evaluation  | [`expr-eval`](https://github.com/silentmatt/expr-eval) (safe expression parsing — no `eval`)                                                                                                |
+| Math evaluation  | Built-in bounded arithmetic tokenizer (`+`, `-`, `*`; no dynamic evaluation)                                                                                                               |
 | UI               | `@expo/ui`, Lucide icons (`@react-native-vector-icons/lucide`), Geist font family                                                                                                           |
 | Testing          | Jest (unit tests for pure scheduling/task logic)                                                                                                                                            |
 | Tooling          | ESLint (`eslint-config-expo`), Prettier, Husky + lint-staged, TypeScript                                                                                                                    |
