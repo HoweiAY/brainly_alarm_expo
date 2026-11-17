@@ -1,5 +1,3 @@
-import { Parser } from "expr-eval";
-
 export type Difficulty = "Easy" | "Normal" | "Hard";
 
 export interface MathDifficultyConfig {
@@ -34,8 +32,6 @@ export const MATH_DIFFICULTY_CONFIG: Record<Difficulty, MathDifficultyConfig> =
 export const PROTOTYPE_DIFFICULTY: Difficulty = "Normal";
 export const PROTOTYPE_ROUNDS = 3;
 
-const parser = new Parser();
-
 export function generateEquation(difficulty: Difficulty): string {
   const config = MATH_DIFFICULTY_CONFIG[difficulty];
   const operands = Array.from(
@@ -57,14 +53,36 @@ export function generateEquation(difficulty: Difficulty): string {
 }
 
 export function evaluateExpression(expression: string): number {
-  if (!/^[\d+\-*\s]+$/.test(expression)) return 0;
-  try {
-    const result: unknown = parser.parse(expression).evaluate();
-    if (typeof result !== "number" || !Number.isFinite(result)) return 0;
-    return Math.trunc(result);
-  } catch {
-    return 0;
+  if (expression.length > 128 || !/^[\d+\-*\s]+$/.test(expression)) return 0;
+
+  const tokens = expression.match(/\d+|[+*-]/g);
+  if (!tokens || tokens.join("") !== expression.replace(/\s/g, "")) return 0;
+  if (tokens.length % 2 === 0) return 0;
+
+  const first = Number(tokens[0]);
+  if (!Number.isFinite(first)) return 0;
+
+  let result = 0;
+  let term = first;
+  let sign = 1;
+
+  for (let index = 1; index < tokens.length; index += 2) {
+    const operator = tokens[index];
+    const operand = Number(tokens[index + 1]);
+    if (!Number.isFinite(operand)) return 0;
+
+    if (operator === "*") {
+      term *= operand;
+      continue;
+    }
+
+    result += sign * term;
+    term = operand;
+    sign = operator === "+" ? 1 : -1;
   }
+
+  const value = result + sign * term;
+  return Number.isFinite(value) ? Math.trunc(value) : 0;
 }
 
 export function parseAnswer(input: string): number | null {

@@ -33,7 +33,6 @@
     "expo-symbols": "~57.0.1",
     "expo-system-ui": "~57.0.1",
     "expo-web-browser": "~57.0.1",
-    "expr-eval": "^2.0.2",
     "i18next": "26.3.6",
     "immer": "^11.1.15",
     "react": "19.2.3",
@@ -82,6 +81,9 @@
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": "eslint --fix"
+  },
+  "overrides": {
+    "shell-quote": "1.11.0"
   },
   "private": true
 }
