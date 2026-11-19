@@ -83,6 +83,9 @@
     "**/*.{js,jsx,ts,tsx}": "eslint --fix"
   },
   "overrides": {
+    "decode-uri-component": "0.5.1",
+    "image-size": "2.1.0",
+    "query-string": "9.5.1",
     "shell-quote": "1.11.0"
   },
   "private": true
