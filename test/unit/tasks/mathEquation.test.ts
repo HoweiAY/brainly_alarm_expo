@@ -13,5 +13,6 @@ describe("math equation evaluation", () => {
     expect(evaluateExpression("2 ** 3")).toBe(0);
     expect(evaluateExpression("constructor.constructor('return 1')()")).toBe(0);
     expect(evaluateExpression("1".repeat(129))).toBe(0);
+    expect(evaluateExpression("1 2 3")).toBe(0);
   });
 });

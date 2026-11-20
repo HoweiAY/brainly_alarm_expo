@@ -58,6 +58,10 @@ export function evaluateExpression(expression: string): number {
   const tokens = expression.match(/\d+|[+*-]/g);
   if (!tokens || tokens.join("") !== expression.replace(/\s/g, "")) return 0;
   if (tokens.length % 2 === 0) return 0;
+  const valid = tokens.every((t, i) =>
+    i % 2 === 0 ? /^\d+$/.test(t) : /^[+\-*]$/.test(t),
+  );
+  if (!valid) return 0;
 
   const first = Number(tokens[0]);
   if (!Number.isFinite(first)) return 0;
