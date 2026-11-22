@@ -66,6 +66,13 @@ Always read the relevant `docs/` section before implementing a subsystem; the do
 13. **Verify before declaring done.** Run `npm run lint` and typecheck (`npx tsc --noEmit`) after non-trivial changes. Prefer unit tests for pure logic (`mathEquation`, `memoryGame`, `time`/next-alarm computation).
 14. **Don't commit** unless explicitly asked.
 
+## Security Auditing
+
+- `.github/workflows/dependency-review.yml` runs `actions/dependency-review-action` on every PR (`pull_request_target`; checks out only the base SHA, `persist-credentials: false`). It fails on new **critical** vulnerabilities in `development`/`runtime`/`unknown` scopes and always comments a summary on the PR. Never add steps that install or execute PR code to this workflow.
+- Before adding or upgrading dependencies, run `npm audit` and keep `package-lock.json` in sync.
+- Fix vulnerable transitive dependencies via `package.json` `overrides` (currently `decode-uri-component`, `image-size`, `query-string`, `shell-quote`), or remove the dependency. The `decode-uri-component` override is ESM-only, so `metro.config.js` serves the CJS bridge in `shims/decode-uri-component-interop.js`; keep both in place.
+- Math evaluation uses the built-in tokenizer in `src/tasks/mathEquation.ts` (`expr-eval` was removed for security); do not reintroduce a dynamic evaluator.
+
 ## Out of Scope
 
 `WRITE_EXTERNAL_STORAGE`, `Datasource.alarmData` sample seed, Compose `@Preview` scaffolding, and the `ExampleUnitTest`/`ExampleInstrumentedTest` placeholders — all scaffolding artifacts with no product behavior (`docs/07` §8).

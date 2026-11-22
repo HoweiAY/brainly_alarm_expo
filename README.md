@@ -61,7 +61,7 @@ This repository is the **Expo-first re-implementation** of that original app. Th
 | Alarm scheduling | Custom Expo native module (`alarm-scheduler`) — Kotlin on Android (`AlarmManager`, wake-up broadcasts, boot receiver), Swift on iOS                                                         |
 | Notifications    | Native Android `AlarmNotificationManager` + `expo-notifications` permission/listener APIs + deep links (`brainlyalarmexpo://alarm`)                                                         |
 | Sensors          | `expo-sensors` (Accelerometer) for the shake task                                                                                                                                           |
-| Math evaluation  | [`expr-eval`](https://github.com/silentmatt/expr-eval) (safe expression parsing — no `eval`)                                                                                                |
+| Math evaluation  | Built-in bounded arithmetic tokenizer (`+`, `-`, `*`; no dynamic evaluation)                                                                                                               |
 | UI               | `@expo/ui`, Lucide icons (`@react-native-vector-icons/lucide`), Geist font family                                                                                                           |
 | Testing          | Jest (unit tests for pure scheduling/task logic)                                                                                                                                            |
 | Tooling          | ESLint (`eslint-config-expo`), Prettier, Husky + lint-staged, TypeScript                                                                                                                    |
@@ -195,6 +195,27 @@ npx tsc --noEmit
 # Format with Prettier
 npm run format
 ```
+
+### Dependency security auditing
+
+Pull requests are scanned by the [`Dependency review`](.github/workflows/dependency-review.yml) workflow (`actions/dependency-review-action`). It compares the dependency changes in the PR (including `package-lock.json`) against the GitHub Advisory Database.
+
+- **Trigger:** `pull_request_target` (`opened`, `synchronize`, `reopened`, `edited`). The workflow checks out only the **base** commit (`persist-credentials: false`) and never executes PR code, so the elevated token is safe for fork PRs. Do not add steps that build, install, or run PR-supplied code.
+- **Permissions:** `contents: read`, `pull-requests: write` (to post the summary comment).
+- **Failure policy:** the check fails on any newly introduced **critical**-severity vulnerability in `development`, `runtime`, or `unknown` scopes.
+- **Output:** a summary comment is always posted on the PR.
+
+Local checks and remediation:
+
+```bash
+# List known vulnerabilities in the installed tree
+npm audit
+
+# Production dependencies only
+npm audit --omit=dev
+```
+
+When an advisory affects a transitive dependency, pin the patched version through the `overrides` block in `package.json` (currently `decode-uri-component`, `image-size`, `query-string`, `shell-quote`) and regenerate `package-lock.json`. Pins that break compatibility need a shim; see the `decode-uri-component` CommonJS bridge in `metro.config.js` / `shims/`. Prefer removing a vulnerable dependency over pinning it (e.g. `expr-eval` was replaced by the built-in arithmetic tokenizer in `src/tasks/mathEquation.ts`).
 
 ### All scripts
 
