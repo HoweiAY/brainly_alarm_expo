@@ -200,7 +200,7 @@ npm run format
 
 Pull requests are scanned by the [`Dependency review`](.github/workflows/dependency-review.yml) workflow (`actions/dependency-review-action`). It compares the dependency changes in the PR (including `package-lock.json`) against the GitHub Advisory Database.
 
-- **Trigger:** `pull_request_target` (`opened`, `synchronize`, `reopened`). The workflow checks out only the **base** commit (`persist-credentials: false`) and never executes PR code, so the elevated token is safe for fork PRs. Do not add steps that build, install, or run PR-supplied code.
+- **Trigger:** `pull_request_target` (`opened`, `synchronize`, `reopened`, `edited`). The workflow checks out only the **base** commit (`persist-credentials: false`) and never executes PR code, so the elevated token is safe for fork PRs. Do not add steps that build, install, or run PR-supplied code.
 - **Permissions:** `contents: read`, `pull-requests: write` (to post the summary comment).
 - **Failure policy:** the check fails on any newly introduced **critical**-severity vulnerability in `development`, `runtime`, or `unknown` scopes.
 - **Output:** a summary comment is always posted on the PR.
