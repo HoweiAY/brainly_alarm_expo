@@ -26,7 +26,7 @@ public final class AlarmSchedulerModule: Module {
       components.hour = opts.hour
       components.minute = opts.minute
       let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
-      try Self.addRequest(identifier: opts.identifier, trigger: trigger, snapshot: snapshot)
+      try await Self.addRequest(identifier: opts.identifier, trigger: trigger, snapshot: snapshot)
       return opts.identifier
     }
 
@@ -34,7 +34,7 @@ public final class AlarmSchedulerModule: Module {
       let now = Date().timeIntervalSince1970 * 1000.0
       let interval = max(1.0, (opts.triggerAt - now) / 1000.0)
       let trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
-      try Self.addRequest(identifier: opts.identifier, trigger: trigger, snapshot: opts.payload)
+      try await Self.addRequest(identifier: opts.identifier, trigger: trigger, snapshot: opts.payload)
       return opts.identifier
     }
 
@@ -83,9 +83,19 @@ public final class AlarmSchedulerModule: Module {
 
   private static func ensureNotificationAuthorization() async throws {
     let center = UNUserNotificationCenter.current()
-    let granted = try await center.notificationSettings()
-    if granted.authorizationStatus != .authorized && granted.authorizationStatus != .provisional {
-      try await center.requestAuthorization(options: [.alert, .sound, .badge])
+    let settings = await center.notificationSettings()
+    if settings.authorizationStatus != .authorized && settings.authorizationStatus != .provisional {
+      let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
+      if !granted {
+        let updated = await center.notificationSettings()
+        if updated.authorizationStatus != .authorized && updated.authorizationStatus != .provisional {
+          throw NSError(
+            domain: "AlarmScheduler",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "Notification authorization was not granted"]
+          )
+        }
+      }
     }
   }
 
@@ -93,14 +103,22 @@ public final class AlarmSchedulerModule: Module {
     identifier: String,
     trigger: UNNotificationTrigger,
     snapshot: AlarmSnapshotRecord
-  ) throws {
+  ) async throws {
     let content = UNMutableNotificationContent()
     content.title = snapshot.notificationTitle
     content.body = snapshot.notificationBody
     content.sound = .default
     content.userInfo = Self.eventPayload(from: snapshot)
     let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
-    try UNUserNotificationCenter.current().add(request)
+    try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+      UNUserNotificationCenter.current().add(request) { error in
+        if let error {
+          continuation.resume(throwing: error)
+        } else {
+          continuation.resume()
+        }
+      }
+    }
   }
 
   private func startPlayback(soundUri: String?) throws {
