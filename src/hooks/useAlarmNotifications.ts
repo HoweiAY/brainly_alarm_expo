@@ -71,11 +71,28 @@ async function activateAlarmForNotification(
   }
 }
 
+function consumeLastNotificationResponse(
+  router: ReturnType<typeof useRouter>,
+): void {
+  try {
+    const response = Notifications.getLastNotificationResponse();
+    if (!response) return;
+    const snapshot = snapshotFromNotificationData(
+      response.notification.request.content.data as
+        Record<string, unknown> | undefined,
+    );
+    if (!snapshot) return;
+    Notifications.clearLastNotificationResponse();
+    void activateAlarmForNotification(snapshot, router, true, true);
+  } catch {}
+}
+
 export function useAlarmNotifications() {
   const router = useRouter();
 
   useEffect(() => {
     void initAlarmNotifications();
+    consumeLastNotificationResponse(router);
 
     const firedSub = getAlarmScheduler().addListener(
       "onAlarmFired",
