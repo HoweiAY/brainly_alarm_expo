@@ -16,4 +16,5 @@ Pod::Spec.new do |s|
   s.source         = { git: '' }
   s.dependency 'ExpoModulesCore'
   s.source_files = "**/*.{h,m,swift}"
+  s.resource = "default_alarm.wav"
 end

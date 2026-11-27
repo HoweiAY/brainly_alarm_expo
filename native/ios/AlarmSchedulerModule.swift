@@ -105,8 +105,16 @@ public final class AlarmSchedulerModule: Module {
 
   private func startPlayback(soundUri: String?) throws {
     stopPlayback()
-    guard let soundUri, let url = URL(string: soundUri), FileManager.default.fileExists(atPath: url.path) else {
-      // No custom sound: rely on the notification's `.default` sound.
+    let url: URL?
+    if let soundUri {
+      guard let customURL = URL(string: soundUri), FileManager.default.fileExists(atPath: customURL.path) else {
+        return
+      }
+      url = customURL
+    } else {
+      url = Self.defaultAlarmSoundURL()
+    }
+    guard let url, FileManager.default.fileExists(atPath: url.path) else {
       return
     }
     try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
@@ -115,6 +123,13 @@ public final class AlarmSchedulerModule: Module {
     player?.numberOfLoops = -1
     player?.prepareToPlay()
     player?.play()
+  }
+
+  private static func defaultAlarmSoundURL() -> URL? {
+    if let url = Bundle.main.url(forResource: "default_alarm", withExtension: "wav") {
+      return url
+    }
+    return Bundle(for: AlarmSchedulerModule.self).url(forResource: "default_alarm", withExtension: "wav")
   }
 
   private func stopPlayback() {
