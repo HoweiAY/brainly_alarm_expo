@@ -6,7 +6,7 @@ import UserNotifications
 // (`UNCalendarNotificationTrigger` for weekly recurrence, `UNTimeIntervalNotificationTrigger`
 // for one-shot/snooze). The OS decides delivery time and may delay/defocus notifications;
 // background wake-up and over-DND playback are not available. Sound is played via `AVAudioPlayer`
-// on the `.alarm` audio session category only while the app is in the foreground. This is the
+// on the `.playback` audio session category only while the app is in the foreground. This is the
 // documented degraded UX shared with Android through one JS API.
 public final class AlarmSchedulerModule: Module {
   private static let deepLinkScheme = "brainlyalarmexpo"
@@ -21,7 +21,7 @@ public final class AlarmSchedulerModule: Module {
 
     AsyncFunction("scheduleWeekly") { (opts: ScheduleWeeklyOptsRecord) -> String in
       let snapshot = opts.payload
-      let components = DateComponents()
+      var components = DateComponents()
       components.weekday = Self.iosWeekday(fromJsWeekday: opts.weekday)
       components.hour = opts.hour
       components.minute = opts.minute
@@ -109,7 +109,7 @@ public final class AlarmSchedulerModule: Module {
       // No custom sound: rely on the notification's `.default` sound.
       return
     }
-    try AVAudioSession.sharedInstance().setCategory(.alarm, mode: .default, options: [])
+    try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
     try AVAudioSession.sharedInstance().setActive(true)
     player = try AVAudioPlayer(contentsOf: url)
     player?.numberOfLoops = -1
