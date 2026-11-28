@@ -59,16 +59,38 @@ async function activateAlarmForNotification(
   try {
     await resetOldAlarm(snapshot);
     const active = useAlarmFiringStore.getState().setActive(snapshot);
+    let playbackFailed = false;
     if (shouldPlaySound) {
-      await playAlarmSound(soundUriFromSnapshot(active));
+      try {
+        await playAlarmSound(soundUriFromSnapshot(active));
+      } catch {
+        playbackFailed = true;
+      }
     }
     navigateToAlarm(router, active);
-    if (shouldClearDelivered) {
+    if (shouldClearDelivered && !playbackFailed) {
       void clearDeliveredAlarmNotifications();
     }
   } finally {
     activeActivationId = null;
   }
+}
+
+function activateSafely(
+  snapshot: AlarmSnapshot,
+  router: ReturnType<typeof useRouter>,
+  shouldPlaySound: boolean,
+  shouldClearDelivered: boolean,
+): Promise<boolean> {
+  return activateAlarmForNotification(
+    snapshot,
+    router,
+    shouldPlaySound,
+    shouldClearDelivered,
+  ).then(
+    () => true,
+    () => false,
+  );
 }
 
 function consumeLastNotificationResponse(
@@ -82,8 +104,9 @@ function consumeLastNotificationResponse(
         Record<string, unknown> | undefined,
     );
     if (!snapshot) return;
-    Notifications.clearLastNotificationResponse();
-    void activateAlarmForNotification(snapshot, router, true, true);
+    void activateSafely(snapshot, router, true, true).then((activated) => {
+      if (activated) Notifications.clearLastNotificationResponse();
+    });
   } catch {}
 }
 
@@ -97,7 +120,7 @@ export function useAlarmNotifications() {
     const firedSub = getAlarmScheduler().addListener(
       "onAlarmFired",
       (snapshot) => {
-        void activateAlarmForNotification(snapshot, router, false, false);
+        void activateSafely(snapshot, router, false, false);
       },
     );
 
@@ -108,7 +131,7 @@ export function useAlarmNotifications() {
             Record<string, unknown> | undefined,
         );
         if (!snapshot) return;
-        void activateAlarmForNotification(snapshot, router, true, false);
+        void activateSafely(snapshot, router, true, false);
       },
     );
 
@@ -119,7 +142,7 @@ export function useAlarmNotifications() {
             Record<string, unknown> | undefined,
         );
         if (!snapshot) return;
-        void activateAlarmForNotification(snapshot, router, true, true);
+        void activateSafely(snapshot, router, true, true);
       },
     );
 
