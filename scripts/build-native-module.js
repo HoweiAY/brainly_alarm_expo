@@ -101,6 +101,28 @@ function buildAndroid() {
   run(`${gradlew} :${MODULE_PROJECT}:assembleRelease`, { cwd: androidDir });
 }
 
+function podInstallCommand() {
+  try {
+    execSync("pod --version", { stdio: "ignore" });
+    return "pod install";
+  } catch {
+    const versionsDir = path.join(os.homedir(), ".rbenv", "versions");
+    if (fs.existsSync(versionsDir)) {
+      const versions = fs
+        .readdirSync(versionsDir)
+        .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+      for (const version of versions) {
+        if (fs.existsSync(path.join(versionsDir, version, "bin", "pod"))) {
+          return `RBENV_VERSION=${version} pod install`;
+        }
+      }
+    }
+  }
+  throw new Error(
+    "CocoaPods is not available. Install it or configure a Ruby version that provides the pod executable.",
+  );
+}
+
 function buildIos() {
   const iosDir = path.join(ROOT, "ios");
   if (!fs.existsSync(iosDir)) {
@@ -117,10 +139,22 @@ function buildIos() {
   }
 
   console.log("\n[build:ios] Running pod install...");
-  run("pod install", { cwd: iosDir });
+  run(podInstallCommand(), { cwd: iosDir });
 
-  console.log(
-    "\n[build:ios] Pod install complete. Run 'npx expo run:ios' to build the full app.",
+  const workspaceName = fs
+    .readdirSync(iosDir)
+    .find((name) => name.endsWith(".xcworkspace"));
+  if (!workspaceName) {
+    console.error(
+      `No .xcworkspace found in ${iosDir}. Run 'npx expo prebuild' first.`,
+    );
+    process.exit(1);
+  }
+
+  console.log(`\n[build:ios] Compiling ${MODULE_PROJECT}...`);
+  run(
+    `xcodebuild -workspace "${path.join(iosDir, workspaceName)}" -scheme AlarmScheduler -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath "${path.join(iosDir, "DerivedData")}" build`,
+    { cwd: iosDir },
   );
 }
 
